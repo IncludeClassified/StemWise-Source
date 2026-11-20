@@ -10,6 +10,14 @@ Most automatic speech recognition and forced-alignment workflows are designed pr
 
 StemWise investigates ways to obtain reliable **word identities and start/end boundaries** despite those conditions. It aims to distinguish uncertainty in lyric content from uncertainty in timing, and to make failures measurable rather than silently produce misleading timestamps. **These are engineering goals and active research questions, not claims that all cases are solved.**
 
+## Native audio playback and multi-stem engine
+
+StemWise is **not only an alignment pipeline or a user interface around an external player**. The Android source includes a built-in native C++ audio engine responsible for playback-side mixing and multibus output, with source selection between the original mix and separately managed stems. Its [mixer interface](StemWise/audio-engine/src/main/cpp/StemwiseMixer.h) defines per-stem gain, mute and solo controls, smooth control ramps, and metronome behavior; the [native multibus output stage](StemWise/audio-engine/src/main/cpp/NativeAudioOutputMultibusCallbackStage.h) coordinates stem mixing with the device audio callback.
+
+The application also handles **FLAC audio** and is designed for high-quality playback of original audio and multiple stem tracks. FLAC describes lossless source-file encoding; the presence of FLAC handling does **not** by itself guarantee bit-perfect output through every Android audio route. The relevant source code is provided for inspection, not as a benchmark or blanket claim of production readiness.
+
+The division of responsibilities is deliberate: Windows-side tooling researches and prepares audio/lyrics, while Android provides the in-app, responsive playback and stem-mixing experience.
+
 ## What is in this repository
 
 - [`StemWise/`](StemWise/): Android application source, the native [audio-engine module](StemWise/audio-engine/), build logic, playback-facing modules, and retained third-party source notices.
@@ -22,8 +30,9 @@ The Android player and Windows processor form a larger end-to-end engineering ef
 
 1. Investigate automatic lyric-content verification and end-of-word timing, including repeated and disputed passages.
 2. Compare and regression-test alignment approaches on supported languages and singing phenomena.
-3. Improve the reliability of the Windows processing workflow and its connection to Android playback and audio processing.
-4. Preserve evidence of failures and prevent regressions without representing experimental results as production-ready capabilities.
+3. Maintain and test native multi-stem playback, FLAC handling, audio quality, and real-time control behavior.
+4. Improve the Windows processing workflow and its connection to Android playback.
+5. Preserve evidence of failures and prevent regressions without representing experimental results as production-ready capabilities.
 
 The primary maintainer is [IncludeClassified](https://github.com/IncludeClassified). The original development history is maintained separately; this public repository starts with a clean, curated publication snapshot.
 
@@ -37,4 +46,4 @@ Original CI workflow definitions are retained under `.github/workflows-disabled/
 
 ## Licensing
 
-**No project-wide open-source license has yet been granted for StemWise's first-party code.** Public source access does not by itself grant the rights provided by MIT, Apache-2.0, GPL, or another open-source license. Third-party components retain their own licenses and notices in their respective locations.
+**First-party code in this public source snapshot is released under the [MIT License](LICENSE)**, except where a file carries a different explicit license or a third-party notice. Independently licensed third-party files, vendored libraries, and upstream components remain subject to their own licenses and attribution requirements, including notices in relevant `third_party` directories. The MIT grant applies to this public snapshot; it does not publish or license omitted private data, recordings, binaries, or unpublished code.
