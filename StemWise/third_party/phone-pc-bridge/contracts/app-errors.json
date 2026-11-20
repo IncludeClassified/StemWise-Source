@@ -1,0 +1,554 @@
+{
+  "power_shutdown_pending": {
+    "code": "power_shutdown_pending",
+    "retryable": true,
+    "message": "A shutdown was claimed for the current PC transition.",
+    "action": "Observe power status; explicitly wake after the PC is off. Reuse an existing accepted job ID without resubmitting work."
+  },
+  "power_state_unconfirmed": {
+    "code": "power_state_unconfirmed",
+    "retryable": true,
+    "message": "The bridge power state could not be confirmed.",
+    "action": "Inspect bridge storage and power status. Automatic shutdown remains disabled."
+  },
+  "power_cycle_changed": {
+    "code": "power_cycle_changed",
+    "retryable": false,
+    "message": "The power cycle changed.",
+    "action": "Read power status and use its current cycle ID."
+  },
+  "power_issue_unresolved": {
+    "code": "power_issue_unresolved",
+    "retryable": false,
+    "message": "Current work still has an unresolved issue.",
+    "action": "Investigate or explicitly discard the affected work before releasing the power hold."
+  },
+  "invalid_power_request": {
+    "code": "invalid_power_request",
+    "retryable": false,
+    "message": "The power request is invalid.",
+    "action": "Provide the current cycleId for an explicit hold release."
+  },
+  "pc_cleanup_status_unavailable": {
+    "code": "pc_cleanup_status_unavailable",
+    "retryable": true,
+    "message": "The PC's native cleanup status is unavailable.",
+    "action": "Read connection status after the PC returns; cleanup retries automatically and never replays a job."
+  },
+  "chat_cleanup_unavailable": {
+    "code": "chat_cleanup_unavailable",
+    "retryable": true,
+    "message": "The PC could not complete an owned-chat cleanup pass.",
+    "action": "The bridge retains minimal ownership records and retries. Inspect PC storage/native availability; never delete unrelated chats or resubmit old jobs."
+  },
+  "invalid_delivery_receipt": {
+    "code": "invalid_delivery_receipt",
+    "retryable": false,
+    "message": "Provide the exact published file descriptor batch after importing it into app storage.",
+    "action": "Verify saved destination bytes and send {files:[...]} to the job delivery endpoint."
+  },
+  "delivery_unverified": {
+    "code": "delivery_unverified",
+    "retryable": false,
+    "message": "This job does not have a verified successful output batch matching the receipt.",
+    "action": "Read the original job; import and verify every published output before acknowledging delivery. Never acknowledge failed or uncertain work."
+  },
+  "chat_ownership_unconfirmed": {
+    "code": "chat_ownership_unconfirmed",
+    "retryable": false,
+    "message": "Native chat ownership could not be established from the immutable creation receipt.",
+    "action": "Preserve the original request; the bridge will never delete a chat based on its name or a supplied ID."
+  },
+  "chat_cleanup_unconfirmed": {
+    "code": "chat_cleanup_unconfirmed",
+    "retryable": true,
+    "message": "Native deletion remains unconfirmed.",
+    "action": "The bridge retries deletion of the original owned chat when the PC returns. This does not replay the job."
+  },
+  "chat_cleanup_delegation_unconfirmed": {
+    "code": "chat_cleanup_delegation_unconfirmed",
+    "retryable": true,
+    "message": "The PC has not confirmed durable cleanup acceptance for this delivered job.",
+    "action": "The original Pi job and files remain retained. The bridge retries exact cleanup when PC storage/connectivity returns; it never replays the job."
+  },
+  "creation_deleted": {
+    "code": "creation_deleted",
+    "retryable": false,
+    "message": "This request's owned chat was already deleted.",
+    "action": "Do not recreate expired or delivered work."
+  },
+  "download_capacity_unavailable": {
+    "code": "download_capacity_unavailable",
+    "retryable": true,
+    "message": "The Pi's concurrent download capacity is in use; no file bytes were sent.",
+    "action": "Retry downloading the same output descriptor after an in-flight download finishes. Do not resubmit the job or request wake."
+  },
+  "artifact_belongs_to_another_job": {
+    "code": "artifact_belongs_to_another_job",
+    "retryable": false,
+    "message": "A declared output ID belongs to another job; this job's batch is not published.",
+    "action": "Use fresh output IDs for each job. The original owning job and its verified files are preserved."
+  },
+  "output_id_conflict": {
+    "code": "output_id_conflict",
+    "retryable": false,
+    "message": "A declared file reuses this job's reserved inline-result ID.",
+    "action": "Allocate a fresh transfer ID for the file; do not reuse reserved result IDs."
+  },
+  "developer_terminal_report_missing": {
+    "code": "developer_terminal_report_missing",
+    "retryable": false,
+    "message": "Native execution ended without a completed or failed developer report; the task outcome is unconfirmed.",
+    "action": "Read the original inputs and diagnostic log. Repair the developer's final-report workflow; do not infer success or replay unverified side effects."
+  },
+  "creation_observation_unavailable": {
+    "code": "creation_observation_unavailable",
+    "retryable": true,
+    "message": "The PC could not confirm this creation request.",
+    "action": "The bridge rechecks the original request's receipt after connectivity returns; do not create a replacement."
+  },
+  "creation_receipt_unconfirmed": {
+    "code": "creation_receipt_unconfirmed",
+    "retryable": true,
+    "message": "A confirmed native creation receipt is not available for this exact request.",
+    "action": "Keep the original creation ID. The bridge only reads receipts and will not repeat an uncertain native creation."
+  },
+  "creation_native_unconfirmed": {
+    "code": "creation_native_unconfirmed",
+    "retryable": true,
+    "message": "The receipt's exact native chat and project could not be verified.",
+    "action": "The bridge rechecks the same native ID; it will not guess another chat or create a replacement."
+  },
+  "creation_store_unavailable": {
+    "code": "creation_store_unavailable",
+    "retryable": true,
+    "message": "The PC's managed creation receipt storage could not be read or committed safely.",
+    "action": "The original reservation remains unknown; restore PC storage access before receipt observation can succeed."
+  },
+  "creation_request_invalid": {
+    "code": "creation_request_invalid",
+    "retryable": false,
+    "message": "The PC rejected the immutable creation envelope.",
+    "action": "Use the documented creation request fields and preserve its original ID; no replacement is automatically created."
+  },
+  "creation_request_conflict": {
+    "code": "creation_request_conflict",
+    "retryable": false,
+    "message": "This creation ID belongs to different immutable parameters on the PC.",
+    "action": "Preserve the original app, request ID, timestamp, name and captured model. Do not retry changed parameters."
+  },
+  "creation_not_sent": {
+    "code": "creation_not_sent",
+    "retryable": true,
+    "message": "The PC confirmed that native chat creation was not submitted and released the exact reservation.",
+    "action": "Keep the original job and unchanged inputs. The bridge observes the original reservation and retries creation only after authenticated absence; do not submit a replacement job."
+  },
+  "creation_rejected": {
+    "code": "creation_rejected",
+    "retryable": true,
+    "message": "Native chat creation was explicitly rejected and the PC released the exact reservation.",
+    "action": "Inspect the independent job log and repair the native rejection. The bridge observes the original reservation and retries the same creation only after authenticated absence; keep its captured settings and original job ID."
+  },
+  "creation_capacity_reached": {
+    "code": "creation_capacity_reached",
+    "retryable": true,
+    "message": "The paired PC has reached its bounded capacity for unresolved native job owners.",
+    "action": "Observe pending cleanup and allow fixed expiry to retire old owners. Keep the original queued job and its immutable request ID; never submit a replacement."
+  },
+  "job_cleanup_authorization_unconfirmed": {
+    "code": "job_cleanup_authorization_unconfirmed",
+    "retryable": true,
+    "message": "The PC has not confirmed durable cleanup authorization for this exact job owner.",
+    "action": "Retry deleting the original job after PC storage/connectivity returns. Its Pi record and required files are retained; do not submit another job or infer that native work stopped."
+  },
+  "dispatch_observation_unavailable": {
+    "code": "dispatch_observation_unavailable",
+    "retryable": true,
+    "message": "The submission acknowledgment was lost and native history is currently unavailable.",
+    "action": "The bridge will recheck native history after connectivity returns; keep the original request ID."
+  },
+  "dispatch_history_unconfirmed": {
+    "code": "dispatch_history_unconfirmed",
+    "retryable": true,
+    "message": "Native history could not establish a unique submission within the bounded search.",
+    "action": "The bridge preserves the unknown outcome and rechecks without submitting another turn."
+  },
+  "dispatch_match_ambiguous": {
+    "code": "dispatch_match_ambiguous",
+    "retryable": false,
+    "message": "More than one native turn contains this job's exact submitted inputs.",
+    "action": "The bridge preserves the unknown outcome and will not choose a turn or repeat execution."
+  },
+  "pc_unreachable": {
+    "code": "pc_unreachable",
+    "retryable": true,
+    "message": "The PC is currently unreachable; this job remains queued.",
+    "action": "Observe connection status. A new explicit user Wake, Send to Bridge, Retry or settings Wake action may authorize one wake request when needed. Preserve the original job ID; passive recovery and automatic retries never authorize wake."
+  },
+  "developer_busy": {
+    "code": "developer_busy",
+    "retryable": true,
+    "message": "The chosen developer is processing earlier work; this job remains queued.",
+    "action": "The bridge will retry after the developer becomes idle."
+  },
+  "developer_selection_unconfirmed": {
+    "code": "developer_selection_unconfirmed",
+    "retryable": false,
+    "message": "Codex returned a different or malformed developer selection.",
+    "action": "Inspect this job's original native creation and selection diagnostic."
+  },
+  "developer_state_unavailable": {
+    "code": "developer_state_unavailable",
+    "retryable": false,
+    "message": "The chosen developer is not available for direct input.",
+    "action": "Inspect this job's original native chat diagnostic; never replay unknown work."
+  },
+  "developer_selection_rejected": {
+    "code": "developer_selection_rejected",
+    "retryable": false,
+    "message": "Codex rejected selection of this developer.",
+    "action": "Inspect this job's original native chat diagnostic."
+  },
+  "native_submission_rejected": {
+    "code": "native_submission_rejected",
+    "retryable": false,
+    "message": "Codex rejected this job before confirming a turn.",
+    "action": "Check the chosen CLI chat and current model settings."
+  },
+  "invalid_developer_protocol": {
+    "code": "invalid_developer_protocol",
+    "retryable": false,
+    "message": "The developer returned a message that does not satisfy the bridge report protocol.",
+    "action": "The app must treat the task outcome as unconfirmed; no output batch is published."
+  },
+  "input_delivery_unconfirmed": {
+    "code": "input_delivery_unconfirmed",
+    "retryable": true,
+    "message": "The PC has not confirmed all input file bytes; the prompt remains unsent.",
+    "action": "The bridge will retry the same file receipts when the PC is reachable."
+  },
+  "manual_wake_required": {
+    "code": "manual_wake_required",
+    "retryable": false,
+    "message": "Wake requires an explicit user action.",
+    "action": "Send one empty-body POST /v2/connection/wake only for an explicit user Wake, Send to Bridge, Retry or settings Wake action. Durably claim at most one attempt for that action; agents, job execution, passive polling, reconnect, startup and background recovery never authorize wake."
+  },
+  "wake_unavailable": {
+    "code": "wake_unavailable",
+    "retryable": false,
+    "message": "The Pi's wake sender is not configured.",
+    "action": "Configure the Pi's PC and LAN pairing."
+  },
+  "invalid_wake_request": {
+    "code": "invalid_wake_request",
+    "retryable": false,
+    "message": "The wake endpoint requires an empty request body.",
+    "action": "Send one empty-body POST only for an explicit user Wake, Send to Bridge, Retry or settings Wake action; do not attach jobs, prompts or settings."
+  },
+  "wake_unconfirmed": {
+    "code": "wake_unconfirmed",
+    "retryable": false,
+    "message": "The Pi could not confirm sending the wake packet.",
+    "action": "Observe current connection status; an unconfirmed acknowledgment does not prove that no packet was sent."
+  },
+  "browser_origin_forbidden": {
+    "code": "browser_origin_forbidden",
+    "retryable": false,
+    "message": "This private API accepts native app requests.",
+    "action": "Use the embedded bridge client."
+  },
+  "unpaired_app_identity": {
+    "code": "unpaired_app_identity",
+    "retryable": false,
+    "message": "This app installation has not been paired with this PC.",
+    "action": "Complete app enrollment and PC pairing."
+  },
+  "bridge_stopping": {
+    "code": "bridge_stopping",
+    "retryable": true,
+    "message": "The bridge is restarting or stopping.",
+    "action": "Reconnect and read the saved request status."
+  },
+  "invalid_route": {
+    "code": "invalid_route",
+    "retryable": false,
+    "message": "The endpoint or its parameters are invalid.",
+    "action": "Use an endpoint documented in the API contract."
+  },
+  "invalid_cursor": {
+    "code": "invalid_cursor",
+    "retryable": false,
+    "message": "The catalog cursor is invalid.",
+    "action": "Use the cursor returned by the previous catalog page."
+  },
+  "unsupported_route": {
+    "code": "unsupported_route",
+    "retryable": false,
+    "message": "This method and endpoint are not supported.",
+    "action": "Use a method listed in the API contract."
+  },
+  "invalid_app": {
+    "code": "invalid_app",
+    "retryable": false,
+    "message": "Provide an app name of 1–255 bytes without control characters.",
+    "action": "Correct the app registration request."
+  },
+  "app_capacity_reached": {
+    "code": "app_capacity_reached",
+    "retryable": false,
+    "message": "The app's retained metadata has no safe capacity for this update, including space reserved for unfinished work.",
+    "action": "Import needed outputs, delete finished jobs or saved prompts, then retry the original request ID and unchanged input. Do not create replacement native work."
+  },
+  "app_store_unavailable": {
+    "code": "app_store_unavailable",
+    "retryable": true,
+    "message": "The Pi could not safely read or save the app's data.",
+    "action": "Restore Pi storage access and retry the same request ID; do not create a replacement job."
+  },
+  "app_identity_already_registered": {
+    "code": "app_identity_already_registered",
+    "retryable": false,
+    "message": "This bridge installation is already registered to another app name.",
+    "action": "Use its existing registration or a separate app installation identity."
+  },
+  "app_registration_required": {
+    "code": "app_registration_required",
+    "retryable": false,
+    "message": "This app has not registered with the bridge.",
+    "action": "Register through POST /v2/app."
+  },
+  "app_registration_changed": {
+    "code": "app_registration_changed",
+    "retryable": false,
+    "message": "The app registration changed while the request body was being received.",
+    "action": "Read the current registration. Preserve original request IDs and reconcile accepted work; never apply the suspended request to a replacement registration."
+  },
+  "app_request_cancelled": {
+    "code": "app_request_cancelled",
+    "retryable": false,
+    "message": "The caller cancelled the request before its body could be admitted.",
+    "action": "Preserve original request IDs and observe their authoritative records before any later user-approved attempt. Cancellation never authorizes replay or wake."
+  },
+  "invalid_job": {
+    "code": "invalid_job",
+    "retryable": false,
+    "message": "The job fields, timestamp or file descriptors are invalid.",
+    "action": "Correct the request using the documented schema."
+  },
+  "request_id_conflict": {
+    "code": "request_id_conflict",
+    "retryable": false,
+    "message": "This request ID already belongs to different input data.",
+    "action": "Retry with unchanged input, or use a new ID for new work."
+  },
+  "request_deleted": {
+    "code": "request_deleted",
+    "retryable": false,
+    "message": "This request was deleted or explicitly retired. Its historical execution outcome is unknown from this receipt.",
+    "action": "Persist this receipt before retiring local tracking. Never resubmit this request or infer that native execution stopped. Preserve app-owned imports and files; use a fresh request ID only for newly approved work. The server's admission barrier has bounded retention."
+  },
+  "invalid_retirement_request": {
+    "code": "invalid_retirement_request",
+    "retryable": false,
+    "message": "The retirement endpoint requires an empty request body.",
+    "action": "Send an empty-body POST to /v2/jobs/<id>/retire for the original unresolved ID. A retained job is returned unchanged."
+  },
+  "job_limit_reached": {
+    "code": "job_limit_reached",
+    "retryable": false,
+    "message": "This app has reached its capacity for live jobs and pending cleanup owners.",
+    "action": "Allow fixed expiry and pending cleanup to finish, or explicitly delete finished work. Never replace an uncertain request with another ID."
+  },
+  "input_bytes_unverified": {
+    "code": "input_bytes_unverified",
+    "retryable": false,
+    "message": "An input file is missing, expired or differs from its descriptor.",
+    "action": "Upload the exact input bytes and use the returned receipt."
+  },
+  "model_or_effort_unavailable": {
+    "code": "model_or_effort_unavailable",
+    "retryable": false,
+    "message": "The selected model or reasoning effort is absent from the current Codex catalog.",
+    "action": "Choose a model and effort returned by /v2/codex/models."
+  },
+  "service_tier_model_required": {
+    "code": "service_tier_model_required",
+    "retryable": false,
+    "message": "A service tier requires an explicitly selected or saved model.",
+    "action": "Choose a model before selecting a service tier. The bridge does not guess a default model."
+  },
+  "invalid_service_tier_choice": {
+    "code": "invalid_service_tier_choice",
+    "retryable": false,
+    "message": "Native-default service tier cannot be combined with an explicit service tier.",
+    "action": "Before admission, choose either nativeDefaultServiceTier:true with an empty serviceTier or one explicit serviceTier. For an accepted job, preserve its original ID and unchanged choices; do not replace its input."
+  },
+  "service_tier_unavailable": {
+    "code": "service_tier_unavailable",
+    "retryable": false,
+    "message": "The selected service tier is absent from this model's confirmed native catalog.",
+    "action": "Choose a service tier advertised for the selected model by /v2/codex/models."
+  },
+  "invalid_model_settings": {
+    "code": "invalid_model_settings",
+    "retryable": false,
+    "message": "Model settings contain invalid fields.",
+    "action": "Send the documented model, effort and optional serviceTier strings."
+  },
+  "model_catalog_unavailable": {
+    "code": "model_catalog_unavailable",
+    "retryable": true,
+    "message": "Codex could not return its model catalog.",
+    "action": "Retry the catalog request."
+  },
+  "codex_unavailable": {
+    "code": "codex_unavailable",
+    "retryable": true,
+    "message": "The native Codex backend is unavailable.",
+    "action": "Reconnect and retry reading backend status."
+  },
+  "native_auth_required": {
+    "code": "native_auth_required",
+    "retryable": true,
+    "message": "Codex authentication is missing or rejected. New native execution is paused and the original job remains queued.",
+    "action": "Sign in with the intended account using the packaged PC Codex runtime. The bridge verifies authentication before starting work; never replace or replay an accepted job."
+  },
+  "native_auth_change_pending": {
+    "code": "native_auth_change_pending",
+    "retryable": true,
+    "message": "Codex login changed while its owned runtime still has active or uncertain work. New execution is paused.",
+    "action": "Observe existing jobs. The bridge reloads only its idle owned runtime, then verifies the new login; it never stops unrelated chats or replays existing turns."
+  },
+  "native_auth_unavailable": {
+    "code": "native_auth_unavailable",
+    "retryable": true,
+    "message": "The current Bridge runtime's authentication could not be verified. New execution is paused.",
+    "action": "Read connection codexAuth and the independent job log. Restore account/provider connectivity; the bridge rechecks authentication without resubmitting uncertain work."
+  },
+  "native_auth_source_unverified": {
+    "code": "native_auth_source_unverified",
+    "retryable": true,
+    "message": "The configured native credential source cannot support verified automatic account switching.",
+    "action": "Use the documented managed ChatGPT file credential source for this installation. Preserve credentials and accepted jobs; do not copy or reset authentication files."
+  },
+  "chat_creation_unconfirmed": {
+    "code": "chat_creation_unconfirmed",
+    "retryable": true,
+    "message": "This job's native chat creation is not yet confirmed; its reservation is retained.",
+    "action": "Read GET /v2/jobs/<id> for this original job. The bridge observes its original creation receipt; do not create a replacement job or disconnect to erase the unknown outcome."
+  },
+  "invalid_prompt": {
+    "code": "invalid_prompt",
+    "retryable": false,
+    "message": "The saved prompt is empty, too large or has invalid fields.",
+    "action": "Correct the prompt; text and instructions together must fit 64 KiB."
+  },
+  "prompt_limit_reached": {
+    "code": "prompt_limit_reached",
+    "retryable": false,
+    "message": "This app has 64 saved prompts.",
+    "action": "Update or remove an existing prompt."
+  },
+  "job_unavailable": {
+    "code": "job_unavailable",
+    "retryable": false,
+    "message": "This job is absent, expired or belongs to another app; its historical execution outcome is unknown.",
+    "action": "Never infer retirement or resubmit accepted or uncertain work from this response. For an original unresolved ID, POST an empty body to /v2/jobs/<id>/retire; preserve any retained job returned, or persist its authoritative request_deleted receipt before retiring local tracking."
+  },
+  "job_observation_unavailable": {
+    "code": "job_observation_unavailable",
+    "retryable": true,
+    "message": "The exact native job outcome could not be established.",
+    "action": "Retry status observation without resubmitting work."
+  },
+  "native_terminal_unconfirmed": {
+    "code": "native_terminal_unconfirmed",
+    "retryable": true,
+    "message": "The native completion is not committed by the PC adapter.",
+    "action": "Read the independent job log and restore authoritative history for the original turn. Retry observation only; do not resubmit acknowledged work."
+  },
+  "native_interaction_required": {
+    "code": "native_interaction_required",
+    "retryable": false,
+    "message": "Native execution requested client interaction unavailable to unattended bridge jobs.",
+    "action": "Read the job log and original native outcome. The bridge requests interruption of this exact turn; repair the workflow or execution capability before new work. No approval or answer is sent."
+  },
+  "output_unavailable": {
+    "code": "output_unavailable",
+    "retryable": false,
+    "message": "This output is absent, expired or belongs to another job.",
+    "action": "Use a file ID returned by this job's outputs endpoint."
+  },
+  "output_bytes_unverified": {
+    "code": "output_bytes_unverified",
+    "retryable": true,
+    "message": "The job's complete output batch could not be verified.",
+    "action": "Retry output observation; do not process a partial batch."
+  },
+  "job_output_ownership_unconfirmed": {
+    "code": "job_output_ownership_unconfirmed",
+    "retryable": false,
+    "message": "The developer declared outputs without matching durable PC receipts for this exact app, job and chat.",
+    "action": "Inspect the job log and repair the producer to queue every output with the exact authenticated handoff ownership flags before reporting. Preserve the original job; do not replay native work or acknowledge delivery."
+  },
+  "retention_cleanup_unavailable": {
+    "code": "retention_cleanup_unavailable",
+    "retryable": true,
+    "message": "Expired or explicitly discarded bridge data could not be cleaned up safely.",
+    "action": "Restore Pi storage access and read expiredJobCleanup. Cleanup obligations retry without replaying jobs; app-owned imported files are excluded."
+  },
+  "expired_job_cleanup_unconfirmed": {
+    "code": "expired_job_cleanup_unconfirmed",
+    "retryable": true,
+    "message": "An expired job's remaining PC cleanup has not been acknowledged.",
+    "action": "Restore PC connectivity and storage. Bridge retries its compact cleanup obligation without restoring expired payloads or replaying the job."
+  },
+  "expired_job_local_cleanup_pending": {
+    "code": "expired_job_local_cleanup_pending",
+    "retryable": true,
+    "message": "Expired job records are removed, but some managed file bytes could not yet be deleted safely.",
+    "action": "Read expiredJobCleanup and storage diagnostics, restore access to the affected managed storage and allow cleanup to retry. Other jobs continue; app-owned imported files are untouched."
+  },
+  "dispatch_outcome_unconfirmed": {
+    "code": "dispatch_outcome_unconfirmed",
+    "retryable": true,
+    "message": "The bridge cannot yet establish whether Codex received this request.",
+    "action": "The bridge rechecks exact native inputs automatically; keep the original request ID and do not create another submission."
+  },
+  "job_not_interruptible": {
+    "code": "job_not_interruptible",
+    "retryable": false,
+    "message": "The saved job has no supported cancellable lifecycle state.",
+    "action": "Read the original job and its diagnostics without resubmitting it."
+  },
+  "cancellation_pending": {
+    "code": "cancellation_pending",
+    "retryable": true,
+    "message": "Cancellation is saved; retirement of the native turn and its background processes is not yet confirmed.",
+    "action": "Read the original job status. The bridge recovers the original turn, requests interruption and verifies owned background terminal cleanup without replaying the job."
+  },
+  "cancellation_retirement_unconfirmed": {
+    "code": "cancellation_retirement_unconfirmed",
+    "retryable": true,
+    "message": "The PC has not confirmed retirement of this cancelled job's owned background processes.",
+    "action": "Read the original job and its diagnostic log. The bridge retries exact owned-thread retirement; it does not replay the job or delete its chat early."
+  },
+  "interrupt_unconfirmed": {
+    "code": "interrupt_unconfirmed",
+    "retryable": true,
+    "message": "Codex could not confirm the interrupt request.",
+    "action": "Read the original job status. The bridge retains cancellation intent and retries the exact turn automatically."
+  },
+  "job_not_removable": {
+    "code": "job_not_removable",
+    "retryable": false,
+    "message": "This job has active or uncertain native work.",
+    "action": "Observe its outcome before deleting the record."
+  },
+  "app_jobs_changed": {
+    "code": "app_jobs_changed",
+    "retryable": true,
+    "message": "The app's retained job owners changed while cleanup was being authorized.",
+    "action": "Read current jobs and retry disconnect only if discarding their terminal work is still intended. Newly accepted or replaced jobs are preserved; never replay them."
+  }
+}

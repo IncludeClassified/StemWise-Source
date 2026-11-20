@@ -1,0 +1,39 @@
+{
+  "formatVersion": 1,
+  "repository": "radiant-lyrics/sylla-600m-v1",
+  "revision": "0a228acf0c1351ad0e2734604ee921d497d861e8",
+  "license": "GPL-3.0",
+  "enabledByDefault": false,
+  "automaticEnabled": false,
+  "scope": "private-shadow-evaluation",
+  "files": [
+    {"name": "LICENSE", "byteCount": 35149, "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"},
+    {"name": "NOTICE", "byteCount": 1519, "sha256": "d0bd8c5c8b8b6679903e4ec359aed25a18d5cbbdf1408e17a7567a895749b8e6"},
+    {"name": "README.md", "byteCount": 4978, "sha256": "fa36b9cd8ed73a9f4612630e7191f91ca9a30bb81a451cf2c4750c7ae2e9ecde"},
+    {"name": "config.json", "byteCount": 1863, "sha256": "b1c416b5f172db84aee2cfca5c8224d35993989c74d82a68d3c80815f8dc661f"},
+    {"name": "model.safetensors", "byteCount": 2325850852, "sha256": "bc8d8e504eabec5538027623b376e3f560691c2fb134c1a8fc6081bd10e86716"},
+    {"name": "preprocessor_config.json", "byteCount": 229, "sha256": "9c6008e1229e6914e5c11df2f673c3a0af5fd6ad442426a4b4eb3a4c11d78264"},
+    {"name": "tokenizer_config.json", "byteCount": 1075, "sha256": "cba58c0d7159768900eef602d0e7309a59e940e996944939326a0219d363ceb1"},
+    {"name": "vocab.json", "byteCount": 12488, "sha256": "2d9fa2ffb8a0b24ddc33cd30b6a7217dcda08a0a55115d50df9cd9ee23aae6ff"}
+  ],
+  "runtime": {
+    "python": "3.10.18",
+    "cudaRuntime": "12.8",
+    "packages": {"torch": "2.7.0+cu128", "torchaudio": "2.7.0+cu128", "transformers": "5.16.1", "numpy": "2.2.6", "soundfile": "0.13.1", "safetensors": "0.8.0"},
+    "implementationSha256": {
+      "transformers.models.seamless_m4t.feature_extraction_seamless_m4t": "5af206c089192495312671fc77fd7acdff7a9ae057ba43830b31a4c560d54929",
+      "transformers.models.wav2vec2_bert.modeling_wav2vec2_bert": "3bff88448d1b01bdb90949b87d02258977f8f1d98902a214ae233eed377fc310"
+    }
+  },
+  "evaluatedSource": {
+    "commit": "98e69c91cbfba2e58cb0a0f6b0e4b5071dc90bda",
+    "sourceTreeSha256": "1303536fa97b964c64a57bc5e4b829b0cfcb1de639c78e7005c8fd0e0a2fab4e",
+    "normalizationVersion": "experimental-targets.v2",
+    "files": {
+      "experimental_text.py": "bf6d71a66dee627b10b10f368c46372a1e8fa9c03db853bb1ad2d3e3c4cb7b12",
+      "text_v2_pilot.py": "5d82bfd04062f6a3c0acb374bdfd5c35690b72c93e15aa77e6b491f07c49f406",
+      "sensitivity_pilot.py": "026da827263cc6beb0556962678ef2d6a09dc78c42e583eecd9149eb5ae087d8",
+      "provenance_pilot.py": "e03f4b51c0e8621a47b8eda4694d4a3f2d5406c891f3ea57cd718b97b05d7b15"
+    }
+  }
+}

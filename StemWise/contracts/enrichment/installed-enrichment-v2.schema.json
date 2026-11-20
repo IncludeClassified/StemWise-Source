@@ -1,0 +1,989 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stemwise.app/schemas/installed-enrichment-v2.schema.json",
+  "title": "StemWise installed enrichment v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "source",
+    "generatedAt",
+    "generator",
+    "media",
+    "artwork",
+    "install"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "required": [
+              "recording"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "media": {
+            "properties": {
+              "files": {
+                "prefixItems": [
+                  {
+                    "properties": {
+                      "path": {
+                        "const": "original.flac"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "kind": {
+      "const": "stemwise.installed-enrichment"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "videoId"
+      ],
+      "properties": {
+        "provider": {
+          "const": "youtube"
+        },
+        "videoId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{11}$"
+        },
+        "recording": {
+          "$ref": "#/$defs/nativeRecording"
+        }
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]{3}|\\.[0-9]{6}|\\.[0-9]{9})?Z$"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "const": "stemwise-pc"
+        },
+        "version": {
+          "const": "2.1.0"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/originalMedia"
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "lyrics": {
+      "$ref": "#/$defs/lyrics"
+    },
+    "analysis": {
+      "type": "object"
+    },
+    "artwork": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delivery",
+        "file",
+        "mimeType",
+        "byteLength",
+        "sha256",
+        "kind",
+        "source"
+      ],
+      "properties": {
+        "delivery": {
+          "const": "selected-root"
+        },
+        "file": {
+          "const": "cover.png"
+        },
+        "mimeType": {
+          "const": "image/png"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "enum": [
+            "album-cover",
+            "single-cover",
+            "youtube-thumbnail",
+            "other"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/sourceDescriptor"
+        }
+      }
+    },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "originalSha256",
+        "contentRevision",
+        "payloadSha256",
+        "generatedDigest"
+      ],
+      "properties": {
+        "contractVersion": {
+          "const": "stemwise.installed-enrichment.v2"
+        },
+        "originalSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contentRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "payloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generatedDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "mediaBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "byteLength",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "originalMedia": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/mediaBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "enum": [
+                "original.opus",
+                "original.flac"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nativeRecording": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordingKey",
+        "trackId",
+        "file",
+        "sha256",
+        "byteCount",
+        "durationMs"
+      ],
+      "properties": {
+        "recordingKey": {
+          "type": "string",
+          "pattern": "^qobuz:[1-9][0-9]*$"
+        },
+        "trackId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*/)?\\.\\.?(?:/|$))[^/]+(?:/[^/]+)*$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byteCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7200000
+        }
+      }
+    },
+    "sourceDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        }
+      }
+    },
+    "lyrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "tracks"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "complete",
+            "partial",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tokenizationVersion": {
+          "const": "stemwise.display-words.v2"
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lyricTrack"
+          },
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "kind": {
+                    "const": "translation"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "kind": {
+                    "const": "transliteration"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "tracks": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "tracks": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tracks": {
+                "contains": {
+                  "properties": {
+                    "lines": {
+                      "contains": {
+                        "required": [
+                          "words"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "lines"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "tokenizationVersion"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              },
+              "tracks": {
+                "contains": {
+                  "properties": {
+                    "format": {
+                      "const": "regional"
+                    }
+                  },
+                  "required": [
+                    "format"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tracks": {
+                "items": {
+                  "properties": {
+                    "format": {
+                      "enum": [
+                        "synced",
+                        "regional"
+                      ]
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "const": "original"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "lines": {
+                            "items": {
+                              "required": [
+                                "words"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "format": {
+                            "const": "regional"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "lines": {
+                            "items": {
+                              "properties": {
+                                "contentStatus": {
+                                  "const": "admitted"
+                                },
+                                "occurrenceStatus": {
+                                  "const": "supported"
+                                },
+                                "timing": {
+                                  "properties": {
+                                    "status": {
+                                      "enum": [
+                                        "supported",
+                                        "estimated"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "words": {
+                                  "items": {
+                                    "properties": {
+                                      "timing": {
+                                        "properties": {
+                                          "status": {
+                                            "enum": [
+                                              "supported",
+                                              "estimated"
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "lyricTrack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "language",
+        "format",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "kind": {
+          "enum": [
+            "original",
+            "translation",
+            "transliteration"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "componentLanguages": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "script": {
+          "type": "string",
+          "pattern": "^[A-Z][a-z]{3}$"
+        },
+        "basedOnTrackId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "format": {
+          "enum": [
+            "plain",
+            "synced",
+            "regional"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/lyricLine"
+              },
+              {
+                "$ref": "#/$defs/regionalLyricLine"
+              }
+            ]
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/sourceRecord"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "translation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "language": {
+                "const": "en"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "transliteration"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "language": {
+                "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{2,8})*-fonipa$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "format": {
+                "const": "plain"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "text"
+            ],
+            "not": {
+              "required": [
+                "lines"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "lines"
+            ],
+            "not": {
+              "required": [
+                "text"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "format": {
+                "const": "regional"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "lines": {
+                "items": {
+                  "$ref": "#/$defs/regionalLyricLine"
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "lines": {
+                "items": {
+                  "$ref": "#/$defs/lyricLine"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "original"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "basedOnTrackId"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "basedOnTrackId"
+            ],
+            "not": {
+              "required": [
+                "componentLanguages"
+              ]
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "format": {
+                      "const": "synced"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "lines": {
+                      "items": {
+                        "not": {
+                          "required": [
+                            "words"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "lyricLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startMs",
+        "endMs",
+        "text"
+      ],
+      "properties": {
+        "startMs": {
+          "$ref": "#/$defs/timeMs"
+        },
+        "endMs": {
+          "$ref": "#/$defs/timeMs"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "words": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/lyricWord"
+          }
+        }
+      }
+    },
+    "lyricWord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startUtf16",
+        "endUtf16",
+        "startMs",
+        "endMs"
+      ],
+      "properties": {
+        "startUtf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "endUtf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "startMs": {
+          "$ref": "#/$defs/timeMs"
+        },
+        "endMs": {
+          "$ref": "#/$defs/timeMs"
+        }
+      }
+    },
+    "timeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7200000
+    },
+    "regionalLyricLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "contentStatus",
+        "occurrenceStatus",
+        "timing"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentStatus": {
+          "enum": [
+            "admitted",
+            "source-only",
+            "disputed"
+          ]
+        },
+        "occurrenceStatus": {
+          "enum": [
+            "supported",
+            "unknown"
+          ]
+        },
+        "timing": {
+          "$ref": "#/$defs/lyricTiming"
+        },
+        "words": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/regionalLyricWord"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "contentStatus": {
+                    "enum": [
+                      "source-only",
+                      "disputed"
+                    ]
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "occurrenceStatus": {
+                    "const": "unknown"
+                  }
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "timing": {
+                "properties": {
+                  "status": {
+                    "const": "none"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "regionalLyricWord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startUtf16",
+        "endUtf16",
+        "timing"
+      ],
+      "properties": {
+        "startUtf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "endUtf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timing": {
+          "$ref": "#/$defs/lyricTiming"
+        }
+      }
+    },
+    "lyricTiming": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "startMs",
+            "endMs"
+          ],
+          "properties": {
+            "status": {
+              "const": "supported"
+            },
+            "startMs": {
+              "$ref": "#/$defs/timeMs"
+            },
+            "endMs": {
+              "$ref": "#/$defs/timeMs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "startMs",
+            "endMs",
+            "basis"
+          ],
+          "properties": {
+            "status": {
+              "const": "estimated"
+            },
+            "startMs": {
+              "$ref": "#/$defs/timeMs"
+            },
+            "endMs": {
+              "$ref": "#/$defs/timeMs"
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "none"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "sourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        }
+      }
+    }
+  }
+}

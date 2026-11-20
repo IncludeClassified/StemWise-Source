@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools==78.1.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stemwise-pc"
+version = "0.1.0"
+description = "StemWise local engine and media tools"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["stemwise_engine", "stemwise_media"]
+package-dir = { stemwise_engine = "stemwise-playlist-builder/src", stemwise_media = "qobuz-comparison" }
+
+[tool.setuptools.package-data]
+stemwise_engine = ["*.json"]

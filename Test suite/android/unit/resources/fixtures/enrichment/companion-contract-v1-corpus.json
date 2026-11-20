@@ -1,0 +1,13 @@
+{
+  "cases": [
+    {"id": "plain-english", "language": "en", "originalFormat": "plain", "companionFormat": "plain", "endMs": 1000, "valid": true, "schemaValid": true},
+    {"id": "synced-english", "language": "en", "originalFormat": "synced", "companionFormat": "synced", "endMs": 1000, "valid": true, "schemaValid": true},
+    {"id": "regional-english-is-not-canonical", "language": "en-US", "originalFormat": "synced", "companionFormat": "plain", "endMs": 1000, "valid": false, "schemaValid": false},
+    {"id": "english-case-is-not-canonical", "language": "EN", "originalFormat": "synced", "companionFormat": "plain", "endMs": 1000, "valid": false, "schemaValid": false},
+    {"id": "synced-companion-needs-synced-original", "language": "en", "originalFormat": "plain", "companionFormat": "synced", "endMs": 1000, "valid": false, "schemaValid": true},
+    {"id": "exact-occurrence-end", "language": "en", "originalFormat": "synced", "companionFormat": "synced", "endMs": 999, "valid": false, "schemaValid": true},
+    {"id": "regional-ipa-variant", "kind": "transliteration", "language": "tr-TR-fonipa", "originalFormat": "plain", "companionFormat": "plain", "endMs": 1000, "valid": true, "schemaValid": true},
+    {"id": "uppercase-ipa-is-not-canonical", "kind": "transliteration", "language": "tr-FONIPA", "originalFormat": "plain", "companionFormat": "plain", "endMs": 1000, "valid": false, "schemaValid": false},
+    {"id": "ipa-private-tail-is-not-canonical", "kind": "transliteration", "language": "tr-fonipa-x-note", "originalFormat": "plain", "companionFormat": "plain", "endMs": 1000, "valid": false, "schemaValid": false}
+  ]
+}

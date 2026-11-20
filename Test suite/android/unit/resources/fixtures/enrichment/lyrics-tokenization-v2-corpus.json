@@ -1,0 +1,453 @@
+{
+  "tokenizationVersion": "stemwise.display-words.v2",
+  "cases": [
+    {
+      "id": "unicode13-tangut-script-transition",
+      "text": "A-𗀀",
+      "ranges": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "unicode14-arabic-letter",
+      "text": "بࡰب",
+      "ranges": [
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "unicode14-mark",
+      "text": "A᫁B",
+      "ranges": [
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "supplementary-script-connector",
+      "text": "𐐀-𐐨x",
+      "ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          5,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "mixed-script-connector",
+      "text": "A-ب",
+      "ranges": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "ascii-connectors-and-digits",
+      "text": "can't re-enter B2B",
+      "ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          14
+        ],
+        [
+          15,
+          18
+        ]
+      ]
+    },
+    {
+      "id": "combining-mark",
+      "text": "Café noir",
+      "ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "arabic-rtl",
+      "text": "مرحبا بالعالم",
+      "ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          13
+        ]
+      ]
+    },
+    {
+      "id": "arabic-prepend-stays-on-grapheme-boundary",
+      "text": "؀مرحبا",
+      "ranges": [
+        [
+          0,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "tulu-tigalari-prepend-stays-on-grapheme-boundary",
+      "text": "𑏑A",
+      "ranges": [
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "kawi-prepend-stays-on-grapheme-boundary",
+      "text": "𑼂A",
+      "ranges": [
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "emoji-is-a-delimiter",
+      "text": "go🎵now",
+      "ranges": [
+        [
+          0,
+          2
+        ],
+        [
+          4,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "significant-script-change",
+      "text": "abcالعربية",
+      "ranges": [
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "cross-script-hyphen-is-a-delimiter",
+      "text": "abc-العربية",
+      "ranges": [
+        [
+          0,
+          3
+        ],
+        [
+          4,
+          11
+        ]
+      ]
+    },
+    {
+      "id": "japanese-scripts-share-a-word-run",
+      "text": "食べる 音楽",
+      "ranges": [
+        [
+          0,
+          3
+        ],
+        [
+          4,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "devanagari-marks",
+      "text": "नमस्ते दुनिया",
+      "ranges": [
+        [
+          0,
+          6
+        ],
+        [
+          7,
+          13
+        ]
+      ]
+    },
+    {
+      "id": "devanagari-zwj-conjunct",
+      "text": "क्‍ष",
+      "ranges": [
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "devanagari-zwnj-conjunct",
+      "text": "क्‌ष",
+      "ranges": [
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "fullwidth-latin-stays-one-word",
+      "text": "ＡB",
+      "ranges": [
+        [
+          0,
+          2
+        ]
+      ]
+    },
+    {
+      "id": "hawaiian-common-modifier",
+      "text": "Oʻahu Hawaiʻi",
+      "ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          13
+        ]
+      ]
+    },
+    {
+      "id": "latin-script-compatibility-letters",
+      "text": "Ａb Kelvin",
+      "ranges": [
+        [
+          0,
+          2
+        ],
+        [
+          3,
+          9
+        ]
+      ]
+    },
+    {
+      "id": "shared-script-extension-adopts-arabic",
+      "text": "بـب",
+      "ranges": [
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "script-extension-cannot-bridge-scripts",
+      "text": "بـܐ",
+      "ranges": [
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "numbers-are-script-neutral",
+      "text": "A١B",
+      "ranges": [
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "modifier-apostrophe-inside-latin",
+      "text": "lʼamour",
+      "ranges": [
+        [
+          0,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "leading-common-modifier-adopts-letter-script",
+      "text": "ʼamour",
+      "ranges": [
+        [
+          0,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "kawi-letters",
+      "text": "𑼒𑼓",
+      "ranges": [
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "kawi-script-transition",
+      "text": "a 𑼒",
+      "ranges": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "nag-mundari-letter-mark-digit",
+      "text": "𞓐𞓬 𞓰",
+      "ranges": [
+        [
+          0,
+          4
+        ],
+        [
+          5,
+          7
+        ]
+      ]
+    }
+  ],
+  "negativeCases": [
+    {
+      "id": "combining-mark-cannot-be-dropped",
+      "text": "Café",
+      "ranges": [
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "arabic-prepend-cannot-be-split",
+      "text": "؀مرحبا",
+      "ranges": [
+        [
+          1,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "tulu-tigalari-prepend-cannot-be-split",
+      "text": "𑏑A",
+      "ranges": [
+        [
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "kawi-prepend-cannot-be-split",
+      "text": "𑼂A",
+      "ranges": [
+        [
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "id": "surrogate-pair-cannot-be-split",
+      "text": "go🎵now",
+      "ranges": [
+        [
+          0,
+          3
+        ],
+        [
+          4,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "partial-word-coverage-is-not-tokenization",
+      "text": "go now",
+      "ranges": [
+        [
+          0,
+          2
+        ]
+      ]
+    },
+    {
+      "id": "significant-script-change-cannot-be-joined",
+      "text": "abcالعربية",
+      "ranges": [
+        [
+          0,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "internal-apostrophe-cannot-be-split",
+      "text": "can't",
+      "ranges": [
+        [
+          0,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ]
+    }
+  ]
+}

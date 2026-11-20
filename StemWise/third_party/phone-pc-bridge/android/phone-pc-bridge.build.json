@@ -1,0 +1,434 @@
+{
+  "schema": "bridge-sdk-artifact-v4",
+  "target": {
+    "goos": "android",
+    "goarch": "arm64",
+    "cgo": true,
+    "tags": [
+      "android"
+    ]
+  },
+  "toolchain": {
+    "schema": "bridge-sdk-build-v1",
+    "go": "go1.27.1",
+    "xMobile": "v0.0.0-20260908204917-8b95e45f8d3e",
+    "compileSdk": 36,
+    "ndk": "27.2.12479018",
+    "javac": "17.0.20",
+    "androidApi": 33,
+    "abi": "arm64-v8a"
+  },
+  "candidateScopes": [
+    {
+      "path": "bridge-core/files",
+      "embeds": false
+    },
+    {
+      "path": "bridge-core/mobile",
+      "embeds": false
+    },
+    {
+      "path": "bridge-core/protocol",
+      "embeds": false
+    }
+  ],
+  "candidates": [
+    {
+      "path": "bridge-core/files/capacity.go",
+      "sha256": "3cbf1f0c0c2039faf54532ea157852986cf40700b31bc6ca854c7c96499a33c4",
+      "size": 1889
+    },
+    {
+      "path": "bridge-core/files/capacity_linux.go",
+      "sha256": "9073030cc510d7740adea62ef4ed3a37d1706b806e57fc31d4c38b25b2ea8b8e",
+      "size": 398
+    },
+    {
+      "path": "bridge-core/files/capacity_other.go",
+      "sha256": "48e54eeaf7636ff2ea29a4f7627f7cc9b49f84c0b909177769b5bd059c9f8d8d",
+      "size": 144
+    },
+    {
+      "path": "bridge-core/files/capacity_windows.go",
+      "sha256": "4274e6677f023ad96807f75261c25bb43fe1d0c76d1ef3013e3bc75249616281",
+      "size": 420
+    },
+    {
+      "path": "bridge-core/files/context.go",
+      "sha256": "93c9efe4ac656b18215bfd5608c997f1662cd33b5e956315f28f2e363f318271",
+      "size": 810
+    },
+    {
+      "path": "bridge-core/files/publish_other.go",
+      "sha256": "d1161e7a86d8d1d9ceb14420b90b0a222dba9f07751e14ce412ea72ed7f0d88f",
+      "size": 193
+    },
+    {
+      "path": "bridge-core/files/publish_windows.go",
+      "sha256": "e39d39368c342a848359596f1f25eceba5f32706e603fadc7af45558735fdc03",
+      "size": 771
+    },
+    {
+      "path": "bridge-core/files/store.go",
+      "sha256": "900a6d09d5bd724a1ac7fca08209d3ebbae281feb640eb066899a687a342f4b8",
+      "size": 32139
+    },
+    {
+      "path": "bridge-core/go.mod",
+      "sha256": "b63ca86776784c1f44bcfe1db291f3afee243fc7e13eb072601337b4e2c32fbd",
+      "size": 2572
+    },
+    {
+      "path": "bridge-core/go.sum",
+      "sha256": "60196c9542f9fb9afd5741d99d517fffc6d8a1e9107881ac649784797866531c",
+      "size": 23428
+    },
+    {
+      "path": "bridge-core/mobile/apps.go",
+      "sha256": "2d700708a60bffaa1e5083a1bcd11057430d37ab06f5459df64dff2c31c42626",
+      "size": 2144
+    },
+    {
+      "path": "bridge-core/mobile/client.go",
+      "sha256": "202c02ce582e68c2bebd1aa954a62f724f9e4513ad0f3bbe0fde2ca54f472d46",
+      "size": 12384
+    },
+    {
+      "path": "bridge-core/mobile/connection.go",
+      "sha256": "edb2e67b90014cf627825ce2a725a1e0e8342efbdb7f69483ba03ba0ea34dd87",
+      "size": 7620
+    },
+    {
+      "path": "bridge-core/mobile/copy_publish_other.go",
+      "sha256": "5baa7bcb10120a4dc0053f43b33976f8f8447dd3021bd759b3018c9346d54b62",
+      "size": 198
+    },
+    {
+      "path": "bridge-core/mobile/copy_publish_unix.go",
+      "sha256": "b88a87c21ad32d7e63034dd6b4ea27584abbfd6ee7f4fea43b2ce8c1f83773e7",
+      "size": 356
+    },
+    {
+      "path": "bridge-core/mobile/copy_publish_windows.go",
+      "sha256": "b93901ab232d8d2fcab2eeb0489151025b0442a6a2f9bb1fc8315b3cb0dc0c63",
+      "size": 551
+    },
+    {
+      "path": "bridge-core/mobile/delivery.go",
+      "sha256": "2f914cd8d9641a75e9dd3759ec994f98f6ab0fc6825c1ee5ba7404b974d5d20e",
+      "size": 4113
+    },
+    {
+      "path": "bridge-core/mobile/file_destinations.go",
+      "sha256": "fc119442b5c8e977ac325490efe8e947bc2f06162cead53ffe45816a353b95a6",
+      "size": 909
+    },
+    {
+      "path": "bridge-core/mobile/file_stream.go",
+      "sha256": "69f74052db49c0da3a32578232f82045f2f3d22ac5bb4f3a9599e261104ef304",
+      "size": 9234
+    },
+    {
+      "path": "bridge-core/mobile/files.go",
+      "sha256": "9f18f6fec21cc3b3a95f097ed022a396db6919387af05f971dfa203fb7b1bdf5",
+      "size": 17375
+    },
+    {
+      "path": "bridge-core/mobile/network.go",
+      "sha256": "3b15fb206f2befb27e943c2415b375d85feec57be54ec717f7e7822bbc15f4e7",
+      "size": 3018
+    },
+    {
+      "path": "bridge-core/mobile/network_android.go",
+      "sha256": "1aab25511d11af6a1a0d80f06c0adb9eabb3d2d10e226b9a9960e4ea9d36de68",
+      "size": 3498
+    },
+    {
+      "path": "bridge-core/mobile/network_lifecycle.go",
+      "sha256": "f50117045f634e03d0465115447e51963feea97e83a65ce95f0518ef1b5c92df",
+      "size": 1969
+    },
+    {
+      "path": "bridge-core/mobile/network_other.go",
+      "sha256": "5a7b0323a98216857775e3349a509b6653e7de300781689f08acb6d8dcf65c95",
+      "size": 657
+    },
+    {
+      "path": "bridge-core/mobile/network_policy.go",
+      "sha256": "b3c262974b342e4b61bb5237bd3c3800ea196928bb7d4d44487a774d479bc677",
+      "size": 5425
+    },
+    {
+      "path": "bridge-core/mobile/operation.go",
+      "sha256": "ca62399ac46bce8028abf4493bde7792bd897c435b12dba36dcc53b5d5983113",
+      "size": 2984
+    },
+    {
+      "path": "bridge-core/mobile/readiness.go",
+      "sha256": "b6dca5cd151d5c611e3dd1ade99704aa670238f27767d631477a4fa8bcb577dd",
+      "size": 6112
+    },
+    {
+      "path": "bridge-core/mobile/restore_prepared.go",
+      "sha256": "6b0ba77a777e9b30ce90ae0964c71b6ab36ccc2e27a4059625acc2e9e8e8e7c6",
+      "size": 3123
+    },
+    {
+      "path": "bridge-core/mobile/retention.go",
+      "sha256": "0a5bf965eaf8b3e0c97e50552eba4127d2e43b842817c16449ae4b7a38848eaf",
+      "size": 1199
+    },
+    {
+      "path": "bridge-core/mobile/storage_lease.go",
+      "sha256": "11781082e4908856562ad1684c767ecd735edb575fb0c4b0efcbfebc5ad3bd6f",
+      "size": 961
+    },
+    {
+      "path": "bridge-core/mobile/storage_lease_other.go",
+      "sha256": "5813699e56518b557628e30d99dde5123f935c82838068a055748e64fc5dc4a4",
+      "size": 134
+    },
+    {
+      "path": "bridge-core/mobile/storage_lease_unix.go",
+      "sha256": "5d035a21b22ac746c4e629bd2d7891b88e1af51ae55036dc7caf5ce631cdc780",
+      "size": 287
+    },
+    {
+      "path": "bridge-core/mobile/storage_lease_windows.go",
+      "sha256": "bf915dbdff715771d5388b6c804ceeae09a775234406aae7a210f3f86a757a1f",
+      "size": 369
+    },
+    {
+      "path": "bridge-core/protocol/adapter.go",
+      "sha256": "f2d22f07a09e6d9961d570a324e4d55438421a2ed30edf693084000028efc0c2",
+      "size": 1831
+    },
+    {
+      "path": "bridge-core/protocol/background.go",
+      "sha256": "cb29620239941143debd1971fb902661538e384a6302de347874287c3214b9dd",
+      "size": 2048
+    },
+    {
+      "path": "bridge-core/protocol/codex.go",
+      "sha256": "39144dc41a79cc2768c4daab158b4dbcc09811442240007e43087aa86e716258",
+      "size": 3194
+    },
+    {
+      "path": "bridge-core/protocol/diagnostic.go",
+      "sha256": "0be631b404838d66c217c9fedfaf291d2339ff2d25778f99609f67adc67ffb6b",
+      "size": 3968
+    },
+    {
+      "path": "bridge-core/protocol/files.go",
+      "sha256": "c31aba6e54bfa6391a427d90ce208e24827f90c5357e9bbb1cc77d2994fbe8e4",
+      "size": 2292
+    },
+    {
+      "path": "bridge-core/protocol/json.go",
+      "sha256": "0b3b3df9f61da6fe81def309ae59dcdf66a1e5887eaf3b7f516c49da58bdc877",
+      "size": 3583
+    }
+  ],
+  "inputs": [
+    {
+      "path": "bridge-core/android/AndroidManifest.xml",
+      "sha256": "e768a5930e37345681f12cb05bc19cfac0f5570c61c50f4f23cf42423671c19c",
+      "size": 377
+    },
+    {
+      "path": "bridge-core/android/BridgeNetwork.java",
+      "sha256": "135d2e5110b25b33fc09be9107a2f5fe2edf6d59482920651b6030ecb7b3d66c",
+      "size": 10001
+    },
+    {
+      "path": "bridge-core/android/BridgeRecovery.java",
+      "sha256": "d6276a6df3a12b19dc8ee2ce3e7b83aecb9b4505ac8525afd2782fcf42eb6e22",
+      "size": 2309
+    },
+    {
+      "path": "bridge-core/build-sdk.ps1",
+      "sha256": "1c410b3a767f97b16762ef4526917fdf79843d8c925305c9bf497797080ece07",
+      "size": 12218
+    },
+    {
+      "path": "bridge-core/files/capacity.go",
+      "sha256": "3cbf1f0c0c2039faf54532ea157852986cf40700b31bc6ca854c7c96499a33c4",
+      "size": 1889
+    },
+    {
+      "path": "bridge-core/files/capacity_linux.go",
+      "sha256": "9073030cc510d7740adea62ef4ed3a37d1706b806e57fc31d4c38b25b2ea8b8e",
+      "size": 398
+    },
+    {
+      "path": "bridge-core/files/context.go",
+      "sha256": "93c9efe4ac656b18215bfd5608c997f1662cd33b5e956315f28f2e363f318271",
+      "size": 810
+    },
+    {
+      "path": "bridge-core/files/publish_other.go",
+      "sha256": "d1161e7a86d8d1d9ceb14420b90b0a222dba9f07751e14ce412ea72ed7f0d88f",
+      "size": 193
+    },
+    {
+      "path": "bridge-core/files/store.go",
+      "sha256": "900a6d09d5bd724a1ac7fca08209d3ebbae281feb640eb066899a687a342f4b8",
+      "size": 32139
+    },
+    {
+      "path": "bridge-core/go.mod",
+      "sha256": "b63ca86776784c1f44bcfe1db291f3afee243fc7e13eb072601337b4e2c32fbd",
+      "size": 2572
+    },
+    {
+      "path": "bridge-core/go.sum",
+      "sha256": "60196c9542f9fb9afd5741d99d517fffc6d8a1e9107881ac649784797866531c",
+      "size": 23428
+    },
+    {
+      "path": "bridge-core/internal/sdkmodinfo/main.go",
+      "sha256": "812e3f48e98c804963316b5146056e4b79404879d908de3cb257a4ef1d81c2e5",
+      "size": 2124
+    },
+    {
+      "path": "bridge-core/mobile/apps.go",
+      "sha256": "2d700708a60bffaa1e5083a1bcd11057430d37ab06f5459df64dff2c31c42626",
+      "size": 2144
+    },
+    {
+      "path": "bridge-core/mobile/client.go",
+      "sha256": "202c02ce582e68c2bebd1aa954a62f724f9e4513ad0f3bbe0fde2ca54f472d46",
+      "size": 12384
+    },
+    {
+      "path": "bridge-core/mobile/connection.go",
+      "sha256": "edb2e67b90014cf627825ce2a725a1e0e8342efbdb7f69483ba03ba0ea34dd87",
+      "size": 7620
+    },
+    {
+      "path": "bridge-core/mobile/copy_publish_unix.go",
+      "sha256": "b88a87c21ad32d7e63034dd6b4ea27584abbfd6ee7f4fea43b2ce8c1f83773e7",
+      "size": 356
+    },
+    {
+      "path": "bridge-core/mobile/delivery.go",
+      "sha256": "2f914cd8d9641a75e9dd3759ec994f98f6ab0fc6825c1ee5ba7404b974d5d20e",
+      "size": 4113
+    },
+    {
+      "path": "bridge-core/mobile/file_destinations.go",
+      "sha256": "fc119442b5c8e977ac325490efe8e947bc2f06162cead53ffe45816a353b95a6",
+      "size": 909
+    },
+    {
+      "path": "bridge-core/mobile/file_stream.go",
+      "sha256": "69f74052db49c0da3a32578232f82045f2f3d22ac5bb4f3a9599e261104ef304",
+      "size": 9234
+    },
+    {
+      "path": "bridge-core/mobile/files.go",
+      "sha256": "9f18f6fec21cc3b3a95f097ed022a396db6919387af05f971dfa203fb7b1bdf5",
+      "size": 17375
+    },
+    {
+      "path": "bridge-core/mobile/network.go",
+      "sha256": "3b15fb206f2befb27e943c2415b375d85feec57be54ec717f7e7822bbc15f4e7",
+      "size": 3018
+    },
+    {
+      "path": "bridge-core/mobile/network_android.go",
+      "sha256": "1aab25511d11af6a1a0d80f06c0adb9eabb3d2d10e226b9a9960e4ea9d36de68",
+      "size": 3498
+    },
+    {
+      "path": "bridge-core/mobile/network_lifecycle.go",
+      "sha256": "f50117045f634e03d0465115447e51963feea97e83a65ce95f0518ef1b5c92df",
+      "size": 1969
+    },
+    {
+      "path": "bridge-core/mobile/network_policy.go",
+      "sha256": "b3c262974b342e4b61bb5237bd3c3800ea196928bb7d4d44487a774d479bc677",
+      "size": 5425
+    },
+    {
+      "path": "bridge-core/mobile/operation.go",
+      "sha256": "ca62399ac46bce8028abf4493bde7792bd897c435b12dba36dcc53b5d5983113",
+      "size": 2984
+    },
+    {
+      "path": "bridge-core/mobile/readiness.go",
+      "sha256": "b6dca5cd151d5c611e3dd1ade99704aa670238f27767d631477a4fa8bcb577dd",
+      "size": 6112
+    },
+    {
+      "path": "bridge-core/mobile/restore_prepared.go",
+      "sha256": "6b0ba77a777e9b30ce90ae0964c71b6ab36ccc2e27a4059625acc2e9e8e8e7c6",
+      "size": 3123
+    },
+    {
+      "path": "bridge-core/mobile/retention.go",
+      "sha256": "0a5bf965eaf8b3e0c97e50552eba4127d2e43b842817c16449ae4b7a38848eaf",
+      "size": 1199
+    },
+    {
+      "path": "bridge-core/mobile/storage_lease.go",
+      "sha256": "11781082e4908856562ad1684c767ecd735edb575fb0c4b0efcbfebc5ad3bd6f",
+      "size": 961
+    },
+    {
+      "path": "bridge-core/mobile/storage_lease_unix.go",
+      "sha256": "5d035a21b22ac746c4e629bd2d7891b88e1af51ae55036dc7caf5ce631cdc780",
+      "size": 287
+    },
+    {
+      "path": "bridge-core/protocol/adapter.go",
+      "sha256": "f2d22f07a09e6d9961d570a324e4d55438421a2ed30edf693084000028efc0c2",
+      "size": 1831
+    },
+    {
+      "path": "bridge-core/protocol/background.go",
+      "sha256": "cb29620239941143debd1971fb902661538e384a6302de347874287c3214b9dd",
+      "size": 2048
+    },
+    {
+      "path": "bridge-core/protocol/codex.go",
+      "sha256": "39144dc41a79cc2768c4daab158b4dbcc09811442240007e43087aa86e716258",
+      "size": 3194
+    },
+    {
+      "path": "bridge-core/protocol/diagnostic.go",
+      "sha256": "0be631b404838d66c217c9fedfaf291d2339ff2d25778f99609f67adc67ffb6b",
+      "size": 3968
+    },
+    {
+      "path": "bridge-core/protocol/files.go",
+      "sha256": "c31aba6e54bfa6391a427d90ce208e24827f90c5357e9bbb1cc77d2994fbe8e4",
+      "size": 2292
+    },
+    {
+      "path": "bridge-core/protocol/json.go",
+      "sha256": "0b3b3df9f61da6fe81def309ae59dcdf66a1e5887eaf3b7f516c49da58bdc877",
+      "size": 3583
+    },
+    {
+      "path": "bridge-core/sdk-build-pins.json",
+      "sha256": "9420c583cff5d19dccef5b3b29aa269e5eb95b12c5f87d6774f97be206e48605",
+      "size": 219
+    },
+    {
+      "path": "bridge-core/sdk_archive.py",
+      "sha256": "f1d25806b5ca320d6ddafd31d225c5b5993d8c3218c16ac55d7dada02d1b6815",
+      "size": 4271
+    },
+    {
+      "path": "bridge-core/sdk_artifact.py",
+      "sha256": "b0864699e598ef46c2214dacefc045b81da6c1916952648e02b80c4d6f96e6b3",
+      "size": 18647
+    }
+  ],
+  "inputsSha256": "16e265c53625a5310091303792731bc894771ffcd84b090ab42fffb556cefe34",
+  "aar": {
+    "sha256": "5ba6ae9b321fa19188950729f7033026a8ffe951544254354dfa9a771c93fe03",
+    "size": 14195992
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "platform": "linux-x86_64",
+  "wslDistribution": "Ubuntu",
+  "python": {
+    "version": "3.10.18",
+    "managedInstallDirectory": "runtime/uv-python",
+    "executable": "runtime/python/bin/python3.10"
+  },
+  "environments": {
+    "main": "stemwise-playlist-builder/.venv/bin/python",
+    "allin1": "stemwise-playlist-builder/.venv-allin1/bin/python",
+    "lyrics": "stemwise-playlist-builder/.venv-lyrics-align/bin/python"
+  },
+  "environmentVariables": {
+    "STEMWISE_DENO": "runtime/deno/deno",
+    "TORCH_HOME": "model-cache/torch",
+    "HF_HOME": "model-cache/huggingface",
+    "XDG_CACHE_HOME": "model-cache/xdg",
+    "UV_CACHE_DIR": "runtime/uv-cache"
+  },
+  "retainedResources": [
+    {
+      "path": "model-cache/python-wheels/melband_roformer_infer-0.1.5-py3-none-any.whl",
+      "sha256": "8b509b90c9c02f014730c897222a31471db59a2d538bf60a5a9e6469c14823e3",
+      "purpose": "Approved RoFormer wheel; bootstrap must not substitute a different artifact"
+    }
+  ],
+  "externalInputs": [
+    {
+      "path": "stemwise-playlist-builder/config.json",
+      "required": true,
+      "purpose": "Owner configuration and authorized provider credentials; copy intentionally, never commit"
+    },
+    {
+      "path": "model-cache",
+      "required": true,
+      "purpose": "Exact approved model snapshots/checkpoints listed by DEPENDENCY_MANIFEST.json and selected route doctor; directory presence is not model readiness"
+    },
+    {
+      "path": "runtime/deno/deno",
+      "required": true,
+      "purpose": "Hash-pinned JavaScript runtime installed by setup_wsl.sh"
+    }
+  ]
+}

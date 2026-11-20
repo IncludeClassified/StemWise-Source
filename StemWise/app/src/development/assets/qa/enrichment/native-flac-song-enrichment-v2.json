@@ -1,0 +1,42 @@
+{
+  "formatVersion": 2,
+  "kind": "stemwise.song-enrichment",
+  "source": {
+    "provider": "youtube", "videoId": "FIXTURE0001",
+    "recording": {
+      "recordingKey": "qobuz:123", "trackId": 123,
+      "file": "Test suite/android/instrumentation/assets/encoder/flac24-stereo-96000.flac",
+      "sha256": "5b986b191b880f74bdb354627a1fd7e3a3c41c248ae329bdb75256bf9f7d2cbd",
+      "byteCount": 154293, "durationMs": 1000
+    }
+  },
+  "generatedAt": "2026-08-09T12:00:00Z",
+  "generator": { "name": "stemwise-pc", "version": "2.1.0" },
+  "metadata": {
+    "matchStatus": "verified", "title": "Native FLAC enriched",
+    "artists": ["StemWise Fixture"],
+    "sources": [{ "name": "Native FLAC fixture" }]
+  },
+  "artwork": {
+    "file": "cover.png", "kind": "album-cover",
+    "source": { "name": "StemWise Fixture" }
+  },
+  "lyrics": { "status": "unavailable", "reason": "The deterministic audio has no lyrics.", "tracks": [] },
+  "analysis": {
+    "status": "unavailable",
+    "rhythm": { "status": "unavailable", "reason": "Deterministic fixture." },
+    "key": { "status": "unavailable", "reason": "Deterministic fixture." },
+    "structure": { "status": "unavailable", "reason": "Deterministic fixture." },
+    "tuning": { "status": "unavailable", "reason": "Deterministic fixture." },
+    "loudness": { "status": "unavailable", "reason": "Deterministic fixture." },
+    "waveform": { "status": "unavailable", "reason": "Deterministic fixture." },
+    "toolRuns": [
+      { "name": "beat-this-full", "status": "skipped", "reason": "Deterministic fixture." },
+      { "name": "stemwise-rhythm-normalizer", "status": "skipped", "reason": "Deterministic fixture." },
+      { "name": "s-key", "status": "skipped", "reason": "Deterministic fixture." },
+      { "name": "all-in-one", "status": "skipped", "reason": "Deterministic fixture." },
+      { "name": "essentia", "status": "skipped", "reason": "Deterministic fixture." },
+      { "name": "stemwise-waveform", "status": "skipped", "reason": "Deterministic fixture." }
+    ]
+  }
+}

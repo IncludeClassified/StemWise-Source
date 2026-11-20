@@ -1,0 +1,18 @@
+{
+  "formatVersion": 2,
+  "kind": "stemwise.song-enrichment",
+  "source": {
+    "provider": "youtube",
+    "videoId": "FIXTURE0001"
+  },
+  "generatedAt": "2026-07-29T08:10:00Z",
+  "generator": {
+    "name": "stemwise-pc",
+    "version": "2.1.0"
+  },
+  "lyrics": {
+    "status": "unavailable",
+    "reason": "No reviewed lyrics are available for this explicit no-lyrics fixture.",
+    "tracks": []
+  }
+}

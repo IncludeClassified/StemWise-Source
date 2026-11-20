@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "rawCases": [
+    { "name": "duplicate-key", "text": "{\"schemaVersion\":1,\"schemaVersion\":1}" },
+    { "name": "trailing-document", "text": "{}{}" },
+    { "name": "utf8-bom", "text": "{}", "prefixBom": true },
+    { "name": "malformed-utf8", "hex": "c328" },
+    { "name": "json-comment", "text": "{/*comment*/}" },
+    { "name": "non-finite-number", "text": "{\"value\":NaN}" }
+  ],
+  "mutationCases": [
+    { "name": "missing-generated-at" },
+    { "name": "wrong-generator-type" },
+    { "name": "fractional-content-revision" },
+    { "name": "string-byte-length" },
+    { "name": "non-object-optional-group" },
+    { "name": "non-canonical-generated-at" },
+    { "name": "open-root" },
+    { "name": "open-source" },
+    { "name": "open-generator" },
+    { "name": "open-media" },
+    { "name": "open-media-entry" },
+    { "name": "open-install" },
+    { "name": "open-artwork" },
+    { "name": "open-artwork-source" },
+    { "name": "missing-artwork" },
+    { "name": "missing-artwork-file" },
+    { "name": "wrong-artwork-file" },
+    { "name": "uppercase-artwork-hash" },
+    { "name": "extra-media" },
+    { "name": "case-changed-path" },
+    { "name": "wrong-source-id" },
+    { "name": "stale-original-hash" },
+    { "name": "uppercase-media-hash" },
+    { "name": "wrong-artwork-delivery" },
+    { "name": "wrong-artwork-kind" },
+    { "name": "digest-mismatch" }
+  ]
+}

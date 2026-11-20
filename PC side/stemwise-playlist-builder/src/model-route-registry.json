@@ -1,0 +1,502 @@
+{
+  "formatVersion": 1,
+  "executionPolicy": {
+    "version": 1,
+    "predictionMaxVariants": 4,
+    "predictionMaxCandidates": 8
+  },
+  "languages": {
+    "ar": {
+      "editorial": {
+        "scripts": [
+          "Arab"
+        ],
+        "spacing": "default"
+      },
+      "owsmEndpointRoute": "owsm-ctc-v4-1b-arabic-v1"
+    },
+    "bs": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "de": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "en": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      },
+      "owsmEndpointRoute": "owsm-ctc-v4-1b-english-v1"
+    },
+    "fr": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "french"
+      }
+    },
+    "hy": {
+      "editorial": {
+        "scripts": [
+          "Armn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "id": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "ku": {
+      "editorial": {
+        "scripts": [
+          "Arab",
+          "Latn"
+        ],
+        "spacing": "default"
+      },
+      "nativeAsr": {
+        "adapter": "kmr-script_latin",
+        "scripts": [
+          "Latn"
+        ]
+      }
+    },
+    "ms": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "sn": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "sq": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "tn": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "tr": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      },
+      "owsmEndpointRoute": "owsm-ctc-v4-1b-turkish-v1"
+    },
+    "ur": {
+      "editorial": {
+        "scripts": [
+          "Arab"
+        ],
+        "spacing": "default"
+      }
+    },
+    "xh": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      }
+    },
+    "zu": {
+      "editorial": {
+        "scripts": [
+          "Latn"
+        ],
+        "spacing": "default"
+      },
+      "nativeAsr": {
+        "adapter": "zul",
+        "scripts": [
+          "Latn",
+          "Zyyy"
+        ]
+      },
+      "owsmEndpointRoute": "owsm-ctc-v4-1b-zulu-v1"
+    }
+  },
+  "assets": {
+    "lyrics_align_pc": {
+      "PINNED_DEMUCS_SHA256": "8726e21a993978c7ba086d3872e7608d7d5bfca646ca4aca459ffda844faa8b4",
+      "PINNED_MMS_SHA256": "20ef12963ab4924bef49ac4fc7f58ad5da2ee43b2c11bc8c853c9b90ecdbc680",
+      "PINNED_WAV2VEC2_MODELS": {
+        "tr": {
+          "repository": "mpoyraz/wav2vec2-xls-r-300m-cv7-turkish",
+          "cacheDirectory": "models--mpoyraz--wav2vec2-xls-r-300m-cv7-turkish",
+          "snapshot": "708639f50559d7970f462e13ec64d3f059ca89f6",
+          "files": {
+            "config.json": [
+              2035,
+              "8c8c02e416aaca6f258fd270eec4d646e8ad60a7a2bc6516f37cef9f21589df5"
+            ],
+            "preprocessor_config.json": [
+              260,
+              "94c00f2bccbdbf4891a1ed8be371e59debaedd03d64f5e8313cedfa4c60da22b"
+            ],
+            "pytorch_model.bin": [
+              1262079473,
+              "008d69c82bf45c82ec5485e550abc86ddabefe75080f22e1ebfdc1699889d82e"
+            ],
+            "special_tokens_map.json": [
+              85,
+              "50eb73d51191696209d30d42d6ede50e57e7a542ca1db12df714b2c0aa3da8e2"
+            ],
+            "tokenizer_config.json": [
+              181,
+              "573f3d46704a5482552885e2ca828fdcb2df1fbe90059a4d18ac2ee15820ca31"
+            ],
+            "vocab.json": [
+              351,
+              "6641ad4761f75bbba7ca2591b1eaef57d1ab444762bf6a51f2ddbd70bfe3ee2f"
+            ]
+          }
+        }
+      },
+      "PINNED_UNIVERSAL_WAV2VEC2_MODEL": {
+        "repository": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+        "cacheDirectory": "models--facebook--wav2vec2-xlsr-53-espeak-cv-ft",
+        "snapshot": "2c733782da5604684829819a5eb744c193fe9398",
+        "files": {
+          "config.json": [
+            1856,
+            "4609fb49b7e1d28aecb2840da1926c40bd915bc6f1120a940afacf7159bbfb13"
+          ],
+          "preprocessor_config.json": [
+            212,
+            "a2254a5b58f72cd4de3632f8eee64f3f098b7c1402128d2f419e7d00ae13e335"
+          ],
+          "pytorch_model.bin": [
+            1263535127,
+            "04366b6c8d24099ef313cf02f0e58d26f5dddfda16edbfc8eb2c713d94a9f551"
+          ],
+          "special_tokens_map.json": [
+            85,
+            "bb7068de1150661a10b55f9e4b12a0e77af8bf91f5e45e1b58afaf1d0e17f675"
+          ],
+          "tokenizer_config.json": [
+            412,
+            "d663833dacef7d29f563e23029d448fe41415dbe5e8e6d5a98b598a5258c18d8"
+          ],
+          "vocab.json": [
+            4637,
+            "d732ab2456c0c017930001dc9af0b41b3b93d25b2eb9740bf9d925508d7d87d0"
+          ]
+        }
+      },
+      "ROFORMER_ROUTES": {
+        "kimberley-jensen-roformer-vocals": {
+          "familyId": "melband-roformer-kimberley-jensen-vocals",
+          "outputInstrument": "vocals",
+          "sourceViewId": "mix",
+          "directory": "kimberley-jensen-vocals",
+          "checkpoint": "MelBandRoformer.ckpt",
+          "checkpointByteCount": 913106900,
+          "checkpointSha256": "87201f4d31afb5bc79993230fc49446918425574db48c01c405e44f365c7559e",
+          "config": "config_vocals_mel_band_roformer.yaml",
+          "configByteCount": 728,
+          "configSha256": "5e380dfa5d5757ac4c2b7f6ef607b93d5058ecff805e7b05ed730a47b90d103c",
+          "assetRepository": "KimberleyJSN/melbandroformer",
+          "assetRevision": "ac9b0614ab3cd7f77219e18ba494dfd93956c348"
+        },
+        "sucial-v2-roformer-dry-vocals": {
+          "familyId": "melband-roformer-sucial-dereverb-echo-v2",
+          "outputInstrument": "dry",
+          "sourceViewId": "kimberley-jensen-roformer-vocals",
+          "directory": "sucial-dereverb-echo-v2",
+          "checkpoint": "dereverb_echo_mbr_v2_sdr_dry_13.4843.ckpt",
+          "checkpointByteCount": 455862568,
+          "checkpointSha256": "396432f5af25992fe82d0286634bd879027c073721db6ab10199e75459708b9f",
+          "config": "config_dereverb_echo_mbr_v2.yaml",
+          "configByteCount": 1135,
+          "configSha256": "5ec06f3f872266d52e06335ebbcdf96e1d3458f0c3f39d986477e7a6f2dc1904",
+          "assetRepository": "Sucial/Dereverb-Echo_Mel_Band_Roformer",
+          "assetRevision": "61aa1e7d87273bbbd06bf3592ecfbb6120a85fcb"
+        }
+      },
+      "QWEN3_ASR_REVISION": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+      "QWEN3_ASR_SNAPSHOT_SHA256": "16d6148c1b3c5ad1e791ec3373d73f18023ad559674b421d54afd68d37665073",
+      "ROFORMER_RUNTIME_PACKAGES": ["beartype", "einops", "librosa", "llvmlite", "melband-roformer-infer", "ml-collections", "numba", "numpy", "packaging", "pyyaml", "requests", "rotary-embedding-torch", "soundfile", "torch", "torchaudio", "tqdm"],
+      "ROFORMER_PACKAGE_VERSION": "0.1.5",
+      "ROFORMER_PACKAGE_WHEEL_SHA256": "8b509b90c9c02f014730c897222a31471db59a2d538bf60a5a9e6469c14823e3",
+      "ROFORMER_PACKAGE_SOURCE_MANIFEST_SHA256": "022be1e10bfd7f3c2cd4c05b1314f3fde98f29f21a03421bb2ecb2c61c7aa372",
+      "ROFORMER_PACKAGE_SOURCE_COMMIT": "fda5d8cb65403a04e2d143ecd130f508c2f8370f",
+      "PINNED_WHISPER_SNAPSHOT": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+      "PINNED_WHISPER_SHA256": "69f74147e3334731bc3a76048724833325d2ec74642fb52620eda87352e3d4f1",
+      "PINNED_WHISPER_FILES": {
+        "config.json": {
+          "byteCount": 2394,
+          "gitBlobSha1": "75336feae814999bae6ccccdecf177639ffc6f9d"
+        },
+        "model.bin": {
+          "byteCount": 3087284237,
+          "sha256": "69f74147e3334731bc3a76048724833325d2ec74642fb52620eda87352e3d4f1"
+        },
+        "preprocessor_config.json": {
+          "byteCount": 340,
+          "gitBlobSha1": "931c77a740890c46365c7ae0c9d350ba3cca908f"
+        },
+        "tokenizer.json": {
+          "byteCount": 2480617,
+          "gitBlobSha1": "3a5e2ba63acdcac9a19ba56cf9bd27f185bfff61"
+        },
+        "vocabulary.json": {
+          "byteCount": 1068114,
+          "gitBlobSha1": "0adcd01e7c237205d593b707e66dd5d7bc785d2d"
+        }
+      }
+    },
+    "endpoint_candidate_prediction": {
+      "phrasePolicy": {
+        "version": 1,
+        "maxVariants": 4,
+        "maxBoundaryCandidates": 8,
+        "startSpreadMs": 300,
+        "endSpreadMs": 400,
+        "spacingFraction": 0.5
+      },
+      "REPOSITORY": "jonatasgrosman/wav2vec2-large-xlsr-53-arabic",
+      "SNAPSHOT": "af46c2d8531b8dcbb5e23b952f739b372c2e5d2d",
+      "MODEL_FILES": {
+        "config.json": "9283014cd08d1fbcb13f7965c4dda8ef54a988e40945ff2616e15afcd0f1fac7",
+        "preprocessor_config.json": "c403ce09975b90dff0dd8302c42d422e9de1f166cd7772df23490069893cb0cf",
+        "pytorch_model.bin": "a0b26f6d9d3edfde1784aef863c192a8cc1e438a23b45910ab648531ebe1857b",
+        "special_tokens_map.json": "bb7068de1150661a10b55f9e4b12a0e77af8bf91f5e45e1b58afaf1d0e17f675",
+        "vocab.json": "96a92ff9bd106f825c878f502fe341f9f0488ace92d3c76dc40a6b30296efedd"
+      },
+      "EN_REPOSITORY": "facebook/wav2vec2-base-960h",
+      "EN_SNAPSHOT": "22aad52d435eb6dbaf354bdad9b0da84ce7d6156",
+      "EN_MODEL_FILES": {
+        "config.json": "d3ec255c063d9f95057b553b19c20135b259875834a4fe9deb218a6be25b4cf3",
+        "model.safetensors": "8aa76ab2243c81747a1f832954586bc566090c83a0ac167df6f31f0fa917d74a",
+        "preprocessor_config.json": "b225d617c025463b9e157e06afea8b90dc7078fc70b013c533328423e0486b4a",
+        "special_tokens_map.json": "bb7068de1150661a10b55f9e4b12a0e77af8bf91f5e45e1b58afaf1d0e17f675",
+        "tokenizer_config.json": "dc790594f5bc351a4311c6624f40acd95850d4aaf2a5cb3c656c9b610720b608",
+        "vocab.json": "19727f8944fe6459fc3f240ae2c198395b740f6a029bd23e06656266b83bcf64"
+      }
+    },
+    "owsm_ctc_forced_alignment": {
+      "MODEL_REVISION": "6db41715b887d65d2d6936a290e7844cb98f9d29",
+      "CHECKPOINT_NAME": "valid.total_count.ave_5best.till70epoch.pth",
+      "CHECKPOINT_SHA256": "10f28cd40ee38582f68131f6502f306762183bf0e85fdc238ea401bd0e863ae4",
+      "CHECKPOINT_BYTE_COUNT": 4045987222,
+      "MODEL_RUN_RELATIVE_PATH": "exp/s2t_train_owsmctc_ebf27_conv2d8_size1024_mel128_bs320_raw_bpe50000",
+      "CONFIG_NAME": "config.yaml",
+      "CONFIG_SHA256": "17f10d2d1d2fd4cc643c394cbb3e1ccbf2e8233f4ec1a4a7b70605b86a6d6e3e",
+      "CONFIG_BYTE_COUNT": 503625,
+      "BPE_RELATIVE_PATH": "data/token_list/bpe_unigram50000/bpe.model",
+      "BPE_SHA256": "71278ea470760e4a9c903242cabda668a846307761c8b947976113970a394795",
+      "BPE_BYTE_COUNT": 1036703,
+      "STATS_RELATIVE_PATH": "exp/s2t_stats_raw_bpe50000/train/feats_stats.npz",
+      "STATS_SHA256": "00c22dba27594df8f1d8f74a491b20c6e6e8c17e92159f81dfd634f98c098654",
+      "STATS_BYTE_COUNT": 1786,
+      "ESPNET_SOURCE_REVISION": "2d139b9198f954b55444c6b359d814164bc70817",
+      "ALIGN_SHA256": "cafce862196f42e38be5cf2c6efff32ed105eb62790ef1a71e6395d30b485a14",
+      "ALIGN_BYTE_COUNT": 34620,
+      "HELPER_SHA256": "3e185885594787f3750055dace5f2114ea90b4f0a4a1da3ed243b6c0b4ad8a9b",
+      "HELPER_BYTE_COUNT": 16287,
+      "ESPNET_WHEEL_SHA256": "4777fd8a121be9bfecd0db34fd8e14894a9b9dc8513db97d3bbded0c20ba886e",
+      "ESPNET_WHEEL_BYTE_COUNT": 2214596,
+      "ESPNET_WHEEL_NAME": "espnet-202511-py3-none-any.whl",
+      "RUNTIME_LOCK_SHA256": "90e750477b70a13328c7e0bf4d2d093c76993a6ec2a2fc9913a8406e74e69877",
+      "RUNTIME_LOCK_BYTE_COUNT": 167286,
+      "RUNTIME_LOCK_NAME": "uv.lock"
+    },
+    "nemo_nfa_forced_alignment": {
+      "NEMO_SOURCE_REVISION": "fd6a877539710e2b98f28c43272ff81312f83417",
+      "NFA_ALIGN_SHA256": "94eb2b1853ca5c6038c6669bca30086adf1f6a12187dda79c139809df008b76b",
+      "NFA_ALIGN_BYTE_COUNT": 18668,
+      "NEMO_LOCK_SHA256": "425e67b2518abde53a6667ac25696893c51df6975999c219cab54c0b7afe9251",
+      "NEMO_LOCK_BYTE_COUNT": 1974522,
+      "ACOUSTIC_TIMESTEP_MS": 80,
+      "MODEL_REVISION": "7f32349d952f42a28dce979ba73270aa2bbdfa89",
+      "MODEL_ARTIFACT": "stt_ar_fastconformer_hybrid_large_pcd_v1.0.nemo",
+      "MODEL_SHA256": "d29d19d7c054a5fc010ac6815e9cbb0dd1b21a30e0a7f7f2982e1fecaf0c3e31",
+      "MODEL_BYTE_COUNT": 459233280
+    },
+    "mms_asr": {
+      "MODEL": "facebook/mms-1b-all",
+      "REVISION": "3d33597edbdaaba14a8e858e2c8caa76e3cec0cd",
+      "ADAPTER": "kmr-script_latin",
+      "ASSETS": {
+        "adapter.kmr-script_latin.safetensors": "47c4d073588da5c3ba4e26bb6d09fca9f88a90bcbfb967de9107e60c8f1cac3d",
+        "config.json": "ee172ef39a0e40c55403fb811fa0f56c6198c7ed21a2bdf5bd0e72e52c07a41c",
+        "model.safetensors": "0f1d95ce43d27e03d5d8dd56c697c805460f967c793dd2cbec2e8e8012deda98",
+        "preprocessor_config.json": "f724fdad65341e79bd9741888fe4e8ce1bb2e7b44fc8216c28c591afb1e202f4",
+        "special_tokens_map.json": "9046da57c270c8e74d0f38832b4adce269c9d914ef21d2a0925e7772152dd793",
+        "tokenizer_config.json": "42a65547cf0654d12263ece7c909c4b0c574b660c78658f806c772cc223bc01b",
+        "vocab.json": "0375a07a977a599040a7ff333b6974996965cd93754020619518c15db7691f01"
+      },
+      "ASSETS_BY_ADAPTER": {
+        "kmr-script_latin": {
+          "adapter.kmr-script_latin.safetensors": "47c4d073588da5c3ba4e26bb6d09fca9f88a90bcbfb967de9107e60c8f1cac3d",
+          "config.json": "ee172ef39a0e40c55403fb811fa0f56c6198c7ed21a2bdf5bd0e72e52c07a41c",
+          "model.safetensors": "0f1d95ce43d27e03d5d8dd56c697c805460f967c793dd2cbec2e8e8012deda98",
+          "preprocessor_config.json": "f724fdad65341e79bd9741888fe4e8ce1bb2e7b44fc8216c28c591afb1e202f4",
+          "special_tokens_map.json": "9046da57c270c8e74d0f38832b4adce269c9d914ef21d2a0925e7772152dd793",
+          "tokenizer_config.json": "42a65547cf0654d12263ece7c909c4b0c574b660c78658f806c772cc223bc01b",
+          "vocab.json": "0375a07a977a599040a7ff333b6974996965cd93754020619518c15db7691f01"
+        },
+        "zul": {
+          "config.json": "ee172ef39a0e40c55403fb811fa0f56c6198c7ed21a2bdf5bd0e72e52c07a41c",
+          "model.safetensors": "0f1d95ce43d27e03d5d8dd56c697c805460f967c793dd2cbec2e8e8012deda98",
+          "preprocessor_config.json": "f724fdad65341e79bd9741888fe4e8ce1bb2e7b44fc8216c28c591afb1e202f4",
+          "special_tokens_map.json": "9046da57c270c8e74d0f38832b4adce269c9d914ef21d2a0925e7772152dd793",
+          "tokenizer_config.json": "42a65547cf0654d12263ece7c909c4b0c574b660c78658f806c772cc223bc01b",
+          "vocab.json": "0375a07a977a599040a7ff333b6974996965cd93754020619518c15db7691f01",
+          "adapter.zul.safetensors": "e213aa91f20ca5842fa2525c600bdf0e1aa8b12abff508df2bdf8e9b87e64dd1"
+        }
+      }
+    },
+    "analyzers": {
+      "BEAT_THIS_FINAL0_SHA256": "8c328b45f59d8dd3dff219253ff6a8d6482be57d0133a29140e2febbf8eb8331",
+      "SKEY_MODEL_SHA256": "78dfd0ad4fa9434bf7cec70a25934b7c575bda9c80e994700140770ad3a5ead4",
+      "ALLIN1_MODEL_REVISION": "379e5fd010b3fdd0ee8381ff8cbcfa51d70b5c19",
+      "ALLIN1_MODEL_SHA256": {
+        "harmonix-fold0-0vra4ys2.pth": "0db596dfb0995f41d62f6267d76a9d54c046f1649bd35e1dbeca0c5f9a7b8acd",
+        "harmonix-fold1-3ozjhtsj.pth": "607b4864eaabccd4f6951410d5ea6676666ad1cfa6ce2e18bc99f3824b77c3b7",
+        "harmonix-fold2-gmgo0nsy.pth": "67c28ec7ca612d365e5fcb152f6530eb53e34c4303940afb30fd17a295c958a4",
+        "harmonix-fold3-i92b7m8p.pth": "446d05672b2669cdb7d9b8bbbc228a4f3592484335a7995cca89a744e3950ddc",
+        "harmonix-fold4-1bql5qo0.pth": "96327222ab9b33c005388b788ba602f529aa03cc4dde1c859c011f1004490493",
+        "harmonix-fold5-x4z5zeef.pth": "c87f162a1090290bcbb863688746784919cf912c56744fb3d81a1a7dba3b114e",
+        "harmonix-fold6-x7t226rq.pth": "13e7e639bf30fcd3fa049ad863088773a4e57b06d7c68581385b3ef625c60688",
+        "harmonix-fold7-qwwskhg6.pth": "b888b7fba95efa3d5a37ca013fe7efe2741621ea9ca335e6b2723e4fd0fade57"
+      },
+      "HTDEMUCS_MODEL_REVISION": "bf35a81b663819a8255c8fefee17f9d812b786b5",
+      "HTDEMUCS_MODEL_SHA256": {
+        "htdemucs.yaml": "239c445d0b14454d541ad8bd9bb271c9e536d267e8a4625208744cbb2e7bb66c",
+        "955717e8.safetensors": "d9fa14133cfcc034a6758923bb3a8ca9f8dfd0b582134643bbf83f72c17576dd"
+      }
+    },
+    "doctor": {
+      "EXPECTED_DENO_VERSION": "2.9.5",
+      "EXPECTED_DENO_SHA256": "dc480c462c8c3582524f3e75c160613d0a975e1f66b5465995d58bae236da7d3",
+      "EXPECTED_EJS_VERSION": "0.8.0"
+    },
+    "bootstrap": {
+      "UV_VERSION": "0.8.3",
+      "UV_ARCHIVE_SHA256": "427c27ed5f87bf91aa045cf459ea34d348ed6377c62c3c054f1b4046b2f83fe2",
+      "DENO_ZIP_SHA256": "8b010a3b1a4a0188a67cdb8a7a27348b2a501af78aec7fc74f2ace167368d530"
+    }
+  },
+  "runtimeProfiles": {
+    "owsm_ctc_forced_alignment": {
+      "profileId": "owsm_ctc_forced_alignment-current-cuda",
+      "PYTHON_VERSION": "3.10.18",
+      "ESPNET_VERSION": "202511",
+      "TORCH_VERSION": "2.7.0+cu128",
+      "TORCHAUDIO_VERSION": "2.7.0+cu128",
+      "CUDA_VERSION": "12.8",
+      "CUDA_MIN_CAPABILITY": 75,
+      "CTC_SEGMENTATION_VERSION": "1.7.5",
+      "CTC_SEGMENTATION_REVISION": "9b9ea1de551bd0ba33e36821049a3e4d8c20c2ef",
+      "NUMPY_VERSION": "2.2.6",
+      "SOUNDFILE_VERSION": "0.14.0",
+      "LIBSNDFILE_VERSION": "1.2.2"
+    },
+    "nemo_nfa_forced_alignment": {
+      "profileId": "nemo_nfa_forced_alignment-current-cuda",
+      "NEMO_VERSION": "3.0.0+fd6a877",
+      "PYTHON_VERSION": "3.13.14",
+      "TORCH_VERSION": "2.12.0+cu132",
+      "CUDA_VERSION": "13.2",
+      "CUDA_MIN_CAPABILITY": 75,
+      "SOUNDFILE_VERSION": "0.13.1",
+      "LIBSNDFILE_VERSION": "1.2.2"
+    },
+    "main": {
+      "profileId": "main-current",
+      "environment": "main",
+      "python": "3.10.18",
+      "packages": {
+        "av": "17.1.0",
+        "ctranslate2": "4.8.1",
+        "faster-whisper": "1.2.1",
+        "numpy": "2.2.6",
+        "Pillow": "12.3.0",
+        "rapidfuzz": "3.14.5",
+        "safetensors": "0.8.0",
+        "phonemizer": "3.4.0",
+        "syncalong": "2.0.1",
+        "tokenizers": "0.23.1",
+        "torch": "2.7.0+cu128",
+        "torchaudio": "2.7.0+cu128",
+        "transformers": "5.16.1",
+        "demucs": "4.0.1",
+        "uroman": "1.3.1.1",
+        "melband-roformer-infer": "0.1.5",
+        "einops": "0.8.2",
+        "beartype": "0.22.9",
+        "librosa": "0.11.0",
+        "llvmlite": "0.49.0",
+        "ml-collections": "1.1.0",
+        "numba": "0.67.0",
+        "packaging": "26.3",
+        "pyyaml": "6.0.3",
+        "requests": "2.34.2",
+        "rotary-embedding-torch": "0.9.1",
+        "soundfile": "0.13.1",
+        "tqdm": "4.69.1"
+      }
+    },
+    "lyrics": {
+      "profileId": "lyrics-current",
+      "python": "3.10.18",
+      "packages": {
+        "av": "17.1.0",
+        "ctranslate2": "4.8.1",
+        "faster-whisper": "1.2.1",
+        "jsonschema": "4.26.0",
+        "nvidia-cublas-cu12": "12.9.2.10",
+        "nvidia-cuda-nvrtc-cu12": "12.9.86",
+        "nvidia-cudnn-cu12": "9.24.0.43",
+        "pillow": "12.3.0",
+        "rapidfuzz": "3.14.5",
+        "rfc3339-validator": "0.1.4",
+        "soundfile": "0.13.1",
+        "syncalong": "2.0.1",
+        "tokenizers": "0.23.1",
+        "yt-dlp": "2026.8.19",
+        "uroman": "1.3.1.1",
+        "numpy": "2.2.6"
+      }
+    }
+  }
+}

@@ -1,0 +1,325 @@
+{
+  "schemaVersion": 1,
+  "dependencies": [
+    {
+      "directory": "wavpack",
+      "repository": "https://github.com/dbry/WavPack",
+      "commit": "5803634a030e2a11dba602ba057b89cc34486c67",
+      "version": "5.9.0",
+      "files": [
+        {
+          "path": "COPYING",
+          "upstreamSha256": "1703dd391c9b422910287add8483a27d9bead0b0b5ccd6d5017e995a7192b3e2",
+          "lineEndings": "lf",
+          "sha256": "1703dd391c9b422910287add8483a27d9bead0b0b5ccd6d5017e995a7192b3e2"
+        },
+        {
+          "path": "include/wavpack.h",
+          "upstreamSha256": "3c61d65511e258c5dc120a6daaee626d6a1051f3254ca9b67ac654a8f6212a97",
+          "lineEndings": "lf",
+          "sha256": "3c61d65511e258c5dc120a6daaee626d6a1051f3254ca9b67ac654a8f6212a97"
+        },
+        {
+          "path": "src/common_utils.c",
+          "upstreamSha256": "cebbeaddba2982100d4cbc8bba53fa623189dac90f7342196bff9e74c5631a38",
+          "lineEndings": "lf",
+          "sha256": "cebbeaddba2982100d4cbc8bba53fa623189dac90f7342196bff9e74c5631a38"
+        },
+        {
+          "path": "src/decorr_tables.h",
+          "upstreamSha256": "70ece1cdaa2873763f88fb9d9d9671f37705afe2fa49af33af34648a7664e84a",
+          "lineEndings": "lf",
+          "sha256": "70ece1cdaa2873763f88fb9d9d9671f37705afe2fa49af33af34648a7664e84a"
+        },
+        {
+          "path": "src/decorr_utils.c",
+          "upstreamSha256": "3dc93ee065ed9459dfc534614112dcf420c0aa59d222b743157128f4df166110",
+          "lineEndings": "lf",
+          "sha256": "3dc93ee065ed9459dfc534614112dcf420c0aa59d222b743157128f4df166110"
+        },
+        {
+          "path": "src/entropy_utils.c",
+          "upstreamSha256": "3d750a714829230d09a09701943c40ac10d8d3a8e4145fe9ca353205a18320d1",
+          "lineEndings": "lf",
+          "sha256": "3d750a714829230d09a09701943c40ac10d8d3a8e4145fe9ca353205a18320d1"
+        },
+        {
+          "path": "src/extra1.c",
+          "upstreamSha256": "37dc7b599f08a04e7c29488dadd825b95520dc689cf295df79ec1b2f43138fed",
+          "lineEndings": "lf",
+          "sha256": "37dc7b599f08a04e7c29488dadd825b95520dc689cf295df79ec1b2f43138fed"
+        },
+        {
+          "path": "src/extra2.c",
+          "upstreamSha256": "37ffa156128773736b2702e5ed3aaee65a362ce0cf1ad6ed0b9d422f32f75c2f",
+          "lineEndings": "lf",
+          "sha256": "37ffa156128773736b2702e5ed3aaee65a362ce0cf1ad6ed0b9d422f32f75c2f"
+        },
+        {
+          "path": "src/open_filename.c",
+          "upstreamSha256": "3bba1ba986edb73ef53c0231168ab954cfaa5aefb064589fbf25a4e09dc8e825",
+          "lineEndings": "lf",
+          "sha256": "52b41aa82396f3a53b0a632b26b7524a58ae8454ae97b3d2406b5a844b42e094"
+        },
+        {
+          "path": "src/open_legacy.c",
+          "upstreamSha256": "d38358d5af002412998380807a4ad6978440d9def4e4425cb0ca4dfbb1e2c5c3",
+          "lineEndings": "lf",
+          "sha256": "f803e36f0cd9e0da397201fabe26c707aaf3795a5420817cdd29309d9740c482"
+        },
+        {
+          "path": "src/open_raw.c",
+          "upstreamSha256": "dd74567cd36342315148c76a4288c99ebdaa9819230720f0245a1716a384b289",
+          "lineEndings": "lf",
+          "sha256": "fa7ee4153b4bb150b891549479b9802eb8e3320f0ee9b4ebce749cc19882a00c"
+        },
+        {
+          "path": "src/open_utils.c",
+          "upstreamSha256": "d1d198ba6d0b6efd11745856dd8a988bf770bccf659ca6aaea557a110c6acaee",
+          "lineEndings": "lf",
+          "sha256": "3f75307bb93bc5b600ef8cd14e7fb62fcc567d46ba00a73448166a5b67071064"
+        },
+        {
+          "path": "src/pack.c",
+          "upstreamSha256": "4a3793bd93a23db67ac2e0407e7f86d30633470dc7962b1a8ef568b0369f536b",
+          "lineEndings": "lf",
+          "sha256": "4a3793bd93a23db67ac2e0407e7f86d30633470dc7962b1a8ef568b0369f536b"
+        },
+        {
+          "path": "src/pack_dns.c",
+          "upstreamSha256": "653bf024ef462136f9f4218728f24b36e0630bc08b9e551445e647952379518a",
+          "lineEndings": "lf",
+          "sha256": "55a5baa2f2e3b3623872babc33178fcec5fa93a7cacc612e2367c42f3abe96aa"
+        },
+        {
+          "path": "src/pack_floats.c",
+          "upstreamSha256": "626cf1aef8fa7f4e1440400fc08336c834443b7d53f9cbb0c072a5c5747d12a9",
+          "lineEndings": "lf",
+          "sha256": "626cf1aef8fa7f4e1440400fc08336c834443b7d53f9cbb0c072a5c5747d12a9"
+        },
+        {
+          "path": "src/pack_utils.c",
+          "upstreamSha256": "b8540ef73bb39bed9a32e5065b4b4a985a236102293d6f43cd59df1b06bac987",
+          "lineEndings": "lf",
+          "sha256": "0da821940f969ef3edde870895d71fb0b71fafa1b0f7a2436d1e58ff6c7f4d1e"
+        },
+        {
+          "path": "src/read_words.c",
+          "upstreamSha256": "f35764aebeb8f0a304b453b4a86b4193093551f629f9c5cc8dcb4f444ff6cc1b",
+          "lineEndings": "lf",
+          "sha256": "f35764aebeb8f0a304b453b4a86b4193093551f629f9c5cc8dcb4f444ff6cc1b"
+        },
+        {
+          "path": "src/tag_utils.c",
+          "upstreamSha256": "ce95106fe5790f9f8ee9ed4876299cb0aef663d5d4789095618338157ad00a85",
+          "lineEndings": "lf",
+          "sha256": "69007b1cd2da53e1cea6661af96d324ea02378b82f7acdecefac456eff56987e"
+        },
+        {
+          "path": "src/tags.c",
+          "upstreamSha256": "097fd6d3a8b697f50e04b95ee79f4028f881642d8f82e97559458e21885b6fb0",
+          "lineEndings": "lf",
+          "sha256": "097fd6d3a8b697f50e04b95ee79f4028f881642d8f82e97559458e21885b6fb0"
+        },
+        {
+          "path": "src/unpack.c",
+          "upstreamSha256": "bba495a5c33f432d8acd82a36a52d79d0d2ff7d05a1a5bc6e110ab7a92a9391c",
+          "lineEndings": "lf",
+          "sha256": "bba495a5c33f432d8acd82a36a52d79d0d2ff7d05a1a5bc6e110ab7a92a9391c"
+        },
+        {
+          "path": "src/unpack3.h",
+          "upstreamSha256": "68e296b5be7ed558bcf15823eef222637dce21268b84c4ec476bea6b702f4715",
+          "lineEndings": "lf",
+          "sha256": "68e296b5be7ed558bcf15823eef222637dce21268b84c4ec476bea6b702f4715"
+        },
+        {
+          "path": "src/unpack_floats.c",
+          "upstreamSha256": "d4b7c9664d43bc284909835cf38e0a70c3a518f7eb10dc4f92e78d559505b3d1",
+          "lineEndings": "lf",
+          "sha256": "d4b7c9664d43bc284909835cf38e0a70c3a518f7eb10dc4f92e78d559505b3d1"
+        },
+        {
+          "path": "src/unpack_seek.c",
+          "upstreamSha256": "e4d3c68cf3ff325ca20faa67cf23730f3b72edeb36cdbdfebf9255d0d06a867a",
+          "lineEndings": "lf",
+          "sha256": "0c24b0730fe98047153756a1ca193c972ec2d1a1877ca347baac93409319a7dd"
+        },
+        {
+          "path": "src/unpack_utils.c",
+          "upstreamSha256": "5e5487d7d97f33334f5b3e5ce719ce06dcec01ee9a08e08e3b7adacd2730190f",
+          "lineEndings": "lf",
+          "sha256": "48da526c142f1c045332e7241c74bdba318f2c05f68939c8187a52294ec11dbe"
+        },
+        {
+          "path": "src/wavpack_local.h",
+          "upstreamSha256": "51e187bb5ddb91723808a37c570e661b258e99947dd986481163a27d8f12fd01",
+          "lineEndings": "lf",
+          "sha256": "51e187bb5ddb91723808a37c570e661b258e99947dd986481163a27d8f12fd01"
+        },
+        {
+          "path": "src/wavpack_version.h",
+          "upstreamSha256": "bfc6435383f32d4ce39d28dd82f17e823e4df63d392b0e7c2b069b3ddfbd5874",
+          "lineEndings": "lf",
+          "sha256": "bfc6435383f32d4ce39d28dd82f17e823e4df63d392b0e7c2b069b3ddfbd5874"
+        },
+        {
+          "path": "src/write_words.c",
+          "upstreamSha256": "31423f8fbd9fea313172f35865235dd624f2f97f778925e25c6cefb457228b0c",
+          "lineEndings": "lf",
+          "sha256": "31423f8fbd9fea313172f35865235dd624f2f97f778925e25c6cefb457228b0c"
+        }
+      ],
+      "patches": [
+        {
+          "path": "patches/wavpack-local.patch",
+          "sha256": "428315b308967f333a1b3e97c648260f36a323eb946c296a2e8f62e25145bbc1"
+        },
+        {
+          "path": "patches/wavpack-encoder-boundaries.patch",
+          "sha256": "5def62af66cda360db296c95aeabff413950ccc3f5c0cfd5f9eef3223ac86a9d"
+        },
+        {
+          "path": "patches/wavpack-tags-and-single-frame.patch",
+          "sha256": "663d53e8e286ba4e6d12019b4eda825e655876ab57c58b589a66c9ea77988a81"
+        }
+      ]
+    },
+    {
+      "directory": "speexdsp",
+      "repository": "https://github.com/xiph/speexdsp",
+      "commit": "7a158783df74efe7c2d1c6ee8363c1e695c71226",
+      "version": "",
+      "files": [
+        {
+          "path": "COPYING",
+          "upstreamSha256": "2654a4264b2bfe298dedc508748d140111840c315cc8eb646a3a68c13fa75b01",
+          "lineEndings": "crlf",
+          "sha256": "554c47c9eb3e5b85b4d1cf951af320229600463f2c9fb931099613a77239e1f7"
+        },
+        {
+          "path": "include/speex/speex_resampler.h",
+          "upstreamSha256": "7e439ec0dd30c32216b3ced17135f8992e5aaf53389d3f5996a7d900c453e65f",
+          "lineEndings": "crlf",
+          "sha256": "6b13e7d98432ec2dd60b3853869af127992d29f63f113c25aaf92e92841f2db8"
+        },
+        {
+          "path": "include/speex/speexdsp_config_types.h.in",
+          "upstreamSha256": "52e5b3ba5f00b4f2729f04ab6ef8ad3d26dbe16a65e998e231de6b1e316e92e1",
+          "lineEndings": "crlf",
+          "sha256": "6c6a18666b1ffdc4d9b38f54367fd319df997b78d62e2f0120d990a9cbf5678d"
+        },
+        {
+          "path": "include/speex/speexdsp_types.h",
+          "upstreamSha256": "4f97187c057fd8493c787f2526752859cf57007d50fef8d2e03c9b79b2fed490",
+          "lineEndings": "crlf",
+          "sha256": "0e0a6fae17afe0ba84f0ae775f4654cad0e8a103a7c5585a8657ef4a322729e2"
+        },
+        {
+          "path": "libspeexdsp/arch.h",
+          "upstreamSha256": "102f6a14a95f8ae0bcfc69270f3a9e3fbba08b63bba688ca524f71e3faa48c23",
+          "lineEndings": "crlf",
+          "sha256": "e516932942b310270d76777e88b486615b1b304c8025b59cef0e8bb19cd96153"
+        },
+        {
+          "path": "libspeexdsp/resample.c",
+          "upstreamSha256": "c4ec3bc71fc4414d7ebd62fc745290c7b5b06b149a05dd70cf72553bc57c8c76",
+          "lineEndings": "crlf",
+          "sha256": "fd1bf4906d3abcc1932f1e837955ca161e4dc48f6355892f4762af295bbc35f4"
+        }
+      ],
+      "patches": [
+        {
+          "path": "patches/speexdsp-local.patch",
+          "sha256": "5c41f37e4867f19f32c64600ba8512a34613eb1daf50fec5009d35f277d03df7"
+        }
+      ]
+    },
+    {
+      "directory": "signalsmith-stretch",
+      "repository": "https://github.com/Signalsmith-Audio/signalsmith-stretch",
+      "commit": "57b93f4e9206a089a45387eaa39bdc9f310d3308",
+      "version": "1.3.2",
+      "files": [
+        {
+          "path": "include/signalsmith-stretch/signalsmith-stretch.h",
+          "upstreamSha256": "869facc1853189bec91fb54960da2f59333284963d6b52a242d55a399d305e4d",
+          "lineEndings": "lf",
+          "sha256": "869facc1853189bec91fb54960da2f59333284963d6b52a242d55a399d305e4d"
+        },
+        {
+          "path": "LICENSE.txt",
+          "upstreamSha256": "ee2ef82481ffb445ecdd4b3a4c1f82c0cddb2da8fe39d8e8dc384fffb3e7f06f",
+          "lineEndings": "crlf",
+          "sha256": "16bf62d475af149d96a24853e77c9e0d939259a9d55b23b41da7f9939db85085"
+        },
+        {
+          "path": "signalsmith-stretch.h",
+          "upstreamSha256": "1188667959ac19dd40c0a6abbce694e44705615ec4f0e8db8af0f1cfb4c5dea7",
+          "lineEndings": "crlf",
+          "sha256": "92b1fa5ef397ffe0341e56d6614922742b80cf21d0d9814e2b5ffafc1f017156"
+        }
+      ],
+      "patches": [
+        {
+          "path": "patches/signalsmith-stretch-local.patch",
+          "sha256": "79cb108771dbf080f496258590383665e4d8fc0204bec2ae6c59213491330222"
+        },
+        {
+          "path": "patches/signalsmith-stretch-active-channels.patch",
+          "sha256": "9668c2fbec24ec150a9c80f801e1d7f561cf9467cd57f4abf3880bfc74b39f7d"
+        }
+      ]
+    },
+    {
+      "directory": "signalsmith-stretch/third_party/signalsmith-linear",
+      "repository": "https://github.com/Signalsmith-Audio/linear",
+      "commit": "5668673560146a9cfe38c25315071e3fd68c8317",
+      "version": "",
+      "files": [
+        {
+          "path": "fft.h",
+          "upstreamSha256": "e7b3d4d98fd4bc4b09740b82a374d4c87ad1d1a6ca28fcfec71800292b939ca2",
+          "lineEndings": "crlf",
+          "sha256": "509f9ca2a8f4ee77efb57d7f3b194d866c8e025a4ca5f8131f3a96241028b8fa"
+        },
+        {
+          "path": "include/signalsmith-linear/stft.h",
+          "upstreamSha256": "a323656e5ed80b271262106ea782d6150ef2f1c8b2f3c5896552b90b2ad6c17e",
+          "lineEndings": "crlf",
+          "sha256": "db40c535f6554daf2f0a12540730dc22bce71c5007210e515f463a0cbd1a16b7"
+        },
+        {
+          "path": "LICENSE.txt",
+          "upstreamSha256": "072b5e9eb5b22880bdf6256324654cf3ce53dba828edb911921121e1be09d9c3",
+          "lineEndings": "crlf",
+          "sha256": "a91f5703b0f5fa22e8c14a8bd854559a7c512bbe58656ea8bdcd4964e923ab2f"
+        },
+        {
+          "path": "stft.h",
+          "upstreamSha256": "4e11e85e823aaf2ec9bd5bd6bd55e6665126de1de2604af84574009ed1f3b5f2",
+          "lineEndings": "crlf",
+          "sha256": "35e5b5d79b576c36910298e141ec19f92bc0f308a4d40700efb1d5818899a528"
+        }
+      ],
+      "patches": [
+        {
+          "path": "patches/signalsmith-linear-local.patch",
+          "sha256": "e130d388debd3d6cc734ff07b882553cd0c97665811ec15c2e3e634cade8f7ac"
+        },
+        {
+          "path": "patches/signalsmith-linear-active-channels.patch",
+          "sha256": "cf858af9861f3e281e0e62d1f2c270f9fda21ea2dcdac07a2f62cd0accc89c30"
+        },
+        {
+          "path": "patches/signalsmith-linear-output-counter.patch",
+          "sha256": "718ee0545d485272df6c0527277253bb736b873ecb6fc18f3c31608ccb57d899"
+        },
+        {
+          "path": "patches/signalsmith-linear-header-and-aliases.patch",
+          "sha256": "8666f3945d45379f38272089f097bf59eb8c8164c13980df1a4d270bb4df76cd"
+        }
+      ]
+    }
+  ]
+}

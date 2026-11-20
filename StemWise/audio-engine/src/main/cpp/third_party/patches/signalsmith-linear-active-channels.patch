@@ -1,0 +1,60 @@
+diff --git a/stft.h b/stft.h
+index 05edcb32..f0e0d86c 100644
+--- a/stft.h
++++ b/stft.h
+@@ -2,6 +2,7 @@
+ #define SIGNALSMITH_AUDIO_LINEAR_STFT_H
+ 
+ #include "./fft.h"
++#include <algorithm>
+ 
+ namespace signalsmith { namespace linear {
+ 
+@@ -25,8 +26,8 @@ struct DynamicSTFT {
+ 	static constexpr WindowShape kaiser = WindowShape::kaiser;
+ 
+ 	void configure(size_t inChannels, size_t outChannels, size_t blockSamples, size_t extraInputHistory=0, size_t intervalSamples=0, Sample asymmetry=0) {
+-		_analysisChannels = inChannels;
+-		_synthesisChannels = outChannels;
++		_analysisChannels = _analysisCapacity = inChannels;
++		_synthesisChannels = _synthesisCapacity = outChannels;
+ 		_blockSamples = blockSamples;
+ 		_fftSamples = fft.fastSizeAbove((blockSamples + 1)/2)*2;
+ 		fft.resize(_fftSamples);
+@@ -493,10 +494,35 @@ struct DynamicSTFT {
+ 	};
+ 	Output output;
+ 
++	// Change only scheduled work; configured buffers/strides and timeline remain intact.
++	bool setActiveChannels(size_t analysis, size_t synthesis) {
++		if (!analysis || !synthesis || analysis > _analysisCapacity || synthesis > _synthesisCapacity) return false;
++		_analysisChannels = analysis;
++		_synthesisChannels = synthesis;
++		return true;
++	}
++	void saveInput(Input &saved) const {
++		saved.pos = input.pos;
++		std::copy_n(input.buffer.begin(), _inputLengthSamples*_analysisChannels, saved.buffer.begin());
++	}
++	void saveOutput(Output &saved) const {
++		saved.pos = output.pos;
++		std::copy_n(output.buffer.begin(), _blockSamples*_synthesisChannels, saved.buffer.begin());
++		std::copy(output.windowProducts.begin(), output.windowProducts.end(), saved.windowProducts.begin());
++	}
++	// Only a newly admitted channel is cleared; shared overlap weights/positions are preserved.
++	void clearChannel(size_t channel, Input &savedInput, Output &savedOutput) {
++		std::fill_n(input.buffer.begin() + channel*_inputLengthSamples, _inputLengthSamples, Sample(0));
++		std::fill_n(savedInput.buffer.begin() + channel*_inputLengthSamples, _inputLengthSamples, Sample(0));
++		std::fill_n(output.buffer.begin() + channel*_blockSamples, _blockSamples, Sample(0));
++		std::fill_n(savedOutput.buffer.begin() + channel*_blockSamples, _blockSamples, Sample(0));
++		std::fill_n(spectrumBuffer.begin() + channel*_fftBins, _fftBins, Complex(0));
++	}
++
+ private:
+ 	static constexpr Sample almostZero = 1e-30;
+ 
+-	size_t _analysisChannels, _synthesisChannels, _inputLengthSamples, _blockSamples, _fftSamples, _fftBins;
++	size_t _analysisChannels, _synthesisChannels, _analysisCapacity, _synthesisCapacity, _inputLengthSamples, _blockSamples, _fftSamples, _fftBins;
+ 	size_t _defaultInterval = 0;
+ 
+ 	std::vector<Sample> _analysisWindow, _synthesisWindow;

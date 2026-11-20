@@ -1,0 +1,39 @@
+name: Instrumented audio shard
+on:
+  workflow_call:
+    inputs:
+      kind:
+        required: true
+        type: string
+      shard:
+        default: all
+        type: string
+      artifact:
+        required: true
+        type: string
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+      - name: Execute this exact instrumented shard and retain actual CTest XML
+        run: >-
+          python -B 'Test suite/native/run_sanitizers.py' --kind ${{ inputs.kind }} --shard ${{ inputs.shard }}
+          --build 'Test suite/work/${{ inputs.artifact }}-current' --jobs 2
+          --report 'Test suite/work/audio-current/${{ inputs.artifact }}.json'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: ${{ inputs.artifact }}
+          retention-days: 2
+          if-no-files-found: error
+          path: |
+            Test suite/work/audio-current/${{ inputs.artifact }}.json
+            Test suite/work/audio-current/${{ inputs.artifact }}.xml
+            Test suite/work/${{ inputs.artifact }}-current/stemwise_*

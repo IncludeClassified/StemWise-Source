@@ -1,0 +1,122 @@
+diff --git a/src/pack_dns.c b/src/pack_dns.c
+index 9deac457..e98755b4 100644
+--- a/src/pack_dns.c
++++ b/src/pack_dns.c
+@@ -122,7 +122,7 @@ void dynamic_noise_shaping (WavpackStream *wps, const int32_t *buffer, int short
+             wps->dc.shaping_acc [0] = wps->dc.shaping_acc [1] = (int32_t) floor (initial_y * 65536.0 + 0.5);
+ 
+             wps->dc.shaping_delta [0] = wps->dc.shaping_delta [1] =
+-                (int32_t) floor ((final_y - initial_y) / (sample_count - 1) * 65536.0 + 0.5);
++                sample_count > 1 ? (int32_t) floor ((final_y - initial_y) / (sample_count - 1) * 65536.0 + 0.5) : 0;
+ 
+             wps->dc.shaping_acc [0] -= wps->dc.shaping_delta [0];
+             wps->dc.shaping_acc [1] -= wps->dc.shaping_delta [1];
+diff --git a/src/tag_utils.c b/src/tag_utils.c
+index 8e5ecbea..0f76b9f8 100644
+--- a/src/tag_utils.c
++++ b/src/tag_utils.c
+@@ -301,7 +301,7 @@ static int get_id3_tag_item (M_Tag *m_tag, const char *item, char *value, int si
+     else if (!stricmp (item, "comment"))
+         tagcpy (lvalue, m_tag->id3_tag.comment, sizeof (m_tag->id3_tag.comment));
+     else if (!stricmp (item, "track") && m_tag->id3_tag.comment [29] && !m_tag->id3_tag.comment [28])
+-        sprintf (lvalue, "%d", m_tag->id3_tag.comment [29]);
++        sprintf (lvalue, "%u", (unsigned char) m_tag->id3_tag.comment [29]);
+     else
+         return 0;
+ 
+@@ -410,29 +410,37 @@ static int get_id3_tag_item_indexed (M_Tag *m_tag, int index, char *item, int si
+ static int append_ape_tag_item (WavpackContext *wpc, const char *item, const char *value, int vsize, int type)
+ {
+     M_Tag *m_tag = &wpc->m_tag;
++    APE_Tag_Hdr tag_hdr = m_tag->ape_tag_hdr;
+     int isize = (int) strlen (item);
+ 
+-    if (!m_tag->ape_tag_hdr.ID [0]) {
+-        memcpy (m_tag->ape_tag_hdr.ID, "APETAGEX", sizeof (m_tag->ape_tag_hdr.ID));
+-        m_tag->ape_tag_hdr.version = 2000;
+-        m_tag->ape_tag_hdr.length = sizeof (m_tag->ape_tag_hdr);
+-        m_tag->ape_tag_hdr.item_count = 0;
+-        m_tag->ape_tag_hdr.flags = APE_TAG_CONTAINS_HEADER;  // we will include header on tags we originate
++    if (!tag_hdr.ID [0]) {
++        memcpy (tag_hdr.ID, "APETAGEX", sizeof (tag_hdr.ID));
++        tag_hdr.version = 2000;
++        tag_hdr.length = sizeof (tag_hdr);
++        tag_hdr.item_count = 0;
++        tag_hdr.flags = APE_TAG_CONTAINS_HEADER;  // we will include header on tags we originate
+     }
+ 
+-    if (m_tag->ape_tag_hdr.ID [0] == 'A') {
++    if (tag_hdr.ID [0] == 'A') {
+         int new_item_len = vsize + isize + 9, flags = type << 1;
+         unsigned char *p;
+ 
+-        if (m_tag->ape_tag_hdr.length + new_item_len > APE_TAG_MAX_LENGTH) {
++        if (tag_hdr.length + new_item_len > APE_TAG_MAX_LENGTH) {
+             strcpy (wpc->error_message, "APEv2 tag exceeds maximum allowed length!");
+             return FALSE;
+         }
+ 
+-        m_tag->ape_tag_hdr.item_count++;
+-        m_tag->ape_tag_hdr.length += new_item_len;
+-        p = m_tag->ape_tag_data = (unsigned char*)realloc (m_tag->ape_tag_data, m_tag->ape_tag_hdr.length);
+-        p += m_tag->ape_tag_hdr.length - sizeof (APE_Tag_Hdr) - new_item_len;
++        p = (unsigned char*)realloc (m_tag->ape_tag_data, tag_hdr.length + new_item_len);
++        if (!p) {
++            strcpy (wpc->error_message, "can't allocate memory for APEv2 tag!");
++            return FALSE;
++        }
++
++        tag_hdr.item_count++;
++        tag_hdr.length += new_item_len;
++        m_tag->ape_tag_hdr = tag_hdr;
++        m_tag->ape_tag_data = p;
++        p += tag_hdr.length - sizeof (APE_Tag_Hdr) - new_item_len;
+ 
+         *p++ = (unsigned char) vsize;
+         *p++ = (unsigned char) (vsize >> 8);
+@@ -468,16 +468,16 @@ static int write_tag_blockout (WavpackContext *wpc)
+         if (m_tag->ape_tag_hdr.flags & APE_TAG_CONTAINS_HEADER) {
+             m_tag->ape_tag_hdr.flags |= APE_TAG_THIS_IS_HEADER;
+             WavpackNativeToLittleEndian (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+-            result = wpc->blockout (wpc->wv_out, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr));
++            result = wpc->blockout (wpc->wv_out, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr)) && result;
+             WavpackLittleEndianToNative (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+         }
+ 
+         if (m_tag->ape_tag_hdr.length > sizeof (m_tag->ape_tag_hdr))
+-            result = wpc->blockout (wpc->wv_out, m_tag->ape_tag_data, m_tag->ape_tag_hdr.length - sizeof (m_tag->ape_tag_hdr));
++            result = wpc->blockout (wpc->wv_out, m_tag->ape_tag_data, m_tag->ape_tag_hdr.length - sizeof (m_tag->ape_tag_hdr)) && result;
+ 
+         m_tag->ape_tag_hdr.flags &= ~APE_TAG_THIS_IS_HEADER;    // this is NOT header
+         WavpackNativeToLittleEndian (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+-        result = wpc->blockout (wpc->wv_out, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr));
++        result = wpc->blockout (wpc->wv_out, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr)) && result;
+         WavpackLittleEndianToNative (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+     }
+ 
+@@ -528,21 +528,21 @@ static int write_tag_reader (WavpackContext *wpc)
+         char zero = 0;
+ 
+         while (nullcnt--)
+-            wpc->reader->write_bytes (wpc->wv_in, &zero, 1);
++            result = (wpc->reader->write_bytes (wpc->wv_in, &zero, 1) == 1) && result;
+     }
+ 
+     if (result && tag_size) {
+         if (m_tag->ape_tag_hdr.flags & APE_TAG_CONTAINS_HEADER) {
+             m_tag->ape_tag_hdr.flags |= APE_TAG_THIS_IS_HEADER;
+             WavpackNativeToLittleEndian (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+-            result = (wpc->reader->write_bytes (wpc->wv_in, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr)) == sizeof (m_tag->ape_tag_hdr));
++            result = (wpc->reader->write_bytes (wpc->wv_in, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr)) == sizeof (m_tag->ape_tag_hdr)) && result;
+             WavpackLittleEndianToNative (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+         }
+ 
+-        result = (wpc->reader->write_bytes (wpc->wv_in, m_tag->ape_tag_data, m_tag->ape_tag_hdr.length - sizeof (m_tag->ape_tag_hdr)) == sizeof (m_tag->ape_tag_hdr));
++        result = (wpc->reader->write_bytes (wpc->wv_in, m_tag->ape_tag_data, m_tag->ape_tag_hdr.length - sizeof (m_tag->ape_tag_hdr)) == m_tag->ape_tag_hdr.length - sizeof (m_tag->ape_tag_hdr)) && result;
+         m_tag->ape_tag_hdr.flags &= ~APE_TAG_THIS_IS_HEADER;    // this is NOT header
+         WavpackNativeToLittleEndian (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+-        result = (wpc->reader->write_bytes (wpc->wv_in, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr)) == sizeof (m_tag->ape_tag_hdr));
++        result = (wpc->reader->write_bytes (wpc->wv_in, &m_tag->ape_tag_hdr, sizeof (m_tag->ape_tag_hdr)) == sizeof (m_tag->ape_tag_hdr)) && result;
+         WavpackLittleEndianToNative (&m_tag->ape_tag_hdr, APE_Tag_Hdr_Format);
+     }
+ 

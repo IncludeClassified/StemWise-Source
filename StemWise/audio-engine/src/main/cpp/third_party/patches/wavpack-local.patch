@@ -1,0 +1,464 @@
+diff --git a/src/open_filename.c b/src/open_filename.c
+index 1b99f1b163f57037ffbd21aed2d4044de8e5edf4..9e420fee37815a51169c8f6417842f1227b145a8 100644
+--- a/src/open_filename.c
++++ b/src/open_filename.c
+@@ -299,6 +299,12 @@ WavpackContext *WavpackOpenFileInput (const char *infilename, char *error, int f
+     if (*infilename != '-' && (flags & OPEN_WVC)) {
+         char *in2filename = malloc (strlen (infilename) + 10);
+ 
++        if (!in2filename) {
++            if (error) strcpy (error, "can't allocate correction filename!");
++            fclose (wv_id);
++            return NULL;
++        }
++
+         strcpy (in2filename, infilename);
+         strcat (in2filename, "c");
+         wvc_id = fopen_func (in2filename, "rb");
+@@ -327,7 +333,9 @@ static wchar_t *utf8_to_utf16(const char *input)
+ 		Result = MultiByteToWideChar(CP_UTF8, 0, input, -1, Buffer, BuffSize);
+ 	}
+ 
+-	return ((Result > 0) && (Result <= BuffSize)) ? Buffer : NULL;
++	if ((Result > 0) && (Result <= BuffSize)) return Buffer;
++	free (Buffer);
++	return NULL;
+ }
+ 
+ 
+diff --git a/src/open_legacy.c b/src/open_legacy.c
+index 813870d663d2f1dce5b7c8de3dc92e8b43709cdc..349a04198d0a31f960d53875fe5bb7a2e2330827 100644
+--- a/src/open_legacy.c
++++ b/src/open_legacy.c
+@@ -100,15 +100,23 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+ 
+     if (wv_id) {
+         trans_wv = (WavpackReaderTranslator *)malloc (sizeof (WavpackReaderTranslator));
++        if (!trans_wv) goto allocation_error;
+         trans_wv->reader = reader;
+         trans_wv->id = wv_id;
+     }
+ 
+     if (wvc_id) {
+         trans_wvc = (WavpackReaderTranslator *)malloc (sizeof (WavpackReaderTranslator));
++        if (!trans_wvc) goto allocation_error;
+         trans_wvc->reader = reader;
+         trans_wvc->id = wvc_id;
+     }
+ 
+     return WavpackOpenFileInputEx64 (&trans_reader, trans_wv, trans_wvc, error, flags, norm_offset);
++
++allocation_error:
++    if (error) strcpy (error, "can't allocate reader translator!");
++    free (trans_wv);
++    free (trans_wvc);
++    return NULL;
+ }
+diff --git a/src/open_raw.c b/src/open_raw.c
+index 816038fedc5aba5643bd57d00f523a012481d3ed..67b617eb0ad858759c19be7d751234c5a5894339 100644
+--- a/src/open_raw.c
++++ b/src/open_raw.c
+@@ -137,6 +137,11 @@ WavpackContext *WavpackOpenRawDecoder (
+ {
+     WavpackRawContext *raw_wv = NULL, *raw_wvc = NULL;
+ 
++    if (!main_data || main_size < 4 || corr_size < 0 || (corr_size && !corr_data)) {
++        if (error) strcpy (error, "invalid raw frame extent!");
++        return NULL;
++    }
++
+     // if the WavPack data does not contain headers we assume Matroska-style storage
+     // and recreate the missing headers
+ 
+@@ -147,27 +152,27 @@ WavpackContext *WavpackOpenRawDecoder (
+         unsigned char *ccp = corr_data;
+         int msi = 0, csi = 0;
+ 
+-        raw_wv = malloc (sizeof (WavpackRawContext));
+-        memset (raw_wv, 0, sizeof (WavpackRawContext));
++        raw_wv = calloc (1, sizeof (WavpackRawContext));
++        if (!raw_wv) goto allocation_error;
+ 
+         if (corr_data && corr_size) {
+-            raw_wvc = malloc (sizeof (WavpackRawContext));
+-            memset (raw_wvc, 0, sizeof (WavpackRawContext));
++            raw_wvc = calloc (1, sizeof (WavpackRawContext));
++            if (!raw_wvc) goto allocation_error;
+         }
+ 
+         while (main_bytes >= 12) {
+             if (!msi) {
+                 block_samples = *mcp++;
+-                block_samples += *mcp++ << 8;
+-                block_samples += *mcp++ << 16;
+-                block_samples += *mcp++ << 24;
++                block_samples += (uint32_t) *mcp++ << 8;
++                block_samples += (uint32_t) *mcp++ << 16;
++                block_samples += (uint32_t) *mcp++ << 24;
+                 main_bytes -= 4;
+             }
+ 
+             wphdr_flags = *mcp++;
+-            wphdr_flags += *mcp++ << 8;
+-            wphdr_flags += *mcp++ << 16;
+-            wphdr_flags += *mcp++ << 24;
++            wphdr_flags += (uint32_t) *mcp++ << 8;
++            wphdr_flags += (uint32_t) *mcp++ << 16;
++            wphdr_flags += (uint32_t) *mcp++ << 24;
+             main_bytes -= 4;
+ 
+             // if the first block does not have the FINAL_BLOCK flag set,
+@@ -177,9 +182,9 @@ WavpackContext *WavpackOpenRawDecoder (
+                 multiple_blocks = 1;
+ 
+             crc = *mcp++;
+-            crc += *mcp++ << 8;
+-            crc += *mcp++ << 16;
+-            crc += *mcp++ << 24;
++            crc += (uint32_t) *mcp++ << 8;
++            crc += (uint32_t) *mcp++ << 16;
++            crc += (uint32_t) *mcp++ << 24;
+             main_bytes -= 4;
+ 
+             if (multiple_blocks) {
+@@ -191,9 +196,9 @@ WavpackContext *WavpackOpenRawDecoder (
+                 }
+ 
+                 block_size = *mcp++;
+-                block_size += *mcp++ << 8;
+-                block_size += *mcp++ << 16;
+-                block_size += *mcp++ << 24;
++                block_size += (uint32_t) *mcp++ << 8;
++                block_size += (uint32_t) *mcp++ << 16;
++                block_size += (uint32_t) *mcp++ << 24;
+                 main_bytes -= 4;
+             }
+             else
+@@ -207,6 +212,8 @@ WavpackContext *WavpackOpenRawDecoder (
+             }
+             else {
+                 WavpackHeader *wphdr = malloc (sizeof (WavpackHeader));
++                RawSegment *segments;
++                if (!wphdr) goto allocation_error;
+                 memset (wphdr, 0, sizeof (WavpackHeader));
+                 memcpy (wphdr->ckID, "wvpk", 4);
+                 wphdr->ckSize = sizeof (WavpackHeader) - 8 + block_size;
+@@ -217,8 +224,10 @@ WavpackContext *WavpackOpenRawDecoder (
+                 wphdr->crc = crc;
+                 WavpackLittleEndianToNative (wphdr, WavpackHeaderFormat);
+ 
++                segments = realloc (raw_wv->segments, sizeof (RawSegment) * (raw_wv->num_segments + 2));
++                if (!segments) { free (wphdr); goto allocation_error; }
++                raw_wv->segments = segments;
+                 raw_wv->num_segments += 2;
+-                raw_wv->segments = realloc (raw_wv->segments, sizeof (RawSegment) * raw_wv->num_segments);
+                 raw_wv->segments [msi].dptr = raw_wv->segments [msi].sptr = (unsigned char *) wphdr;
+                 raw_wv->segments [msi].eptr = raw_wv->segments [msi].dptr + sizeof (WavpackHeader);
+                 raw_wv->segments [msi++].free_required = 1;
+@@ -231,9 +240,9 @@ WavpackContext *WavpackOpenRawDecoder (
+ 
+             if (corr_data && corr_bytes >= 4) {
+                 crc = *ccp++;
+-                crc += *ccp++ << 8;
+-                crc += *ccp++ << 16;
+-                crc += *ccp++ << 24;
++                crc += (uint32_t) *ccp++ << 8;
++                crc += (uint32_t) *ccp++ << 16;
++                crc += (uint32_t) *ccp++ << 24;
+                 corr_bytes -= 4;
+ 
+                 if (multiple_blocks) {
+@@ -245,9 +254,9 @@ WavpackContext *WavpackOpenRawDecoder (
+                     }
+ 
+                     block_size = *ccp++;
+-                    block_size += *ccp++ << 8;
+-                    block_size += *ccp++ << 16;
+-                    block_size += *ccp++ << 24;
++                    block_size += (uint32_t) *ccp++ << 8;
++                    block_size += (uint32_t) *ccp++ << 16;
++                    block_size += (uint32_t) *ccp++ << 24;
+                     corr_bytes -= 4;
+                 }
+                 else
+@@ -261,6 +270,8 @@ WavpackContext *WavpackOpenRawDecoder (
+                 }
+                 else {
+                     WavpackHeader *wphdr = malloc (sizeof (WavpackHeader));
++                    RawSegment *segments;
++                    if (!wphdr) goto allocation_error;
+                     memset (wphdr, 0, sizeof (WavpackHeader));
+                     memcpy (wphdr->ckID, "wvpk", 4);
+                     wphdr->ckSize = sizeof (WavpackHeader) - 8 + block_size;
+@@ -271,8 +282,10 @@ WavpackContext *WavpackOpenRawDecoder (
+                     wphdr->crc = crc;
+                     WavpackLittleEndianToNative (wphdr, WavpackHeaderFormat);
+ 
++                    segments = realloc (raw_wvc->segments, sizeof (RawSegment) * (raw_wvc->num_segments + 2));
++                    if (!segments) { free (wphdr); goto allocation_error; }
++                    raw_wvc->segments = segments;
+                     raw_wvc->num_segments += 2;
+-                    raw_wvc->segments = realloc (raw_wvc->segments, sizeof (RawSegment) * raw_wvc->num_segments);
+                     raw_wvc->segments [csi].dptr = raw_wvc->segments [csi].sptr = (unsigned char *) wphdr;
+                     raw_wvc->segments [csi].eptr = raw_wvc->segments [csi].dptr + sizeof (WavpackHeader);
+                     raw_wvc->segments [csi++].free_required = 1;
+@@ -294,20 +307,22 @@ WavpackContext *WavpackOpenRawDecoder (
+     }
+     else {      // the case of WavPack blocks with headers is much easier...
+         if (main_data) {
+-            raw_wv = malloc (sizeof (WavpackRawContext));
+-            memset (raw_wv, 0, sizeof (WavpackRawContext));
++            raw_wv = calloc (1, sizeof (WavpackRawContext));
++            if (!raw_wv) goto allocation_error;
++            raw_wv->segments = malloc (sizeof (RawSegment));
++            if (!raw_wv->segments) goto allocation_error;
+             raw_wv->num_segments = 1;
+-            raw_wv->segments = malloc (sizeof (RawSegment) * raw_wv->num_segments);
+             raw_wv->segments [0].dptr = raw_wv->segments [0].sptr = main_data;
+             raw_wv->segments [0].eptr = raw_wv->segments [0].dptr + main_size;
+             raw_wv->segments [0].free_required = 0;
+         }
+ 
+         if (corr_data && corr_size) {
+-            raw_wvc = malloc (sizeof (WavpackRawContext));
+-            memset (raw_wvc, 0, sizeof (WavpackRawContext));
++            raw_wvc = calloc (1, sizeof (WavpackRawContext));
++            if (!raw_wvc) goto allocation_error;
++            raw_wvc->segments = malloc (sizeof (RawSegment));
++            if (!raw_wvc->segments) goto allocation_error;
+             raw_wvc->num_segments = 1;
+-            raw_wvc->segments = malloc (sizeof (RawSegment) * raw_wvc->num_segments);
+             raw_wvc->segments [0].dptr = raw_wvc->segments [0].sptr = corr_data;
+             raw_wvc->segments [0].eptr = raw_wvc->segments [0].dptr + corr_size;
+             raw_wvc->segments [0].free_required = 0;
+@@ -315,6 +330,12 @@ WavpackContext *WavpackOpenRawDecoder (
+     }
+ 
+     return WavpackOpenFileInputEx64 (&raw_reader, raw_wv, raw_wvc, error, flags | OPEN_STREAMING | OPEN_NO_CHECKSUM, norm_offset);
++
++allocation_error:
++    if (error) strcpy (error, "can't allocate raw decoder!");
++    raw_close_stream (raw_wv);
++    raw_close_stream (raw_wvc);
++    return NULL;
+ }
+ 
+ // Return the number of samples represented by the current (and in the raw case, only) frame.
+diff --git a/src/open_utils.c b/src/open_utils.c
+index dd661a63f873fd6bebeb5934f10bb3e379b562d2..cb21ad8b1c8b959b09ce9363aff31d91529b6681 100644
+--- a/src/open_utils.c
++++ b/src/open_utils.c
+@@ -42,6 +42,10 @@ WavpackContext *WavpackOpenFileInputEx64 (WavpackStreamReader64 *reader, void *w
+ 
+     if (!wpc) {
+         if (error) strcpy (error, "can't allocate memory");
++        if (reader->close) {
++            if (wv_id) reader->close (wv_id);
++            if (wvc_id) reader->close (wvc_id);
++        }
+         return NULL;
+     }
+ 
+@@ -84,7 +88,7 @@ WavpackContext *WavpackOpenFileInputEx64 (WavpackStreamReader64 *reader, void *w
+ #endif
+     }
+ 
+-    wpc->streams = (WavpackStream **)(malloc ((wpc->num_streams = 1) * sizeof (wpc->streams [0])));
++    wpc->streams = (WavpackStream **)(calloc (1, sizeof (wpc->streams [0])));
+     if (!wpc->streams) {
+         if (error) strcpy (error, "can't allocate memory");
+         return WavpackCloseFile (wpc);
+@@ -96,6 +100,8 @@ WavpackContext *WavpackOpenFileInputEx64 (WavpackStreamReader64 *reader, void *w
+         return WavpackCloseFile (wpc);
+     }
+ 
++    wpc->num_streams = 1;
++
+     wps->wpc = wpc;
+ 
+     while (!wps->wphdr.block_samples) {
+@@ -562,6 +568,10 @@ static int read_channel_identities (WavpackContext *wpc, WavpackMetadata *wpmd)
+ 
+     if (!wpc->channel_identities) {
+         wpc->channel_identities = (unsigned char *)malloc (wpmd->byte_length + 1);
++        if (!wpc->channel_identities) {
++            strcpy (wpc->error_message, "can't allocate channel identity memory");
++            return FALSE;
++        }
+         memcpy (wpc->channel_identities, wpmd->data, wpmd->byte_length);
+         wpc->channel_identities [wpmd->byte_length] = 0;
+     }
+@@ -700,9 +710,10 @@ static int read_sample_rate (WavpackContext *wpc, WavpackMetadata *wpmd)
+ static int read_wrapper_data (WavpackContext *wpc, WavpackMetadata *wpmd)
+ {
+     if ((wpc->open_flags & OPEN_WRAPPER) && wpc->wrapper_bytes < MAX_WRAPPER_BYTES && wpmd->byte_length) {
+-        wpc->wrapper_data = (unsigned char *)realloc (wpc->wrapper_data, wpc->wrapper_bytes + wpmd->byte_length);
+-	if (!wpc->wrapper_data)
++        unsigned char *next = (unsigned char *)realloc (wpc->wrapper_data, wpc->wrapper_bytes + wpmd->byte_length);
++	if (!next)
+ 	    return FALSE;
++        wpc->wrapper_data = next;
+         memcpy (wpc->wrapper_data + wpc->wrapper_bytes, wpmd->data, wpmd->byte_length);
+         wpc->wrapper_bytes += wpmd->byte_length;
+     }
+@@ -1224,12 +1235,13 @@ static int seek_eof_information (WavpackContext *wpc, int64_t *final_index, int
+             meta_id &= ID_UNIQUE;
+ 
+             if (get_wrapper && (meta_id == ID_RIFF_TRAILER || (alt_types && meta_id == ID_ALT_TRAILER)) && meta_bc) {
+-                wpc->wrapper_data = (unsigned char *)realloc (wpc->wrapper_data, wpc->wrapper_bytes + meta_bc);
++                unsigned char *next = (unsigned char *)realloc (wpc->wrapper_data, wpc->wrapper_bytes + meta_bc);
+ 
+-                if (!wpc->wrapper_data) {
++                if (!next) {
+                     reader->set_pos_abs (id, restore_pos);
+                     return FALSE;
+                 }
++                wpc->wrapper_data = next;
+ 
+                 if (reader->read_bytes (id, wpc->wrapper_data + wpc->wrapper_bytes, meta_bc) == meta_bc)
+                     wpc->wrapper_bytes += meta_size;
+diff --git a/src/unpack_seek.c b/src/unpack_seek.c
+index b58443d62585994fd33a858729b231dcb4b1dfe9..f698034d6cbfc173fd293744a7513bd6929655ba 100644
+--- a/src/unpack_seek.c
++++ b/src/unpack_seek.c
+@@ -96,6 +96,7 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+         }
+ 
+         wps->blockbuff = (unsigned char *)malloc (wps->wphdr.ckSize + 8);
++        if (!wps->blockbuff) goto allocation_failure;
+         memcpy (wps->blockbuff, &wps->wphdr, sizeof (WavpackHeader));
+ 
+         if (wpc->reader->read_bytes (wpc->wv_in, wps->blockbuff + sizeof (WavpackHeader), wps->wphdr.ckSize - 24) !=
+@@ -126,6 +127,7 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+             }
+ 
+             wps->block2buff = (unsigned char *)malloc (wps->wphdr.ckSize + 8);
++            if (!wps->block2buff) goto allocation_failure;
+             memcpy (wps->block2buff, &wps->wphdr, sizeof (WavpackHeader));
+ 
+             if (wpc->reader->read_bytes (wpc->wvc_in, wps->block2buff + sizeof (WavpackHeader), wps->wphdr.ckSize - 24) !=
+@@ -161,8 +163,13 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+                 return FALSE;
+             }
+ 
+-            wpc->streams = (WavpackStream **)realloc (wpc->streams, (wpc->num_streams + 1) * sizeof (wpc->streams [0]));
+-            wps = wpc->streams [wpc->num_streams] = (WavpackStream *)calloc (1, sizeof (WavpackStream));
++            WavpackStream **streams = (WavpackStream **)realloc (wpc->streams,
++                (wpc->num_streams + 1) * sizeof (wpc->streams [0]));
++            if (!streams) goto allocation_failure;
++            wpc->streams = streams;
++            wps = (WavpackStream *)calloc (1, sizeof (WavpackStream));
++            if (!wps) goto allocation_failure;
++            wpc->streams [wpc->num_streams] = wps;
+             wps->stream_index = wpc->num_streams++;
+             wps->wpc = wpc;
+             bcount = read_next_header (wpc->reader, wpc->wv_in, &wps->wphdr);
+@@ -173,6 +180,7 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+             }
+ 
+             wps->blockbuff = (unsigned char *)malloc (wps->wphdr.ckSize + 8);
++            if (!wps->blockbuff) goto allocation_failure;
+             memcpy (wps->blockbuff, &wps->wphdr, 32);
+ 
+             if (wpc->reader->read_bytes (wpc->wv_in, wps->blockbuff + 32, wps->wphdr.ckSize - 24) !=
+@@ -190,6 +198,8 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+                 memcpy (wps->blockbuff, &wps->wphdr, 32);
+             }
+ 
++            SET_BLOCK_INDEX (wps->wphdr, GET_BLOCK_INDEX (wps->wphdr) - wpc->initial_index);
++            memcpy (wps->blockbuff, &wps->wphdr, sizeof (WavpackHeader));
+             wps->init_done = FALSE;
+ 
+             if (wpc->wvc_flag && !read_wvc_block (wpc, stream_index)) {
+@@ -223,6 +233,7 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+ 
+     if (samples_to_skip) {
+         buffer = (int32_t *)malloc (samples_to_skip * 8);
++        if (!buffer) goto allocation_failure;
+ 
+         for (stream_index = 0; stream_index < wpc->num_streams; stream_index++)
+ #ifdef ENABLE_DSD
+@@ -250,6 +261,11 @@ int WavpackSeekSample64 (WavpackContext *wpc, int64_t sample)
+ #endif
+ 
+     return TRUE;
++
++allocation_failure:
++    strcpy (wpc->error_message, "can't allocate seek memory");
++    free_streams (wpc);
++    return FALSE;
+ }
+ 
+ // Find a valid WavPack header, searching either from the current file position
+@@ -265,6 +281,8 @@ static int64_t find_header (WavpackStreamReader64 *reader, void *id, int64_t fil
+ {
+     unsigned char *buffer = (unsigned char *)malloc (BUFSIZE), *sp = buffer, *ep = buffer;
+ 
++    if (!buffer) return -2;
++
+     if (filepos != (uint32_t) -1 && reader->set_pos_abs (id, filepos)) {
+         free (buffer);
+         return -1;
+@@ -358,6 +376,11 @@ static int64_t find_sample (WavpackContext *wpc, void *infile, int64_t header_po
+         seek_pos += (int64_t)(bytes_per_sample * (sample - sample_pos1) * ratio);
+         seek_pos = find_header (wpc->reader, infile, seek_pos, &wps->wphdr);
+ 
++        if (seek_pos == -2) {
++            strcpy (wpc->error_message, "can't allocate seek search memory");
++            return -1;
++        }
++
+         if (seek_pos != (int64_t) -1)
+             SET_BLOCK_INDEX (wps->wphdr, GET_BLOCK_INDEX (wps->wphdr) - wpc->initial_index);
+ 
+diff --git a/src/unpack_utils.c b/src/unpack_utils.c
+index cb1e9411350f21d596a068ad4273078ef2094eec..e04d911de337bfc3ad6cb8f7ceb2e787f4d61aa7 100644
+--- a/src/unpack_utils.c
++++ b/src/unpack_utils.c
+@@ -261,6 +261,12 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+             int32_t *temp_buffer = (int32_t *)calloc (1, samples_to_unpack * 8);
+             uint32_t offset = 0;     // offset to next channel in sequence (0 to num_channels - 1)
+ 
++            if (!temp_buffer) {
++                strcpy (wpc->error_message, "can't allocate decode memory");
++                wpc->crc_errors++;
++                return samples_unpacked;
++            }
++
+             // loop through all the streams...
+ 
+             while (1) {
+@@ -268,15 +274,26 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+                 // if the stream has not been allocated and corresponding block read, do that here...
+ 
+                 if (stream_index == wpc->num_streams) {
+-                    wpc->streams = (WavpackStream **)realloc (wpc->streams, (wpc->num_streams + 1) * sizeof (wpc->streams [0]));
+-
+-                    if (!wpc->streams)
+-                        break;
++                    WavpackStream **streams = (WavpackStream **)realloc (wpc->streams,
++                        (wpc->num_streams + 1) * sizeof (wpc->streams [0]));
++                    WavpackStream *next;
+ 
+-                    wps = wpc->streams [wpc->num_streams++] = (WavpackStream *)calloc (1, sizeof (WavpackStream));
++                    if (!streams) {
++                        free (temp_buffer);
++                        strcpy (wpc->error_message, "can't allocate decode streams");
++                        wpc->crc_errors++;
++                        return samples_unpacked;
++                    }
+ 
+-                    if (!wps)
+-                        break;
++                    wpc->streams = streams;
++                    next = (WavpackStream *)calloc (1, sizeof (WavpackStream));
++                    if (!next) {
++                        free (temp_buffer);
++                        strcpy (wpc->error_message, "can't allocate decode stream");
++                        wpc->crc_errors++;
++                        return samples_unpacked;
++                    }
++                    wps = wpc->streams [wpc->num_streams++] = next;
+ 
+                     wps->wpc = wpc;
+                     wps->stream_index = stream_index;

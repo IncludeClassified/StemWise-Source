@@ -1,0 +1,29 @@
+diff --git a/fft.h b/fft.h
+index a459e98e..f11ccc53 100644
+--- a/fft.h
++++ b/fft.h
+@@ -4,6 +4,7 @@
+ #include <complex>
+ #include <vector>
+ #include <cmath>
++#include <cstring>
+ 
+ #if defined(__FAST_MATH__) && (__apple_build_version__ >= 16000000) && (__apple_build_version__ <= 16000099) && !defined(SIGNALSMITH_IGNORE_BROKEN_APPLECLANG)
+ #	error Apple Clang 16.0.0 generates incorrect SIMD for ARM. If you HAVE to use this version of Clang, turn off -ffast-math.
+diff --git a/stft.h b/stft.h
+index a425b174..de82c92d 100644
+--- a/stft.h
++++ b/stft.h
+@@ -448,10 +448,10 @@ struct DynamicSTFT {
+ 	}
+ 	COMPAT_SPELLING(analyse, analyze);
+ 	COMPAT_SPELLING(analyseStep, analyzeStep);
+-	COMPAT_SPELLING(analyseSteps, analyzeSteps);
++	size_t analyzeSteps() const { return analyseSteps(); }
+ 	COMPAT_SPELLING(synthesise, synthesize);
+ 	COMPAT_SPELLING(synthesiseStep, synthesizeStep);
+-	COMPAT_SPELLING(synthesiseSteps, synthesizeSteps);
++	size_t synthesizeSteps() const { return synthesiseSteps(); }
+ 
+ 	/// Input (only available so we can save/restore the input state)
+ 	struct Input {

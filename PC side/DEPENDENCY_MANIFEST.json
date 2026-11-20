@@ -1,0 +1,85 @@
+{
+  "formatVersion": 17,
+  "purpose": "Current dependency paths. Executable model declarations and current workflow policy own admission.",
+  "launcher": "PC side/STEMWISE_AGENT.ps1",
+  "futureSongPolicyVersion": "stemwise-future-song/23",
+  "dependencies": {
+    "builder": "PC side\\stemwise-playlist-builder",
+    "mainEnvironment": "PC side\\stemwise-playlist-builder\\.venv",
+    "allInOneEnvironment": "PC side\\stemwise-playlist-builder\\.venv-allin1",
+    "lyricsAlignmentEnvironment": "PC side\\stemwise-playlist-builder\\.venv-lyrics-align",
+    "lyricsAlignmentRunner": "PC side\\stemwise-playlist-builder\\lyrics-align.ps1",
+    "recordingAnalysisRunner": "PC side\\stemwise-playlist-builder\\recording-analysis.ps1",
+    "recordingAnalysisWorker": "PC side\\stemwise-playlist-builder\\src\\recording_analysis.py",
+    "mmsForcedAlignmentWorker": "PC side\\stemwise-playlist-builder\\src\\mms_forced_alignment.py",
+    "wav2vec2ForcedAlignmentWorker": "PC side\\stemwise-playlist-builder\\src\\wav2vec2_forced_alignment.py",
+    "owsmCtcForcedAlignmentWorker": "PC side\\stemwise-playlist-builder\\src\\owsm_ctc_forced_alignment.py",
+    "nemoNfaForcedAlignmentWorker": "PC side\\stemwise-playlist-builder\\src\\nemo_nfa_forced_alignment.py",
+    "owsmCtcRuntime": "PC side\\runtime\\espnet-202511-owsm",
+    "nemoNfaRuntime": "PC side\\runtime\\nemo-speech-3.0.0",
+    "runtimeProfiles": "PC side\\stemwise-playlist-builder\\src\\model-route-registry.json",
+    "environmentLocks": "PC side\\stemwise-playlist-builder\\environment-locks.json",
+    "pythonRuntime": "PC side\\runtime\\python",
+    "denoRuntime": "PC side\\runtime\\deno\\deno",
+    "modelCache": "PC side\\model-cache",
+    "lyricsAlignmentModelCache": "PC side\\model-cache\\lyrics-alignment",
+    "torchModelCache": "PC side\\model-cache\\torch",
+    "lyricsAlignmentWorkspace": "PC side\\lyrics-alignment",
+    "privateSongReports": "PC side\\reports",
+    "temporaryAnalysis": "PC side\\temporary-analysis",
+    "generatedPackages": "PC side\\generated-packages",
+    "policy": "PC side\\stemwise-playlist-builder\\future-songs\\policy",
+    "currentPolicyState": "PC side\\stemwise-playlist-builder\\future-songs\\policy-state\\current",
+    "currentPolicyTemporaryAnalysis": "PC side\\temporary-analysis\\future-song-policy-state\\current",
+    "readyToImport": "Ready to Import",
+    "recordingWorkflowWorker": "PC side\\stemwise-playlist-builder\\src\\recording_workflow.py"
+  },
+  "modelRegistry": "PC side/stemwise-playlist-builder/src/model-route-registry.json",
+  "modelLicensePins": {
+    "Systran/faster-whisper-large-v3": "MIT",
+    "htdemucs": "MIT",
+    "Torchaudio MMS_FA": "CC-BY-NC-4.0",
+    "mpoyraz/wav2vec2-xls-r-300m-cv7-turkish": "CC-BY-4.0",
+    "facebook/wav2vec2-xlsr-53-espeak-cv-ft": "Apache-2.0",
+    "KimberleyJSN/melbandroformer": "MIT",
+    "Sucial/Dereverb-Echo_Mel_Band_Roformer": "CC-BY-NC-SA-4.0",
+    "isi-nlp/uroman": "Apache-2.0",
+    "noncommercialWeightsUse": "owner-local-noncommercial-no-distribution"
+  },
+  "runtimeLayout": "PC side/runtime-layout.json",
+  "environmentLocks": "PC side/stemwise-playlist-builder/environment-locks.json",
+  "lyricsPolicy": "PC side/stemwise-playlist-builder/future-songs/policy/lyrics-policy.json",
+  "lyricsV2Runtime": {
+    "runtimeProfiles": [
+      "main",
+      "lyrics",
+      "owsm_ctc_forced_alignment",
+      "nemo_nfa_forced_alignment"
+    ],
+    "displayReviewAttemptRetention": "retained-required-for-terminal-delivery-validation",
+    "workflowOperationLedger": {
+      "actions": [
+        "New",
+        "Source",
+        "Artwork",
+        "Validate",
+        "Finalize",
+        "Retry"
+      ],
+      "outcomeCodes": [
+        "success",
+        "keyboard-interrupt",
+        "future-song-error",
+        "recording-evidence-draft-unavailable",
+        "unexpected-error",
+        "authority-unresolved",
+        "lyrics-content-unresolved",
+        "line-unresolved",
+        "retryable-technical",
+        "superseded-recording",
+        "recording-not-selected",
+        "platform-content-restriction"
+      ]
+    }
+  }
+}

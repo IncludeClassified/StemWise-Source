@@ -1,0 +1,94 @@
+Compiled from "Mobile.java"
+public abstract class local.phonepc.bridge.mobile.Mobile {
+  public static void touch();
+  public static native local.phonepc.bridge.mobile.Client newClient(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+}
+Compiled from "Client.java"
+public final class local.phonepc.bridge.mobile.Client implements go.Seq$Proxy {
+  public final int incRefnum();
+  public local.phonepc.bridge.mobile.Client(java.lang.String, java.lang.String, java.lang.String);
+  public native java.lang.String callApp(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native void cancel(java.lang.String);
+  public native void close() throws java.lang.Exception;
+  public native java.lang.String confirmDelivery(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String exchange(java.lang.String, java.lang.String, java.lang.String, long, java.lang.String, java.lang.String, byte[]) throws java.lang.Exception;
+  public native local.phonepc.bridge.mobile.FileClient localFiles(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native void login() throws java.lang.Exception;
+  public native local.phonepc.bridge.mobile.Connection newConnection(java.lang.String, java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native local.phonepc.bridge.mobile.Operation newOperation() throws java.lang.Exception;
+  public native local.phonepc.bridge.mobile.FileClient openAppFiles(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native local.phonepc.bridge.mobile.FileClient openFiles(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native void setNetworkDNS(java.lang.String) throws java.lang.Exception;
+  public native void setNetworkEnabled(boolean) throws java.lang.Exception;
+  public native void setNetworkState(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native void setSocketBinder(local.phonepc.bridge.mobile.SocketBinder) throws java.lang.Exception;
+  public native void start() throws java.lang.Exception;
+  public native java.lang.String status() throws java.lang.Exception;
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public java.lang.String toString();
+}
+Compiled from "FileClient.java"
+public final class local.phonepc.bridge.mobile.FileClient implements go.Seq$Proxy {
+  public final int incRefnum();
+  public local.phonepc.bridge.mobile.FileClient();
+  public native java.lang.String available(java.lang.String, java.lang.String, long) throws java.lang.Exception;
+  public native void copyReceived(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native void discardPrepared(java.lang.String) throws java.lang.Exception;
+  public native java.lang.String ensureSent(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String pending(java.lang.String, java.lang.String, long) throws java.lang.Exception;
+  public native java.lang.String prepare(java.lang.String, java.lang.String, byte[]) throws java.lang.Exception;
+  public native java.lang.String prepareFile(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native byte[] readReceived(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String receipt(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String receive(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String receiveMatching(java.lang.String, java.lang.String, java.lang.String, long, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String received(java.lang.String, java.lang.String, long) throws java.lang.Exception;
+  public native java.lang.String receivedInfo(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String refresh(java.lang.String) throws java.lang.Exception;
+  public native void removeReceived(java.lang.String) throws java.lang.Exception;
+  public native java.lang.String restorePreparedFile(java.lang.String, java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String send(java.lang.String, java.lang.String) throws java.lang.Exception;
+  public native java.lang.String storageDiagnostics(java.lang.String) throws java.lang.Exception;
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public java.lang.String toString();
+}
+Compiled from "Connection.java"
+public final class local.phonepc.bridge.mobile.Connection implements go.Seq$Proxy {
+  public final int incRefnum();
+  public local.phonepc.bridge.mobile.Connection();
+  public native java.lang.String check(java.lang.String) throws java.lang.Exception;
+  public native void close();
+  public native java.lang.String connect(java.lang.String, long) throws java.lang.Exception;
+  public native java.lang.String wake(java.lang.String) throws java.lang.Exception;
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public java.lang.String toString();
+}
+Compiled from "Operation.java"
+public final class local.phonepc.bridge.mobile.Operation implements go.Seq$Proxy {
+  public final int incRefnum();
+  public local.phonepc.bridge.mobile.Operation();
+  public native void cancel();
+  public native void close();
+  public native java.lang.String token();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public java.lang.String toString();
+}
+Compiled from "SocketBinder.java"
+public interface local.phonepc.bridge.mobile.SocketBinder {
+  public abstract void bindSocket(long) throws java.lang.Exception;
+}
+Compiled from "BridgeNetwork.java"
+public final class local.phonepc.bridge.BridgeNetwork implements java.lang.AutoCloseable {
+  public local.phonepc.bridge.BridgeNetwork(android.content.Context, local.phonepc.bridge.mobile.Client, local.phonepc.bridge.BridgeNetwork$Errors) throws java.lang.Exception;
+  public local.phonepc.bridge.BridgeNetwork(android.content.Context, local.phonepc.bridge.mobile.Client, local.phonepc.bridge.BridgeNetwork$Errors, boolean) throws java.lang.Exception;
+  public synchronized void close();
+}
+Compiled from "BridgeRecovery.java"
+public final class local.phonepc.bridge.BridgeRecovery {
+  public static local.phonepc.bridge.mobile.Client client(android.content.Context, java.lang.String) throws java.lang.Exception;
+  public static local.phonepc.bridge.mobile.Client client(android.content.Context, java.lang.String, boolean) throws java.lang.Exception;
+}

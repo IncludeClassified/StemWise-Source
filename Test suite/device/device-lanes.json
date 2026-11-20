@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "ordinaryPolicy": "all-unmatched-test-classes",
+  "optionalClasses": [
+    "app.stemwise.playback.engine.AudioTrackAcousticInstrumentationTest",
+    "app.stemwise.ui.UiStressLabInstrumentationTest"
+  ],
+  "ordinaryRequiredClasses": [
+    "app.stemwise.ui.design.GlyphRendererParityInstrumentationTest",
+    "app.stemwise.integration.SourceAcknowledgementStoreInstrumentationTest",
+    "app.stemwise.data.CurrentSourcePackageInstrumentationTest",
+    "app.stemwise.artwork.ArtworkDiskCacheRevisionInstrumentationTest",
+    "app.stemwise.data.BackendSafetyInstrumentationTest",
+    "app.stemwise.ui.LyricsDiscreteInputInstrumentationTest",
+    "app.stemwise.playback.NotificationIconOwnershipInstrumentationTest"
+  ],
+  "explicitSuites": [
+    {
+      "wrapper": "app.stemwise.qualification.AppActionSurfaceSuite",
+      "children": [
+        "app.stemwise.ui.DesignSystemComposeInstrumentationTest",
+        "app.stemwise.ui.PlayerVisualPolicyInstrumentationTest",
+        "app.stemwise.ui.player.surface.DesignSystemNativePlayerInstrumentationTest",
+        "app.stemwise.ui.player.surface.NativePlayerGestureInstrumentationTest",
+        "app.stemwise.ui.player.surface.NativePlayerRenderingInstrumentationTest",
+        "app.stemwise.ui.LibraryInteractionTest",
+        "app.stemwise.ui.CompactPlayerProductionIntegrationTest",
+        "app.stemwise.ui.PlayerGestureIsolationTest",
+        "app.stemwise.ui.PlayerNavigationVisibilityTest",
+        "app.stemwise.ui.player.surface.PlayerSurfaceSemanticsAccessibilityTest",
+        "app.stemwise.ui.MetronomeAccessibilityInstrumentationTest",
+        "app.stemwise.ui.PlayerLyricsScrollIsolationTest",
+        "app.stemwise.ui.PlayerLyricsViewportTest",
+        "app.stemwise.ui.RetainedLyricsComposePressureTest",
+        "app.stemwise.ui.QualificationEvidenceTest",
+        "app.stemwise.playback.session.StableMediaSessionPlayerInstrumentationTest"
+      ]
+    },
+    {
+      "wrapper": "app.stemwise.qualification.IsolatedDataEngineSurfaceSuite",
+      "children": [
+        "app.stemwise.data.CanonicalProjectionPromotionTest",
+        "app.stemwise.data.CurrentSourceAuthorityPersistenceTest",
+        "app.stemwise.data.StemwisePreferencesIsolationTest",
+        "app.stemwise.data.StorageRefreshInstrumentationTest",
+        "app.stemwise.enrichment.EnrichmentStrictJsonParserInstrumentationTest",
+        "app.stemwise.enrichment.GoldenEnrichmentImportInstrumentationTest",
+        "app.stemwise.enrichment.OriginalEnrichmentImportInstrumentationTest",
+        "app.stemwise.enrichment.EnrichmentPublicationRecoveryInstrumentationTest",
+        "app.stemwise.playback.engine.MediaCodecTrackDecoderInstrumentationTest",
+        "app.stemwise.playback.engine.NativeLaneIngressInstrumentationTest",
+        "app.stemwise.playback.engine.NativeManagedLoopIntentJniInstrumentationTest",
+        "app.stemwise.playback.engine.NativePlaybackRuntimeInstrumentationTest",
+        "app.stemwise.ui.player.surface.PlayerSurfaceArtworkLoaderQosInstrumentationTest"
+      ]
+    },
+    {
+      "wrapper": "app.stemwise.qualification.UnifiedPlayerPressureSuite",
+      "children": [
+        "app.stemwise.playback.PcmContentIdentityInstrumentationTest",
+        "app.stemwise.playback.PlayerScrubOwnershipInstrumentationTest",
+        "app.stemwise.playback.QueueIntegrationInstrumentationTest",
+        "app.stemwise.playback.EndedSourceSwitchInstrumentationTest",
+        "app.stemwise.playback.RuntimePlaybackControlsInstrumentationTest",
+        "app.stemwise.playback.LoopPlaybackInstrumentationTest",
+        "app.stemwise.playback.LoopRetargetInstrumentationTest",
+        "app.stemwise.playback.LoopSourceHandoffInstrumentationTest",
+        "app.stemwise.playback.MediaSessionLifecycleInstrumentationTest"
+      ]
+    }
+  ],
+  "lifecycleWorkflows": [
+    {
+      "id": "physical-library-rehearsal",
+      "forceStopBetweenPhases": true,
+      "phases": [
+        "app.stemwise.data.TesterPhysicalLibraryLifecycleInstrumentationTest#phaseOnePublishesEnrichesAndPlaysDirectPhysicalPackage",
+        "app.stemwise.data.TesterPhysicalLibraryLifecycleInstrumentationTest#phaseTwoRestartsRecoversIsolatesDeletesAndCleans"
+      ]
+    }
+  ],
+  "fatalTwoProcess": {
+    "class": "app.stemwise.playback.NativeFatalProcessRetirementInstrumentationTest",
+    "phaseA": "app.stemwise.playback.NativeFatalProcessRetirementInstrumentationTest#fatalThenRecentsRemovalRetiresProcess",
+    "phaseB": "app.stemwise.playback.NativeFatalProcessRetirementInstrumentationTest#freshProcessAfterFatalRetirementCanPlay",
+    "phaseAExpectedProcessRetirement": true
+  },
+  "nativeProcessFault": {
+    "class": "app.stemwise.playback.engine.NativeProcessFaultInstrumentationTest",
+    "selector": "app.stemwise.playback.engine.NativeProcessFaultInstrumentationTest#processFaultEvidenceSurvivesRuntimeReplacement",
+    "arguments": {
+      "stemwiseIntentionalNativeFault": "true",
+      "stemwiseDisposableTarget": "true"
+    }
+  },
+  "deliberateExclusions": [
+    {
+      "id": "app.stemwise.integration.HostedDemoPackageExportInstrumentationTest#exportCompletedUiDemoPackages",
+      "reason": "Explicit post-completion UI demo export only: requires exact method selection, named export opt-in, disposable target, exact demo root and completed hosted job authority; never runs in ordinary or full suites."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#quarantinesHostileLegacyWithoutExecutingBundled",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#bundledExtractorBootstrapsWithoutGithubAndPassesOfflineChecks",
+      "reason": "Explicit runtime-update lane: signed bundled extractor with live YouTube metadata and blocked GitHub admission on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#bundledReleaseIsEligibleOfflineAndPreservesSignedAuthority",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#stagesCommittedVerifiedDownloadForProcessDeath",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#freshProcessPromotesCommittedVerifiedDownloadOffline",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#stagesOfficialInitializationPreservationForProcessDeath",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#freshProcessRecoversInitializationPreservation",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#futurePortableSchemaFailsClosedWithoutRewritingAnyBytes",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    },
+    {
+      "id": "app.stemwise.integration.CurrentVerifiedYtDlpUpdaterInstrumentationTest#reacquiresSameOfficialAfterPrivateLossWithoutPortableRollback",
+      "reason": "Explicit runtime-update lane: ordered signed network update and separate-process recovery on disposable rehearsal."
+    }
+  ]
+}

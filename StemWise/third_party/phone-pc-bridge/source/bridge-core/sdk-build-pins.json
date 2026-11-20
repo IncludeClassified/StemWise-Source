@@ -1,0 +1,10 @@
+{
+  "schema": "bridge-sdk-build-v1",
+  "go": "go1.27.1",
+  "xMobile": "v0.0.0-20260908204917-8b95e45f8d3e",
+  "compileSdk": 36,
+  "ndk": "27.2.12479018",
+  "javac": "17.0.20",
+  "androidApi": 33,
+  "abi": "arm64-v8a"
+}

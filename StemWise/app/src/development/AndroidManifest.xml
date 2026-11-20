@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <permission android:name="app.stemwise.testprovider.permission.CONTROL_FIXTURE"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="app.stemwise.testprovider.permission.CONTROL_FIXTURE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <application
+        android:name=".demo.DevelopmentStemwiseApplication"
+        tools:replace="android:name">
+        <activity
+            android:name=".debug.UiStressLabActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:launchMode="singleTask"
+            android:label="StemWise UI stress lab" />
+        <provider
+            android:name=".demo.UiDemoLibraryDocumentsProvider"
+            android:authorities="${applicationId}.ui.demo.library"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS" />
+        <activity
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:enabled="${stemwiseQaLabActivitiesExported}"
+            android:exported="${stemwiseQaLabActivitiesExported}"
+            tools:replace="android:exported" />
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:enabled="${stemwiseQaLabActivitiesExported}"
+            android:exported="${stemwiseQaLabActivitiesExported}"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".debug.ProcessRetirementProbeActivity"
+            android:exported="${stemwiseQaLabActivitiesExported}" />
+        <receiver
+            android:name=".debug.QualificationLibraryGrantReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="app.stemwise.qualification.BIND_EXTERNAL_LIBRARY" />
+                <data android:scheme="content" />
+            </intent-filter>
+        </receiver>
+        <provider
+            android:name=".qa.GoldenQaDocumentsProvider"
+            android:process="${stemwiseQaDocumentsProviderProcess}"
+            android:authorities="${applicationId}.golden.qa.documents"
+            android:enabled="${stemwiseQaDocumentsProviderEnabled}"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+    </application>
+</manifest>

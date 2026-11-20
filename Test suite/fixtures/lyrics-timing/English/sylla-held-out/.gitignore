@@ -1,0 +1,5 @@
+/audio/*.wav
+/source/**/*.mp3
+/source/.cache/
+/decoded/
+/*.pending.wav

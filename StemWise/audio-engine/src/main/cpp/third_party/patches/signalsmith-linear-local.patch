@@ -1,0 +1,13 @@
+diff --git a/stft.h b/stft.h
+index 05bd2ae..05edcb3 100644
+--- a/stft.h
++++ b/stft.h
+@@ -446,7 +446,7 @@ struct DynamicSTFT {
+ 		name(std::forward<Args>(args)...); \
+ 	}
+ 	COMPAT_SPELLING(analyse, analyze);
+-	COMPAT_SPELLING(analyseStep, analyseStep);
++	COMPAT_SPELLING(analyseStep, analyzeStep);
+ 	COMPAT_SPELLING(analyseSteps, analyzeSteps);
+ 	COMPAT_SPELLING(synthesise, synthesize);
+ 	COMPAT_SPELLING(synthesiseStep, synthesizeStep);

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:allowBackup="false"
+        android:label="StemWise qualification provider"
+        android:usesCleartextTraffic="false">
+        <provider
+            android:name=".QualificationDocumentsProvider"
+            android:authorities="app.stemwise.testprovider.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+        <activity
+            android:name=".GrantQualificationTreeActivity"
+            android:permission="app.stemwise.testprovider.permission.CONTROL_FIXTURE"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:finishOnTaskLaunch="true"
+            android:noHistory="true" />
+    </application>
+</manifest>

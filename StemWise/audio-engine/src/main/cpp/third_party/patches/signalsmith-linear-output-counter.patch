@@ -1,0 +1,18 @@
+--- a/stft.h
++++ b/stft.h
+@@ -207,6 +207,7 @@
+ 		return replaceOutput(channel, 0, length, newOutputArray);
+ 	}
+ 	void moveOutput(size_t samples) {
++		_samplesSinceSynthesis += samples;
+ 		if (samples == 1) { // avoid all the loops/chunks if we can
+ 			for (size_t c = 0; c < _synthesisChannels; ++c) {
+ 				output.buffer[output.pos + c*_blockSamples] = 0;
+@@ -238,7 +239,6 @@
+ 			output.windowProducts[i2] = almostZero;
+ 		}
+ 		output.pos = (output.pos + samples)%_blockSamples;
+-		_samplesSinceSynthesis += samples;
+ 	}
+ 	size_t samplesSinceSynthesis() const {
+ 		return _samplesSinceSynthesis;

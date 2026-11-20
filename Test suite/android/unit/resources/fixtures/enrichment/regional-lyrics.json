@@ -1,0 +1,29 @@
+{
+  "formatVersion": 2,
+  "kind": "stemwise.song-enrichment",
+  "source": {"provider": "youtube", "videoId": "a1B2c3D4e5F"},
+  "generatedAt": "2026-10-26T12:00:00Z",
+  "generator": {"name": "stemwise-pc", "version": "2.1.0"},
+  "lyrics": {
+    "status": "partial",
+    "reason": "Regional timing is incomplete",
+    "tokenizationVersion": "stemwise.display-words.v2",
+    "tracks": [{
+      "id": "original", "kind": "original", "language": "en", "format": "regional",
+      "source": {"name": "Exact recording evidence"},
+      "lines": [
+        {"text": "One two three", "contentStatus": "admitted", "occurrenceStatus": "supported",
+         "timing": {"status": "supported", "startMs": 100, "endMs": 1000},
+         "words": [
+           {"startUtf16": 0, "endUtf16": 3, "timing": {"status": "supported", "startMs": 100, "endMs": 300}},
+           {"startUtf16": 4, "endUtf16": 7, "timing": {"status": "estimated", "startMs": 400, "endMs": 600, "basis": "bounded-acoustic-proposal"}},
+           {"startUtf16": 8, "endUtf16": 13, "timing": {"status": "none", "reason": "Offset unresolved"}}
+         ]},
+        {"text": "Possible repeat", "contentStatus": "source-only", "occurrenceStatus": "unknown",
+         "timing": {"status": "none", "reason": "Occurrence unresolved"}},
+        {"text": "Four", "contentStatus": "admitted", "occurrenceStatus": "supported",
+         "timing": {"status": "supported", "startMs": 2000, "endMs": 2300}}
+      ]
+    }]
+  }
+}

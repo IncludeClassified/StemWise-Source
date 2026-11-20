@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "pythonVersion": "3.10.18",
+  "platform": "linux-x86_64",
+  "environments": {
+    "main": {
+      "lock": "locks/main-linux-x86_64-py310.txt",
+      "sha256": "6a65777a6af2ce8302f48afeeb0d2173bc8989653fff75fe1f27b64381cae9a9",
+      "sources": [
+        {
+          "path": "model-cache/python-wheels/melband_roformer_infer-0.1.5-py3-none-any.whl",
+          "environmentVariable": "STEMWISE_ROFORMER_WHEEL",
+          "sha256": "8b509b90c9c02f014730c897222a31471db59a2d538bf60a5a9e6469c14823e3"
+        },
+        {
+          "repository": "https://github.com/deezer/skey.git",
+          "commit": "918b83d273568d5041569bb8068843d19a335726"
+        }
+      ],
+      "torchIndex": "https://download.pytorch.org/whl/cu128"
+    },
+    "allin1": {
+      "lock": "locks/allin1-linux-x86_64-py310.txt",
+      "sha256": "e55f41b09c404bbea3e00dee6e15c9d505d0dbf96da997677da8117329ef54ca",
+      "sources": [
+        {
+          "repository": "https://github.com/CPJKU/madmom.git",
+          "commit": "27f032e8947204902c675e5e341a3faf5dc86dae"
+        }
+      ],
+      "torchIndex": "https://download.pytorch.org/whl/cpu"
+    },
+    "lyrics": {
+      "lock": "locks/lyrics-linux-x86_64-py310.txt",
+      "sha256": "e59267469456cc2fe4fe5ba4fda9baf8dd6464b9d8f8c45e2877f7f447da3081",
+      "sources": []
+    }
+  }
+}

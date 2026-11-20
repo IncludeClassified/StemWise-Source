@@ -1,0 +1,976 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stemwise.local/schema/song-enrichment-v2.schema.json",
+  "title": "StemWise one-way song enrichment v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "source", "generatedAt", "generator"],
+  "anyOf": [
+    { "required": ["metadata"] },
+    { "required": ["artwork"] },
+    { "required": ["lyrics"] },
+    { "required": ["analysis"] }
+  ],
+  "properties": {
+    "formatVersion": { "const": 2 },
+    "kind": { "const": "stemwise.song-enrichment" },
+    "source": { "$ref": "#/$defs/sourceIdentity" },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]{3}|\\.[0-9]{6}|\\.[0-9]{9})?Z$"
+    },
+    "generator": { "$ref": "#/$defs/generator" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "artwork": { "$ref": "#/$defs/artwork" },
+    "lyrics": { "$ref": "#/$defs/lyrics" },
+    "analysis": { "$ref": "#/$defs/analysis" }
+  },
+  "$defs": {
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "videoId"],
+      "properties": {
+        "provider": { "const": "youtube" },
+        "videoId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{11}$" },
+        "recording": { "$ref": "#/$defs/nativeRecording" }
+      }
+    },
+    "nativeRecording": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordingKey", "trackId", "file", "sha256", "byteCount", "durationMs"],
+      "properties": {
+        "recordingKey": { "type": "string", "pattern": "^qobuz:[1-9][0-9]*$" },
+        "trackId": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "file": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*\/)?\\.\\.?(?:\/|$))[^/]+(?:/[^/]+)*$" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "byteCount": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "durationMs": { "type": "integer", "minimum": 1, "maximum": 7200000 }
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "stemwise-pc" },
+        "version": { "const": "2.1.0" }
+      }
+    },
+    "sourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matchStatus", "title", "artists", "sources"],
+      "properties": {
+        "matchStatus": { "enum": ["verified", "youtube-fallback"] },
+        "title": { "type": "string", "minLength": 1 },
+        "artists": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "album": { "$ref": "#/$defs/album" },
+        "genres": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "explicit": { "type": "boolean" },
+        "recordLabel": { "type": "string", "minLength": 1 },
+        "copyright": { "type": "string", "minLength": 1 },
+        "credits": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/credit" }
+        },
+        "identifiers": { "$ref": "#/$defs/identifiers" },
+        "links": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/link" }
+        },
+        "sources": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/sourceRecord" }
+        }
+      }
+    },
+    "album": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["album", "single", "ep", "compilation", "soundtrack", "other"] },
+        "artists": {
+          "type": "array", "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "releaseDate": {
+          "type": "string",
+          "pattern": "^[0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?$"
+        },
+        "trackNumber": { "type": "integer", "minimum": 1 },
+        "trackTotal": { "type": "integer", "minimum": 1 },
+        "discNumber": { "type": "integer", "minimum": 1 },
+        "discTotal": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "credit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "roles"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "roles": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "identifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "isrc": { "type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$" },
+        "musicBrainzRecordingId": { "type": "string", "format": "uuid" },
+        "musicBrainzReleaseId": { "type": "string", "format": "uuid" },
+        "discogsReleaseId": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "wikidataId": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url"],
+      "properties": {
+        "type": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    },
+    "artwork": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "kind", "source"],
+      "properties": {
+        "file": { "const": "cover.png" },
+        "kind": { "enum": ["album-cover", "single-cover", "youtube-thumbnail", "other"] },
+        "source": { "$ref": "#/$defs/sourceRecord" }
+      }
+    },
+    "lyrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "tracks"],
+      "properties": {
+        "status": { "enum": ["complete", "partial", "unavailable"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "tokenizationVersion": { "const": "stemwise.display-words.v2" },
+        "tracks": {
+          "type": "array", "items": { "$ref": "#/$defs/lyricTrack" },
+          "allOf": [
+            { "contains": { "properties": { "kind": { "const": "translation" } } }, "minContains": 0, "maxContains": 1 },
+            { "contains": { "properties": { "kind": { "const": "transliteration" } } }, "minContains": 0, "maxContains": 1 }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": { "required": ["reason"], "properties": { "tracks": { "maxItems": 0 } } },
+          "else": { "properties": { "tracks": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "partial" } } },
+          "then": { "required": ["reason"] }
+        },
+        {
+          "if": {
+            "properties": {
+              "tracks": {
+                "contains": {
+                  "properties": {
+                    "lines": {
+                      "contains": { "required": ["words"] }
+                    }
+                  },
+                  "required": ["lines"]
+                }
+              }
+            }
+          },
+          "then": { "required": ["tokenizationVersion"] }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": { "const": "complete" },
+              "tracks": { "contains": { "properties": { "format": { "const": "regional" } }, "required": ["format"] } }
+            }
+          },
+          "then": {
+            "properties": {
+              "tracks": {
+                "items": {
+                  "properties": { "format": { "enum": ["synced", "regional"] } },
+                  "allOf": [
+                    {
+                      "if": { "properties": { "kind": { "const": "original" } } },
+                      "then": { "properties": { "lines": { "items": { "required": ["words"] } } } }
+                    },
+                    {
+                      "if": { "properties": { "format": { "const": "regional" } } },
+                      "then": {
+                        "properties": {
+                          "lines": {
+                            "items": {
+                              "properties": {
+                                "contentStatus": { "const": "admitted" },
+                                "occurrenceStatus": { "const": "supported" },
+                                "timing": { "properties": { "status": { "enum": ["supported", "estimated"] } } },
+                                "words": { "items": { "properties": { "timing": { "properties": { "status": { "enum": ["supported", "estimated"] } } } } } }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "lyricTrack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "language", "format", "source"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "kind": { "enum": ["original", "translation", "transliteration"] },
+        "language": { "type": "string", "minLength": 1 },
+        "componentLanguages": {
+          "type": "array", "minItems": 2, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 2 }
+        },
+        "script": { "type": "string", "pattern": "^[A-Z][a-z]{3}$" },
+        "basedOnTrackId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "format": { "enum": ["plain", "synced", "regional"] },
+        "text": { "type": "string", "minLength": 1 },
+        "lines": {
+          "type": "array", "minItems": 1,
+          "items": { "oneOf": [{ "$ref": "#/$defs/lyricLine" }, { "$ref": "#/$defs/regionalLyricLine" }] }
+        },
+        "source": { "$ref": "#/$defs/sourceRecord" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "translation" } } },
+          "then": { "properties": { "language": { "const": "en" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "transliteration" } } },
+          "then": { "properties": { "language": { "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{2,8})*-fonipa$" } } }
+        },
+        {
+          "if": { "properties": { "format": { "const": "plain" } } },
+          "then": { "required": ["text"], "not": { "required": ["lines"] } },
+          "else": { "required": ["lines"], "not": { "required": ["text"] } }
+        },
+        {
+          "if": { "properties": { "format": { "const": "regional" } } },
+          "then": { "properties": { "lines": { "items": { "$ref": "#/$defs/regionalLyricLine" } } } },
+          "else": { "properties": { "lines": { "items": { "$ref": "#/$defs/lyricLine" } } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "original" } } },
+          "then": { "not": { "required": ["basedOnTrackId"] } },
+          "else": {
+            "required": ["basedOnTrackId"],
+            "not": { "required": ["componentLanguages"] },
+            "allOf": [{
+              "if": { "properties": { "format": { "const": "synced" } } },
+              "then": { "properties": { "lines": { "items": { "not": { "required": ["words"] } } } } }
+            }]
+          }
+        }
+      ]
+    },
+    "lyricLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startMs", "endMs", "text"],
+      "properties": {
+        "startMs": { "$ref": "#/$defs/timeMs" },
+        "endMs": { "$ref": "#/$defs/timeMs" },
+        "text": { "type": "string", "minLength": 1 },
+        "words": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/lyricWord" }
+        }
+      }
+    },
+    "lyricWord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startUtf16", "endUtf16", "startMs", "endMs"],
+      "properties": {
+        "startUtf16": { "type": "integer", "minimum": 0 },
+        "endUtf16": { "type": "integer", "minimum": 1 },
+        "startMs": { "$ref": "#/$defs/timeMs" },
+        "endMs": { "$ref": "#/$defs/timeMs" }
+      }
+    },
+    "lyricTiming": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "startMs",
+            "endMs"
+          ],
+          "properties": {
+            "status": {
+              "const": "supported"
+            },
+            "startMs": {
+              "$ref": "#/$defs/timeMs"
+            },
+            "endMs": {
+              "$ref": "#/$defs/timeMs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "startMs",
+            "endMs",
+            "basis"
+          ],
+          "properties": {
+            "status": {
+              "const": "estimated"
+            },
+            "startMs": {
+              "$ref": "#/$defs/timeMs"
+            },
+            "endMs": {
+              "$ref": "#/$defs/timeMs"
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "none"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "regionalLyricLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "contentStatus",
+        "occurrenceStatus",
+        "timing"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentStatus": {
+          "enum": [
+            "admitted",
+            "source-only",
+            "disputed"
+          ]
+        },
+        "occurrenceStatus": {
+          "enum": [
+            "supported",
+            "unknown"
+          ]
+        },
+        "timing": {
+          "$ref": "#/$defs/lyricTiming"
+        },
+        "words": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/regionalLyricWord"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "contentStatus": {
+                    "enum": [
+                      "source-only",
+                      "disputed"
+                    ]
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "occurrenceStatus": {
+                    "const": "unknown"
+                  }
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "timing": {
+                "properties": {
+                  "status": {
+                    "const": "none"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "regionalLyricWord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startUtf16",
+        "endUtf16",
+        "timing"
+      ],
+      "properties": {
+        "startUtf16": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "endUtf16": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timing": {
+          "$ref": "#/$defs/lyricTiming"
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "rhythm", "key", "structure", "tuning", "loudness", "waveform", "toolRuns"],
+      "properties": {
+        "status": { "enum": ["complete", "partial", "unavailable"] },
+        "durationMs": { "type": "integer", "minimum": 1, "maximum": 7200000 },
+        "rhythm": { "$ref": "#/$defs/rhythm" },
+        "key": { "$ref": "#/$defs/key" },
+        "structure": { "$ref": "#/$defs/structure" },
+        "tuning": { "$ref": "#/$defs/tuning" },
+        "loudness": { "$ref": "#/$defs/loudness" },
+        "waveform": { "$ref": "#/$defs/waveform" },
+        "diagnostics": { "$ref": "#/$defs/diagnostics" },
+        "toolRuns": {
+          "type": "array", "minItems": 6, "maxItems": 6,
+          "items": { "$ref": "#/$defs/toolRun" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["durationMs"],
+            "properties": {
+              "rhythm": { "properties": { "status": { "const": "complete" } } },
+              "key": { "properties": { "status": { "const": "complete" } } },
+              "structure": { "properties": { "status": { "const": "complete" } } },
+              "tuning": { "properties": { "status": { "const": "complete" } } },
+              "loudness": { "properties": { "status": { "const": "complete" } } },
+              "waveform": { "properties": { "status": { "const": "complete" } } },
+              "toolRuns": {
+                "items": { "properties": { "status": { "const": "complete" } } }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "partial" } } },
+          "then": {
+            "required": ["durationMs"],
+            "anyOf": [
+              { "properties": { "rhythm": { "properties": { "status": { "enum": ["complete", "partial"] } } } } },
+              { "properties": { "key": { "properties": { "status": { "enum": ["complete", "uncertain"] } } } } },
+              { "properties": { "structure": { "properties": { "status": { "enum": ["complete", "partial"] } } } } },
+              { "properties": { "tuning": { "properties": { "status": { "enum": ["complete", "uncertain"] } } } } },
+              { "properties": { "loudness": { "properties": { "status": { "enum": ["complete", "partial"] } } } } },
+              { "properties": { "waveform": { "properties": { "status": { "enum": ["complete", "partial"] } } } } }
+            ],
+            "not": {
+              "properties": {
+                "rhythm": { "properties": { "status": { "const": "complete" } } },
+                "key": { "properties": { "status": { "const": "complete" } } },
+                "structure": { "properties": { "status": { "const": "complete" } } },
+                "tuning": { "properties": { "status": { "const": "complete" } } },
+                "loudness": { "properties": { "status": { "const": "complete" } } },
+                "waveform": { "properties": { "status": { "const": "complete" } } }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": {
+            "properties": {
+              "rhythm": { "properties": { "status": { "const": "unavailable" } } },
+              "key": { "properties": { "status": { "enum": ["unsupported", "unavailable"] } } },
+              "structure": { "properties": { "status": { "const": "unavailable" } } },
+              "tuning": { "properties": { "status": { "enum": ["unsupported", "unavailable"] } } },
+              "loudness": { "properties": { "status": { "const": "unavailable" } } },
+              "waveform": { "properties": { "status": { "const": "unavailable" } } }
+            }
+          }
+        }
+      ]
+    },
+    "featureStatus": {
+      "type": "string",
+      "enum": ["complete", "partial", "unavailable"]
+    },
+    "rhythm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/featureStatus" },
+        "reason": { "type": "string", "minLength": 1 },
+        "bpm": { "$ref": "#/$defs/bpm" },
+        "alternativeBpms": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/bpm" }
+        },
+        "meter": { "$ref": "#/$defs/meter" },
+        "beats": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/beat" }
+        },
+        "tempoSegments": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/tempoSegment" }
+        },
+        "meterSegments": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/meterSegment" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["bpm", "beats"],
+            "not": { "required": ["reason"] }
+          },
+          "else": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "partial" } } },
+          "then": {
+            "anyOf": [
+              { "required": ["bpm"] },
+              { "required": ["alternativeBpms"] },
+              { "required": ["meter"] },
+              { "required": ["beats"] },
+              { "required": ["tempoSegments"] },
+              { "required": ["meterSegments"] }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["bpm"] },
+                { "required": ["alternativeBpms"] },
+                { "required": ["meter"] },
+                { "required": ["beats"] },
+                { "required": ["tempoSegments"] },
+                { "required": ["meterSegments"] }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "bpm": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
+    "meter": {
+      "type": "object", "additionalProperties": false, "required": ["numerator"],
+      "properties": {
+        "numerator": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "denominator": { "type": "integer", "enum": [1, 2, 4, 8, 16, 32] }
+      }
+    },
+    "beat": {
+      "type": "object", "additionalProperties": false, "required": ["timeMs", "isDownbeat"],
+      "properties": {
+        "timeMs": { "$ref": "#/$defs/timeMs" },
+        "isDownbeat": { "type": "boolean" },
+        "beatInBar": { "type": "integer", "minimum": 1 },
+        "barIndex": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tempoSegment": {
+      "type": "object", "additionalProperties": false, "required": ["startMs", "endMs", "bpm"],
+      "properties": {
+        "startMs": { "$ref": "#/$defs/timeMs" },
+        "endMs": { "$ref": "#/$defs/timeMs" },
+        "bpm": { "$ref": "#/$defs/bpm" }
+      }
+    },
+    "meterSegment": {
+      "type": "object", "additionalProperties": false, "required": ["startMs", "endMs", "numerator"],
+      "properties": {
+        "startMs": { "$ref": "#/$defs/timeMs" },
+        "endMs": { "$ref": "#/$defs/timeMs" },
+        "numerator": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "denominator": { "type": "integer", "enum": [1, 2, 4, 8, 16, 32] }
+      }
+    },
+    "key": {
+      "type": "object", "additionalProperties": false, "required": ["status"],
+      "properties": {
+        "status": { "enum": ["complete", "uncertain", "unsupported", "unavailable"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "tonic": { "type": "string", "pattern": "^[A-G](?:#|b)?$" },
+        "mode": { "enum": ["major", "minor"] },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "alternatives": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/keyAlternative" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["tonic", "mode"],
+            "not": { "required": ["reason"] }
+          },
+          "else": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "uncertain" } } },
+          "then": { "required": ["tonic", "mode"] }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["unsupported", "unavailable"] } } },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["tonic"] },
+                { "required": ["mode"] },
+                { "required": ["confidence"] },
+                { "required": ["alternatives"] }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "keyAlternative": {
+      "type": "object", "additionalProperties": false, "required": ["tonic", "mode"],
+      "properties": {
+        "tonic": { "type": "string", "pattern": "^[A-G](?:#|b)?$" },
+        "mode": { "enum": ["major", "minor"] },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "structure": {
+      "type": "object", "additionalProperties": false, "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/featureStatus" },
+        "reason": { "type": "string", "minLength": 1 },
+        "sections": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/section" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["sections"],
+            "not": { "required": ["reason"] }
+          },
+          "else": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "partial" } } },
+          "then": { "required": ["sections"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": { "not": { "required": ["sections"] } }
+        }
+      ]
+    },
+    "section": {
+      "type": "object", "additionalProperties": false, "required": ["startMs", "endMs", "label"],
+      "properties": {
+        "startMs": { "$ref": "#/$defs/timeMs" },
+        "endMs": { "$ref": "#/$defs/timeMs" },
+        "label": { "type": "string", "minLength": 1 },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "tuning": {
+      "type": "object", "additionalProperties": false, "required": ["status"],
+      "properties": {
+        "status": { "enum": ["complete", "uncertain", "unsupported", "unavailable"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "frequencyHz": { "type": "number", "exclusiveMinimum": 0 },
+        "centsFromA440": { "type": "number" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["frequencyHz", "centsFromA440"],
+            "not": { "required": ["reason"] }
+          },
+          "else": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "uncertain" } } },
+          "then": { "required": ["frequencyHz", "centsFromA440"] }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["unsupported", "unavailable"] } } },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["frequencyHz"] },
+                { "required": ["centsFromA440"] },
+                { "required": ["confidence"] }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "loudness": {
+      "type": "object", "additionalProperties": false, "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/featureStatus" },
+        "reason": { "type": "string", "minLength": 1 },
+        "integratedLufs": { "type": "number" },
+        "loudnessRangeLu": { "type": "number" },
+        "truePeakDbtp": { "type": "number" },
+        "descriptors": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/descriptor" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["integratedLufs", "loudnessRangeLu"],
+            "not": { "required": ["reason"] }
+          },
+          "else": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "partial" } } },
+          "then": {
+            "anyOf": [
+              { "required": ["integratedLufs"] },
+              { "required": ["loudnessRangeLu"] },
+              { "required": ["truePeakDbtp"] },
+              { "required": ["descriptors"] }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["integratedLufs"] },
+                { "required": ["loudnessRangeLu"] },
+                { "required": ["truePeakDbtp"] },
+                { "required": ["descriptors"] }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "descriptor": {
+      "type": "object", "additionalProperties": false, "required": ["id", "value", "unit"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1 }
+      }
+    },
+    "waveform": {
+      "type": "object", "additionalProperties": false, "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/featureStatus" },
+        "reason": { "type": "string", "minLength": 1 },
+        "encoding": { "const": "s16le-min-max-rms-base64-v1" },
+        "levels": {
+          "type": "array", "minItems": 1, "maxItems": 3,
+          "items": { "$ref": "#/$defs/waveformLevel" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "unavailable" } } },
+          "then": {
+            "required": ["reason"],
+            "not": {
+              "anyOf": [
+                { "required": ["encoding"] },
+                { "required": ["levels"] }
+              ]
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "partial" } } },
+          "then": {
+            "required": ["reason", "encoding", "levels"],
+            "properties": { "levels": { "minItems": 1, "maxItems": 2 } }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["encoding", "levels"],
+            "not": { "required": ["reason"] },
+            "properties": { "levels": { "minItems": 3, "maxItems": 3 } }
+          }
+        }
+      ]
+    },
+    "waveformLevel": {
+      "type": "object", "additionalProperties": false, "required": ["frameDurationMs", "frameCount", "data"],
+      "properties": {
+        "frameDurationMs": { "type": "integer", "enum": [5, 50, 250] },
+        "frameCount": { "type": "integer", "minimum": 1 },
+        "data": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object", "additionalProperties": false, "required": ["allInOneRhythm"],
+      "properties": {
+        "allInOneRhythm": {
+          "type": "object", "additionalProperties": false, "required": ["status"],
+          "properties": {
+            "status": { "enum": ["complete", "partial"] },
+            "reason": { "type": "string", "minLength": 1 },
+            "bpm": { "$ref": "#/$defs/bpm" },
+            "beatsMs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/timeMs" } },
+            "downbeatsMs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/timeMs" } }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "status": { "const": "complete" } } },
+              "then": {
+                "required": ["bpm", "beatsMs"],
+                "not": { "required": ["reason"] }
+              },
+              "else": {
+                "required": ["reason"],
+                "anyOf": [
+                  { "required": ["bpm"] },
+                  { "required": ["beatsMs"] },
+                  { "required": ["downbeatsMs"] }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "toolRun": {
+      "type": "object", "additionalProperties": false, "required": ["name", "status"],
+      "properties": {
+        "name": { "enum": ["beat-this-full", "stemwise-rhythm-normalizer", "s-key", "all-in-one", "essentia", "stemwise-waveform"] },
+        "status": { "enum": ["complete", "failed", "skipped"] },
+        "version": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "profile": { "type": "string", "minLength": 1 },
+        "warnings": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "complete" } } },
+          "then": {
+            "required": ["version"],
+            "not": { "required": ["reason"] }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "failed" } } },
+          "then": { "required": ["version", "reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "skipped" } } },
+          "then": { "required": ["reason"] }
+        }
+      ]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "timeMs": { "type": "integer", "minimum": 0, "maximum": 7200000 }
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "artist": "Cortéz",
+    "title": "Feel (Stripped)",
+    "trackUrl": "https://www.jamendo.com/track/1481500/feel-stripped",
+    "audioAndLyricsLicense": "https://creativecommons.org/licenses/by/3.0/",
+    "sourceAudio": "subsets/en/mp3/Cortez_-_Feel__Stripped_.mp3",
+    "sourceAudioSha256": "beefa48e4520bb290e739faa7c0a91e4e7296fb239577966b2129934ccf86b31",
+    "sourceAudioBytes": 5947904,
+    "wordAnnotations": "annotations/words/Cortez_-_Feel__Stripped_.csv",
+    "wordAnnotationsSha256": "5f8f43dd1443b0fe53962491e9a268f13ee3a1b277a9e92d4b962c3a2d9863e4",
+    "wordText": "lyrics/Cortez_-_Feel__Stripped_.words.txt",
+    "wordTextSha256": "558091d2eff3db13e0167a9e72774c627cbc20ac80419a54b31536d9a64192ec",
+    "dataset": "jamendolyrics/jamendolyrics",
+    "revision": "de188c963fd4539bc769b3feb83582e5a9595e36"
+  },
+  {
+    "artist": "Lower Loveday",
+    "title": "Is It Right?",
+    "trackUrl": "https://www.jamendo.com/track/1559614/is-it-right",
+    "audioAndLyricsLicense": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "sourceAudio": "subsets/en/mp3/Lower_Loveday_-_Is_It_Right_.mp3",
+    "sourceAudioSha256": "84e344829620711e39f9c189f15671f7ffd184946cf03e269c23c6061c05e1eb",
+    "sourceAudioBytes": 4521984,
+    "wordAnnotations": "annotations/words/Lower_Loveday_-_Is_It_Right_.csv",
+    "wordAnnotationsSha256": "7f1f7744622e7dad945be9f501ce2638cfbb79cbd579e46a1dbe3e98ca5998c9",
+    "wordText": "lyrics/Lower_Loveday_-_Is_It_Right_.words.txt",
+    "wordTextSha256": "b4813ae07f52d387cb581038369c31711337004c07dcc1438c5e93738e76c75b",
+    "dataset": "jamendolyrics/jamendolyrics",
+    "revision": "de188c963fd4539bc769b3feb83582e5a9595e36"
+  },
+  {
+    "artist": "Rxbyn",
+    "title": "Bad Side",
+    "trackUrl": "https://www.jamendo.com/track/1556580/bad-side",
+    "audioAndLyricsLicense": "https://creativecommons.org/licenses/by/3.0/",
+    "sourceAudio": "subsets/en/mp3/Rxbyn_-_Bad_Side.mp3",
+    "sourceAudioSha256": "24090af9ca4886bb0551f7c1896c249af3311cce1c585092054ed5c428834d44",
+    "sourceAudioBytes": 5672448,
+    "wordAnnotations": "annotations/words/Rxbyn_-_Bad_Side.csv",
+    "wordAnnotationsSha256": "040bb6c15c870b2a0ce39ee8f302bf74848ec4788305daf71b5094d1a3deb3b5",
+    "wordText": "lyrics/Rxbyn_-_Bad_Side.words.txt",
+    "wordTextSha256": "1a03b21b3ab66050987de7c68cc86cd597f03d5f4785d3fe13774218d6182d33",
+    "dataset": "jamendolyrics/jamendolyrics",
+    "revision": "de188c963fd4539bc769b3feb83582e5a9595e36"
+  }
+]

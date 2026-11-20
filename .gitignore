@@ -1,0 +1,94 @@
+# Root-only captures and standalone build outputs.
+/*.apk
+/*.obj
+/*.log
+/Testing/
+/work/
+
+# Recorded/generated tester output.
+/Test suite/evidence/
+/Test suite/work/
+
+# Structured per-job engine telemetry is auditable; disposable process output is local.
+/Engine telemetry/**/*.log
+/Engine telemetry/**/*.tmp
+/Engine telemetry/**/*.lock
+/Engine telemetry/**/emissions-*.pt
+/Engine telemetry/**/operations/**/*.launch.json
+/Engine telemetry/**/operations/**/*.completion.json
+/Engine telemetry/**/SEND_TO_AGENTS.md
+
+# Reconstructable host toolchains, native scratch, and interpreter caches.
+/StemWise/.host-native*/
+/StemWise/.toolchains/
+/StemWise/qa-provider/build/
+/StemWise/audio-engine/build/
+/StemWise/audio-engine/.cxx/
+**/__pycache__/
+*.pyc
+*.pyo
+*.apk
+
+# PC runtime, models and generated delivery/inference output.
+/PC side/.alignment-workspace-placeholder
+/PC side/generated-packages/
+/PC side/handoff-history/
+/PC side/lyrics-alignment/
+/PC side/model-cache/
+/PC side/reports/
+/PC side/runtime/
+/PC side/temporary-analysis/
+/PC side/stemwise-playlist-builder/.tools/
+/PC side/stemwise-playlist-builder/.venv*/
+/PC side/stemwise-playlist-builder/owner-input/*
+!/PC side/stemwise-playlist-builder/owner-input/*.lyrics.json
+!/PC side/stemwise-playlist-builder/owner-input/drafts/
+!/PC side/stemwise-playlist-builder/owner-input/recording-editorial-reference.txt
+/PC side/stemwise-playlist-builder/runtime/acoustic-queue/
+/PC side/stemwise-playlist-builder/runtime/model-operations/
+/PC side/stemwise-playlist-builder/qualification/*
+!/PC side/stemwise-playlist-builder/qualification/qualification-profile.json
+/PC side/stemwise-playlist-builder/future-songs/history/
+/PC side/stemwise-playlist-builder/future-songs/jobs/
+/PC side/stemwise-playlist-builder/future-songs/lyrics-alignment/
+/PC side/stemwise-playlist-builder/future-songs/runtime/
+/PC side/stemwise-playlist-builder/future-songs/policy/history/
+/PC side/stemwise-playlist-builder/future-songs/policy-state/*
+!/PC side/stemwise-playlist-builder/future-songs/policy-state/*/
+/PC side/stemwise-playlist-builder/future-songs/policy-state/*/*
+!/PC side/stemwise-playlist-builder/future-songs/policy-state/*/owner-input/
+/PC side/stemwise-playlist-builder/stemwise-heavy-worker.lock
+/PC side/.codex-inspect-*/
+
+# Raw recordings and generated comparison output; source identities/decisions are auditable.
+/.codex-remote-attachments/
+/PC side/qobuz-comparison/audio/**
+!/PC side/qobuz-comparison/audio/**/
+!/PC side/qobuz-comparison/audio/**/download.json
+/PC side/qobuz-comparison/catalogue.json.lock
+/PC side/qobuz-comparison/comparison-results/*
+!/PC side/qobuz-comparison/comparison-results/library-files.json
+/PC side/artwork-qa-*/
+/PC side/temporary-qa-*/
+/PC side/stemwise-playlist-builder/temporary-analysis/
+/PC side/stemwise-playlist-builder/future-songs/artwork-qa-*/
+
+# Deliveries and generated local test artifacts.
+/Ready to Import/
+/artifacts/
+
+# Superseded editorial backups are not current review inputs.
+**/owner-input/qa-history/
+**/owner-input/**/qa-history/
+**/owner-input/**/*.before
+
+/PC side/stemwise-playlist-builder/.environment-*.lock
+/PC side/stemwise-playlist-builder/.environment-install-*.json
+/PC side/stemwise-playlist-builder/.environment-build/
+
+# Editable local Python package metadata.
+/PC side/*.egg-info/
+/PC side/build/
+
+# Mutable report pointers; immutable runs and bound validation evidence remain auditable.
+/Engine telemetry/**/reports/**/runtime/

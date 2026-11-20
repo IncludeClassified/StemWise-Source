@@ -1,0 +1,787 @@
+{
+  "schemaVersion": 1,
+  "sourceHashes": {
+    "StemWise/contracts/audio/playback-capacity.json": "2b77b39e8318dd1cb1daa8ec84ad87fc789fbd670f0ecc04656912e0eb54a08f",
+    "StemWise/app/src/main/java/app/stemwise/integration/MvsepSourcePlanner.kt": "3c6542c7c66e96b04cc6e03d488fcb9cea25ab0d10d63c8b0a5274be5dd90fe0",
+    "StemWise/audio-engine/src/main/java/app/stemwise/model/StemSourceCatalogue.kt": "0f4502a64c9c57c531715b2212e720cedc3fcead43c1e6366637c2ee131c95c1"
+  },
+  "selectedSourceIds": [
+    "vocals",
+    "lead-vocals",
+    "backing-vocals",
+    "male-vocals",
+    "female-vocals",
+    "choir",
+    "soprano-vocals",
+    "alto-vocals",
+    "tenor-vocals",
+    "bass-vocals",
+    "drums",
+    "kick",
+    "snare",
+    "toms",
+    "cymbals",
+    "hi-hat",
+    "ride",
+    "crash",
+    "percussion",
+    "tambourine",
+    "marimba",
+    "glockenspiel",
+    "timpani",
+    "triangle",
+    "congas",
+    "bells",
+    "wind-chimes",
+    "xylophone",
+    "vibraphone",
+    "metal-bars",
+    "clap",
+    "cowbell",
+    "bass",
+    "guitar",
+    "acoustic-guitar",
+    "electric-guitar",
+    "lead-guitar",
+    "rhythm-guitar",
+    "plucked-strings",
+    "harp",
+    "mandolin",
+    "banjo",
+    "sitar",
+    "ukulele",
+    "dobro",
+    "strings",
+    "violin",
+    "viola",
+    "cello",
+    "double-bass",
+    "keys",
+    "piano",
+    "digital-piano",
+    "organ",
+    "synth",
+    "harpsichord",
+    "accordion",
+    "rhodes",
+    "clavinet",
+    "mellotron",
+    "celesta",
+    "wind",
+    "brass",
+    "woodwind",
+    "saxophone",
+    "flute",
+    "trumpet",
+    "trombone",
+    "oboe",
+    "clarinet",
+    "french-horn",
+    "harmonica",
+    "tuba",
+    "bassoon",
+    "bagpipes",
+    "whistle",
+    "crowd"
+  ],
+  "configurations": [
+    {
+      "renderId": 63,
+      "options": {},
+      "expectedRoles": [
+        "bass",
+        "drums",
+        "guitar",
+        "instrum",
+        "other",
+        "piano",
+        "vocals"
+      ],
+      "configurationId": "mvsep-63",
+      "outputBindings": {
+        "vocals": "vocals",
+        "bass": "bass",
+        "piano": "piano",
+        "drums": "drums",
+        "guitar": "guitar"
+      }
+    },
+    {
+      "renderId": 49,
+      "options": {
+        "add_opt1": "6",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "back-instrum",
+        "instrum-only",
+        "vocals-back",
+        "vocals-lead"
+      ],
+      "configurationId": "mvsep-49-direct",
+      "outputBindings": {
+        "lead-vocals": "vocals-lead",
+        "backing-vocals": "vocals-back"
+      }
+    },
+    {
+      "renderId": 57,
+      "options": {
+        "add_opt1": "2",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "female",
+        "male"
+      ],
+      "configurationId": "mvsep-57-direct",
+      "outputBindings": {
+        "female-vocals": "female",
+        "male-vocals": "male"
+      }
+    },
+    {
+      "renderId": 112,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "choir",
+        "other"
+      ],
+      "configurationId": "mvsep-112-direct",
+      "outputBindings": {"choir": "choir"}
+    },
+    {
+      "renderId": 111,
+      "options": {
+        "add_opt1": "3",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "alto",
+        "bass",
+        "soprano",
+        "tenor"
+      ],
+      "configurationId": "mvsep-111-direct",
+      "outputBindings": {
+        "bass-vocals": "bass",
+        "soprano-vocals": "soprano",
+        "alto-vocals": "alto",
+        "tenor-vocals": "tenor"
+      }
+    },
+    {
+      "renderId": 37,
+      "options": {
+        "add_opt1": "7",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "crash",
+        "drums",
+        "hh",
+        "kick",
+        "residual",
+        "ride",
+        "snare",
+        "toms"
+      ],
+      "configurationId": "mvsep-37-six-direct",
+      "outputBindings": {
+        "snare": "snare",
+        "hi-hat": "hh",
+        "kick": "kick",
+        "ride": "ride",
+        "toms": "toms",
+        "crash": "crash"
+      }
+    },
+    {
+      "renderId": 37,
+      "options": {
+        "add_opt1": "6",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "cymbals",
+        "drums",
+        "kick",
+        "residual",
+        "snare",
+        "toms"
+      ],
+      "configurationId": "mvsep-37-four-direct",
+      "outputBindings": {
+        "snare": "snare",
+        "kick": "kick",
+        "cymbals": "cymbals",
+        "toms": "toms"
+      }
+    },
+    {
+      "renderId": 105,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "percussion"
+      ],
+      "configurationId": "mvsep-105-direct",
+      "outputBindings": {"percussion": "percussion"}
+    },
+    {
+      "renderId": 76,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "tambourine"
+      ],
+      "configurationId": "mvsep-76-direct",
+      "outputBindings": {"tambourine": "tambourine"}
+    },
+    {
+      "renderId": 84,
+      "options": {},
+      "expectedRoles": [
+        "marimba",
+        "other"
+      ],
+      "configurationId": "mvsep-84-direct",
+      "outputBindings": {"marimba": "marimba"}
+    },
+    {
+      "renderId": 85,
+      "options": {},
+      "expectedRoles": [
+        "glockenspiel",
+        "other"
+      ],
+      "configurationId": "mvsep-85-direct",
+      "outputBindings": {"glockenspiel": "glockenspiel"}
+    },
+    {
+      "renderId": 86,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "timpani"
+      ],
+      "configurationId": "mvsep-86-direct",
+      "outputBindings": {"timpani": "timpani"}
+    },
+    {
+      "renderId": 89,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "triangle"
+      ],
+      "configurationId": "mvsep-89-direct",
+      "outputBindings": {"triangle": "triangle"}
+    },
+    {
+      "renderId": 94,
+      "options": {},
+      "expectedRoles": [
+        "congas",
+        "other"
+      ],
+      "configurationId": "mvsep-94-direct",
+      "outputBindings": {"congas": "congas"}
+    },
+    {
+      "renderId": 95,
+      "options": {},
+      "expectedRoles": [
+        "bells",
+        "other"
+      ],
+      "configurationId": "mvsep-95-direct",
+      "outputBindings": {"bells": "bells"}
+    },
+    {
+      "renderId": 98,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "wind-chimes"
+      ],
+      "configurationId": "mvsep-98-direct",
+      "outputBindings": {"wind-chimes": "wind-chimes"}
+    },
+    {
+      "renderId": 109,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "other",
+        "xylophone"
+      ],
+      "configurationId": "mvsep-109-direct",
+      "outputBindings": {"xylophone": "xylophone"}
+    },
+    {
+      "renderId": 129,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "vibes"
+      ],
+      "configurationId": "mvsep-129-direct",
+      "outputBindings": {"vibraphone": "vibes"}
+    },
+    {
+      "renderId": 130,
+      "options": {},
+      "expectedRoles": [
+        "metal-bars",
+        "other"
+      ],
+      "configurationId": "mvsep-130-direct",
+      "outputBindings": {"metal-bars": "metal-bars"}
+    },
+    {
+      "renderId": 133,
+      "options": {},
+      "expectedRoles": [
+        "clap",
+        "other"
+      ],
+      "configurationId": "mvsep-133-direct",
+      "outputBindings": {"clap": "clap"}
+    },
+    {
+      "renderId": 128,
+      "options": {},
+      "expectedRoles": [
+        "cowbell",
+        "other"
+      ],
+      "configurationId": "mvsep-128-direct",
+      "outputBindings": {"cowbell": "cowbell"}
+    },
+    {
+      "renderId": 66,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "acoustic-guitar",
+        "other"
+      ],
+      "configurationId": "mvsep-66-direct",
+      "outputBindings": {"acoustic-guitar": "acoustic-guitar"}
+    },
+    {
+      "renderId": 81,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "electric-guitar",
+        "other"
+      ],
+      "configurationId": "mvsep-81-direct",
+      "outputBindings": {"electric-guitar": "electric-guitar"}
+    },
+    {
+      "renderId": 101,
+      "options": {"add_opt1": "1"},
+      "expectedRoles": [
+        "all-guitar",
+        "lead-guitar",
+        "no-guitar",
+        "rhythm-guitar"
+      ],
+      "configurationId": "mvsep-101-direct",
+      "outputBindings": {
+        "lead-guitar": "lead-guitar",
+        "rhythm-guitar": "rhythm-guitar"
+      }
+    },
+    {
+      "renderId": 102,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "plucked-strings"
+      ],
+      "configurationId": "mvsep-102-direct",
+      "outputBindings": {"plucked-strings": "plucked-strings"}
+    },
+    {
+      "renderId": 72,
+      "options": {},
+      "expectedRoles": [
+        "harp",
+        "other"
+      ],
+      "configurationId": "mvsep-72-direct",
+      "outputBindings": {"harp": "harp"}
+    },
+    {
+      "renderId": 74,
+      "options": {},
+      "expectedRoles": [
+        "mandolin",
+        "other"
+      ],
+      "configurationId": "mvsep-74-direct",
+      "outputBindings": {"mandolin": "mandolin"}
+    },
+    {
+      "renderId": 83,
+      "options": {},
+      "expectedRoles": [
+        "banjo",
+        "other"
+      ],
+      "configurationId": "mvsep-83-direct",
+      "outputBindings": {"banjo": "banjo"}
+    },
+    {
+      "renderId": 90,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "sitar"
+      ],
+      "configurationId": "mvsep-90-direct",
+      "outputBindings": {"sitar": "sitar"}
+    },
+    {
+      "renderId": 96,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "ukulele"
+      ],
+      "configurationId": "mvsep-96-direct",
+      "outputBindings": {"ukulele": "ukulele"}
+    },
+    {
+      "renderId": 97,
+      "options": {},
+      "expectedRoles": [
+        "dobro",
+        "other"
+      ],
+      "configurationId": "mvsep-97-direct",
+      "outputBindings": {"dobro": "dobro"}
+    },
+    {
+      "renderId": 52,
+      "options": {
+        "add_opt1": "1",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "other",
+        "strings"
+      ],
+      "configurationId": "mvsep-52-direct",
+      "outputBindings": {"strings": "strings"}
+    },
+    {
+      "renderId": 65,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "violin"
+      ],
+      "configurationId": "mvsep-65-direct",
+      "outputBindings": {"violin": "violin"}
+    },
+    {
+      "renderId": 69,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "other",
+        "viola"
+      ],
+      "configurationId": "mvsep-69-direct",
+      "outputBindings": {"viola": "viola"}
+    },
+    {
+      "renderId": 70,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "cello",
+        "other"
+      ],
+      "configurationId": "mvsep-70-direct",
+      "outputBindings": {"cello": "cello"}
+    },
+    {
+      "renderId": 73,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "double-bass",
+        "other"
+      ],
+      "configurationId": "mvsep-73-direct",
+      "outputBindings": {"double-bass": "double-bass"}
+    },
+    {
+      "renderId": 106,
+      "options": {},
+      "expectedRoles": [
+        "keys",
+        "other"
+      ],
+      "configurationId": "mvsep-106-direct",
+      "outputBindings": {"keys": "keys"}
+    },
+    {
+      "renderId": 79,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "digital-piano",
+        "other"
+      ],
+      "configurationId": "mvsep-79-direct",
+      "outputBindings": {"digital-piano": "digital-piano"}
+    },
+    {
+      "renderId": 58,
+      "options": {"add_opt1": "3"},
+      "expectedRoles": [
+        "organ",
+        "other"
+      ],
+      "configurationId": "mvsep-58-direct",
+      "outputBindings": {"organ": "organ"}
+    },
+    {
+      "renderId": 88,
+      "options": {"add_opt1": "0"},
+      "expectedRoles": [
+        "other",
+        "synth"
+      ],
+      "configurationId": "mvsep-88-direct",
+      "outputBindings": {"synth": "synth"}
+    },
+    {
+      "renderId": 91,
+      "options": {},
+      "expectedRoles": [
+        "harpsichord",
+        "other"
+      ],
+      "configurationId": "mvsep-91-direct",
+      "outputBindings": {"harpsichord": "harpsichord"}
+    },
+    {
+      "renderId": 99,
+      "options": {},
+      "expectedRoles": [
+        "accordion",
+        "other"
+      ],
+      "configurationId": "mvsep-99-direct",
+      "outputBindings": {"accordion": "accordion"}
+    },
+    {
+      "renderId": 131,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "rhodes"
+      ],
+      "configurationId": "mvsep-131-direct",
+      "outputBindings": {"rhodes": "rhodes"}
+    },
+    {
+      "renderId": 135,
+      "options": {},
+      "expectedRoles": [
+        "clavinet",
+        "other"
+      ],
+      "configurationId": "mvsep-135-direct",
+      "outputBindings": {"clavinet": "clavinet"}
+    },
+    {
+      "renderId": 136,
+      "options": {},
+      "expectedRoles": [
+        "mellotron",
+        "other"
+      ],
+      "configurationId": "mvsep-136-direct",
+      "outputBindings": {"mellotron": "mellotron"}
+    },
+    {
+      "renderId": 110,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "celesta",
+        "other"
+      ],
+      "configurationId": "mvsep-110-direct",
+      "outputBindings": {"celesta": "celesta"}
+    },
+    {
+      "renderId": 54,
+      "options": {
+        "add_opt1": "3",
+        "add_opt2": "0",
+        "add_opt3": "0"
+      },
+      "expectedRoles": [
+        "other",
+        "wind"
+      ],
+      "configurationId": "mvsep-54-direct",
+      "outputBindings": {"wind": "wind"}
+    },
+    {
+      "renderId": 107,
+      "options": {"add_opt1": "0"},
+      "expectedRoles": [
+        "brass",
+        "other"
+      ],
+      "configurationId": "mvsep-107-direct",
+      "outputBindings": {"brass": "brass"}
+    },
+    {
+      "renderId": 108,
+      "options": {"add_opt1": "0"},
+      "expectedRoles": [
+        "other",
+        "woodwind"
+      ],
+      "configurationId": "mvsep-108-direct",
+      "outputBindings": {"woodwind": "woodwind"}
+    },
+    {
+      "renderId": 61,
+      "options": {"add_opt1": "3"},
+      "expectedRoles": [
+        "other",
+        "saxophone"
+      ],
+      "configurationId": "mvsep-61-direct",
+      "outputBindings": {"saxophone": "saxophone"}
+    },
+    {
+      "renderId": 67,
+      "options": {
+        "add_opt1": "1",
+        "add_opt2": "0"
+      },
+      "expectedRoles": [
+        "flute",
+        "other"
+      ],
+      "configurationId": "mvsep-67-direct",
+      "outputBindings": {"flute": "flute"}
+    },
+    {
+      "renderId": 71,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "other",
+        "trumpet"
+      ],
+      "configurationId": "mvsep-71-direct",
+      "outputBindings": {"trumpet": "trumpet"}
+    },
+    {
+      "renderId": 75,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "other",
+        "trombone"
+      ],
+      "configurationId": "mvsep-75-direct",
+      "outputBindings": {"trombone": "trombone"}
+    },
+    {
+      "renderId": 77,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "oboe",
+        "other"
+      ],
+      "configurationId": "mvsep-77-direct",
+      "outputBindings": {"oboe": "oboe"}
+    },
+    {
+      "renderId": 78,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "clarinet",
+        "other"
+      ],
+      "configurationId": "mvsep-78-direct",
+      "outputBindings": {"clarinet": "clarinet"}
+    },
+    {
+      "renderId": 82,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "french-horn",
+        "other"
+      ],
+      "configurationId": "mvsep-82-direct",
+      "outputBindings": {"french-horn": "french-horn"}
+    },
+    {
+      "renderId": 87,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "harmonica",
+        "other"
+      ],
+      "configurationId": "mvsep-87-direct",
+      "outputBindings": {"harmonica": "harmonica"}
+    },
+    {
+      "renderId": 92,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "tuba"
+      ],
+      "configurationId": "mvsep-92-direct",
+      "outputBindings": {"tuba": "tuba"}
+    },
+    {
+      "renderId": 93,
+      "options": {},
+      "expectedRoles": [
+        "bassoon",
+        "other"
+      ],
+      "configurationId": "mvsep-93-direct",
+      "outputBindings": {"bassoon": "bassoon"}
+    },
+    {
+      "renderId": 116,
+      "options": {"add_opt2": "0"},
+      "expectedRoles": [
+        "bagpipes",
+        "other"
+      ],
+      "configurationId": "mvsep-116-direct",
+      "outputBindings": {"bagpipes": "bagpipes"}
+    },
+    {
+      "renderId": 132,
+      "options": {},
+      "expectedRoles": [
+        "other",
+        "whistle"
+      ],
+      "configurationId": "mvsep-132-direct",
+      "outputBindings": {"whistle": "whistle"}
+    },
+    {
+      "renderId": 34,
+      "options": {"add_opt1": "2"},
+      "expectedRoles": [
+        "crowd",
+        "other"
+      ],
+      "configurationId": "mvsep-34-direct",
+      "outputBindings": {"crowd": "crowd"}
+    }
+  ]
+}

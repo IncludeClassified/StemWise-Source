@@ -1,0 +1,26 @@
+{
+  "formatVersion": 2,
+  "kind": "stemwise.song-enrichment",
+  "source": {
+    "provider": "youtube",
+    "videoId": "FIXTURE0001"
+  },
+  "generatedAt": "2026-07-29T08:15:00Z",
+  "generator": {
+    "name": "stemwise-pc",
+    "version": "2.1.0"
+  },
+  "metadata": {
+    "matchStatus": "verified",
+    "title": "Golden Hour Circuit (Revised Metadata)",
+    "artists": [
+      "StemWise Fixture Artist"
+    ],
+    "sources": [
+      {
+        "name": "StemWise golden-fixture catalog",
+        "url": "https://stemwise.local/fixtures/FIXTURE0001"
+      }
+    ]
+  }
+}

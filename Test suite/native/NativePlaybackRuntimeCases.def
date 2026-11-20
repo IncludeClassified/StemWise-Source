@@ -1,0 +1,425 @@
+// One executable case registry drives selectors, aggregate execution and normal CTest entries.
+STEMWISE_FOCUSED_CASE("--streamed-repeat-src-preroll", [] {
+    streamedRepeatDrainsRealSrcPrerollBeforeBodyAcknowledgement();
+})
+STEMWISE_FOCUSED_CASE("--streamed-repeat-src-preroll-short-stem", [] {
+    streamedRepeatDrainsRealSrcPrerollBeforeBodyAcknowledgement(true);
+})
+STEMWISE_FOCUSED_CASE("--streamed-repeat-src-preroll-gap", [] {
+    streamedRepeatDrainsRealSrcPrerollBeforeBodyAcknowledgement(false, true);
+})
+STEMWISE_FOCUSED_CASE("--streamed-repeat-src-preroll-delayed-fallback", [] {
+    streamedRepeatDrainsRealSrcPrerollBeforeBodyAcknowledgement(true, false, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-stems-head-readers", [] {
+    completedOriginalLoopClearReleasesOnlyObsoleteSpareHeadReaders();
+})
+STEMWISE_FOCUSED_CASE("--playback-window", [] {
+    nonzeroColdOwnerAudibleEndIsExactOnce(true);
+})
+STEMWISE_FOCUSED_CASE("--trimmed-successor", [] {
+    automaticSuccessorFillsExactEosCallbackWithoutHole(true);
+})
+STEMWISE_FOCUSED_CASE("--playback-window-repeat", [] {
+    managedOriginalEosBoundaryComesFromActiveDecoderForExactAndLongSongs(true);
+})
+STEMWISE_FOCUSED_CASE("--stop-during-retained-body-copy", [] {
+    stopDuringUnpublishedRetainedBodyCopyReleasesTheBankAndAcceptsANewOwner();
+})
+STEMWISE_FOCUSED_CASE("--failed-retained-window-read-status", [] {
+    failedRetainedWindowReadCannotMasqueradeAsPendingInput();
+})
+STEMWISE_FOCUSED_CASE("--cache-reader-rebind", [] {
+    cacheRebindingRetainsAcceptedPcmWhileReaderAdmissionWaits(false);
+})
+STEMWISE_FOCUSED_CASE("--cache-reader-promotion", [] {
+    cacheRebindingRetainsAcceptedPcmWhileReaderAdmissionWaits(true);
+})
+STEMWISE_FOCUSED_CASE("--output-wait-reasons", [] {
+    producerStarvationDiagnosticsAreCommittedQueueLowWaterGated();
+    asyncPipelineReplacementWakesTheIdleIoOwner();
+    coldLoopSpareCannotPublishActiveStarvationEvidence();
+})
+STEMWISE_FOCUSED_CASE("--bounded-late-loop", [] {
+    boundedLateHeadUsesAtomicRuntimeWithMaximumParts(false);
+    boundedLateHeadUsesAtomicRuntimeWithMaximumParts(true);
+})
+STEMWISE_FOCUSED_CASE("--bounded-loop-head-publication", [] {
+    pendingBoundedHeadCannotWithdrawInstalledLoopPcm(false);
+    pendingBoundedHeadCannotWithdrawInstalledLoopPcm(true);
+    pendingBoundedHeadCannotWithdrawInstalledLoopPcm(false, true);
+    pendingBoundedHeadCannotWithdrawInstalledLoopPcm(false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--bounded-loop-eof-clear", [] {
+    pendingBoundedHeadCannotWithdrawInstalledLoopPcm(false, false, true, true);
+})
+STEMWISE_FOCUSED_CASE("--bounded-head-frame-zero-seek", [] {
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead();
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--retained-active-head-clear", [] {
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, false, true, false, false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--delayed-bounded-head-seek", [] {
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(true, false, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, true, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, true, false, true);
+})
+STEMWISE_FOCUSED_CASE("--original-only-head-with-declared-parts", [] {
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(true, false, false, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, true, false, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, true, false, false, false, true);
+    frameZeroSeekReusesOnlyTheSameRecordingBoundedHead(false, false, false, false, false, false, true, true);
+})
+STEMWISE_FOCUSED_CASE("--retained-window-loop", [] {
+    boundedLateHeadUsesAtomicRuntimeWithMaximumParts(false, true);
+    boundedLateHeadUsesAtomicRuntimeWithMaximumParts(true, true);
+})
+STEMWISE_FOCUSED_CASE("--retained-window-read-failure", [] {
+    boundedLateHeadUsesAtomicRuntimeWithMaximumParts(false, true, true);
+})
+STEMWISE_FOCUSED_CASE("--retained-active-head-read-failure", [] {
+    boundedLateHeadUsesAtomicRuntimeWithMaximumParts(true, true, true, true);
+})
+STEMWISE_FOCUSED_CASE("--optional-cache-read-failure", [] {
+    optionalCacheReadFailureReportsItsLaneAndKeepsOriginal(false);
+    optionalCacheReadFailureReportsItsLaneAndKeepsOriginal(true);
+})
+STEMWISE_FOCUSED_CASE("--failed-cache-loop-availability", [] {
+    impossibleLoopAfterCacheFailureReleasesNaturalEnd(false);
+    impossibleLoopAfterCacheFailureReleasesNaturalEnd(true);
+})
+STEMWISE_FOCUSED_CASE("--optional-cache-two-seeks", [] {
+    optionalAdmissionFallbackSurvivesTwoExactSeeks();
+})
+STEMWISE_FOCUSED_CASE("--superseded-cache-admission", [] {
+    supersededOptionalAdmissionReleasesReceiptAndReservation(false);
+    supersededOptionalAdmissionReleasesReceiptAndReservation(true);
+})
+STEMWISE_FOCUSED_CASE("--partial-original-stem-identity", [] {
+    incompleteOriginalPrefixSurvivesStemIdentityChanges(false, false);
+    incompleteOriginalPrefixSurvivesStemIdentityChanges(true, false);
+    incompleteOriginalPrefixSurvivesStemIdentityChanges(false, true);
+})
+STEMWISE_FOCUSED_CASE("--frame-zero-candidate-cache-prefix", [] {
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(false, false);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(true, false);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(false, true);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(true, true);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(false, false, true);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(false, true, true);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(true, false, true);
+    frameZeroCandidatePreservesPreviouslyDrainedOriginalPrefix(true, true, false, true);
+})
+STEMWISE_FOCUSED_CASE("--failed-optional-cache-retirement", [] {
+    failedOptionalCacheCanRetireItsPackage(false);
+    failedOptionalCacheCanRetireItsPackage(true);
+})
+STEMWISE_FOCUSED_CASE("--rejected-cache-expansion", [] {
+    rejectedCacheExpansionCannotAuthorizeOptionalWrites(false);
+    rejectedCacheExpansionCannotAuthorizeOptionalWrites(true);
+})
+STEMWISE_FOCUSED_CASE("--optional-cache-failure-continuity", [] {
+    nonzeroSelectedOwnerBuildsCurrentSongCacheOnSameSongSpareBank(true);
+    for (const bool partial : {false, true}) for (const bool seal : {false, true})
+                    optionalStemCacheFailureKeepsExactOriginalPcm(partial, seal);
+})
+STEMWISE_FOCUSED_CASE("--paused-late-stem-preload", [] {
+    pausedPresentationRangeSurvivesLateStemPreload();
+})
+STEMWISE_FOCUSED_CASE("--original-loop-optional-head", [] {
+    pausedPresentationRangeSurvivesLateStemPreload(true);
+})
+STEMWISE_FOCUSED_CASE("--cache-io-fairness", [] {
+    canonicalReadsUpdateDiagnosticsWithoutControlNotifications();
+    commandAcknowledgementsCannotStarveCanonicalAsyncReads();
+    canonicalProgressWaitsForPublicationAndStopsWithoutEcho();
+})
+STEMWISE_FOCUSED_CASE("--canonical-pcm-io", [] {
+    canonical44100RandomReadsMatchCanonicalIngress();
+})
+STEMWISE_FOCUSED_CASE("--canonical-playback-rewind", [] {
+    unsealedBoundedCacheSeekUsesOrdinaryAllLanePlayback();
+    allLanePlaybackAndExactCanonicalRewind();
+})
+STEMWISE_FOCUSED_CASE("--ingress-failure-owner", [] {
+    workerRejectedIngressPublishesTheExactFailedGeneration();
+})
+STEMWISE_FOCUSED_CASE("--cache-storage-admission", [] {
+    wholeSongCacheBudgetFailurePreservesOrdinaryOriginalAndParts();
+})
+STEMWISE_FOCUSED_CASE("--dynamic-parts", [] {
+    selectedPartCountsAreBoundedAndInactiveIngressIsNeverScheduled();
+})
+STEMWISE_FOCUSED_CASE("--preview-mailbox", [] {
+    stemGainPreviewMailboxIsLatestOnlyAllocationFreeAndNotACommand();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-callback-claim", [] {
+    directLoopPhysicalCutoverUsesDistinctBoundaryAndContinuation(
+                    LoopClearOrder::ClearOnly, false, true);
+    directLoopPhysicalCutoverUsesDistinctBoundaryAndContinuation(
+                    LoopClearOrder::ClearOnly, false, false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--managed-repeat-edges", [] {
+    streamedDeadlineFallbackRecoversAfterNaturalEosWithLateExactBody();
+    streamedRepeatZeroPadsAStemOnlyFromExactFutureEpochEos();
+})
+STEMWISE_FOCUSED_CASE("--late-control-queue-full", [] {
+    queueFullLateMixPublicationBypassesFortyEightMillisecondRenderReserve();
+})
+STEMWISE_FOCUSED_CASE("--concurrency-check", [] {
+    diagnosticsSnapshotsRemainCoherentUnderConcurrentPublication();
+    twoInstancesAndSteadyControlPressureStayIndependentAndAllocationFree();
+})
+STEMWISE_FOCUSED_CASE("--lazy-pipeline-construction", [] {
+    coldPipelinesRequireExactResourceAdmission();
+    measureUnusedPipelineConstruction();
+})
+STEMWISE_FOCUSED_CASE("--route-cache-recovery", [] {
+    cacheTransferWaitsForItsDestinationIoOwner();
+    completedSongCacheSurvivesRuntimeReplacement();
+})
+STEMWISE_FOCUSED_CASE("--tuned-repeat-readiness", [] {
+    tunedRepeatPreparesBeforeEosAfterRawLookaheadWasConsumed();
+    newlyAttachedStemsBuildTheOwnerCacheAfterRepeatAdvancesIngress();
+})
+STEMWISE_FOCUSED_CASE("--tuned-successor-parts", [] {
+    tunedSuccessorMakesIncrementalProgressForDynamicParts();
+})
+STEMWISE_FOCUSED_CASE("--empty-successor-eof-audit", [] {
+    emptyEndedSuccessorCannotSuppressOutgoingEndForever();
+})
+STEMWISE_FOCUSED_CASE("--prewarm-eos-cache-audit", [] {
+    prewarmedSuccessorEosMustSealPromotedOriginalCache();
+})
+STEMWISE_FOCUSED_CASE("--successor-control-lifecycle-audit", [] {
+    automaticSuccessorFillsExactEosCallbackWithoutHole();
+    sameCanonicalRevisionAutomaticSuccessorLifecycleReappliesPerOwnerControls();
+})
+STEMWISE_FOCUSED_CASE("--paused-idle-quiescence", [] {
+    pausedIdleParksUntilExplicitWake();
+})
+STEMWISE_FOCUSED_CASE("--rejected-play-idle-retry", [] {
+    rejectedPlayingUsesBoundedIdleRetryAndRetainsPcm();
+})
+STEMWISE_FOCUSED_CASE("--beat-grid-idempotence", [] {
+    bothBanksPrewarmAndFastSwitchWithAllControls();
+})
+STEMWISE_FOCUSED_CASE("--neutral-render-quantum", [] {
+    neutralReturnRestoresMaximumRenderQuantum();
+})
+STEMWISE_FOCUSED_CASE("--cache-read-failure", [] {
+    failedCacheReadPublishesExactOwnerFailure();
+})
+STEMWISE_FOCUSED_CASE("--current-song-cache-promotion", [] {
+    completeCurrentSongCachePromotesOnlyToExactSelectedOwner();
+    completeCurrentSongCachePromotesOnlyToExactSelectedOwner(true);
+    failedPartialStemPackageDetachesWithoutReplacingOriginal();
+})
+STEMWISE_FOCUSED_CASE("--current-song-cache-allocation-fallback", [] {
+    currentSongCacheFileCreationFailureFallsBackToOriginalReservoir();
+    for (int fault = 1; fault <= 4; ++fault) currentSongCacheFileCreationFailureFallsBackToOriginalReservoir(fault);
+})
+STEMWISE_FOCUSED_CASE("--initial-cache-refusal", [] {
+    currentSongCacheFileCreationFailureFallsBackToOriginalReservoir(2, true);
+    currentSongCacheFileCreationFailureFallsBackToOriginalReservoir(1, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-admission-races", [] {
+    rejectedDirectLoopDemandIsTransactionalAndRetryable();
+    directLoopDemandLinearizesAgainstAutomaticSuccessor();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-retirement", [] {
+    directLoopDemandWithoutPhysicalCacheFencesNaturalEnd();
+    disabledDirectLoopRetiresWithoutBreakingIdempotentRetry();
+    sameTokenSeekRetiresInstalledDirectLoopPhysicalIdentity();
+    directLoopPhysicalCutoverUsesDistinctBoundaryAndContinuation();
+    nearQueuedDirectLoopBoundaryDoesNotWaitAnotherTraversal();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-pause", [] {
+    fakeOutputUsesTheActualOutputOwnersControlPublicationNamespace();
+    directLoopPhysicalCutoverUsesDistinctBoundaryAndContinuation(
+                    LoopClearOrder::ClearPauseSourceResume);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-next", [] {
+    directLoopPhysicalCutoverUsesDistinctBoundaryAndContinuation(
+        LoopClearOrder::ClearOnly, false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-next-pause", [] {
+    directLoopPhysicalCutoverUsesDistinctBoundaryAndContinuation(
+        LoopClearOrder::ClearPauseSourceResume, false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-pressure", [] {
+    fullCurrentOutputRetriesDeferredCacheRequirementPublication();
+    directLoopClearCommandOrdersProgressUnderOutputPressure();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-control-overlap", [] {
+    directLoopClearCommandOrdersProgressUnderOutputPressure(true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-clear-cache-contention", [] {
+    directLoopClearCommandOrdersProgressUnderOutputPressure(true, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-cache-identity", [] {
+    failedLoopResourcePreparationSettlesAndExplicitRevisionRetries();
+    failedLoopResourcePreparationSettlesAndExplicitRevisionRetries(true);
+    unrelatedCommittedHeadCannotBackANewSongsPartialCache(false);
+    unrelatedCommittedHeadCannotBackANewSongsPartialCache(true);
+    directLoopStemIdentityChangesPreserveEnabledRange();
+    directLoopStemIdentityChangesPreserveEnabledRange(true, 9U);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-spare-cache-ingress", [] {
+    nonzeroSelectedOwnerBuildsCurrentSongCacheOnSameSongSpareBank();
+})
+STEMWISE_FOCUSED_CASE("--retired-cache-builder-ingress", [] {
+    nonzeroSelectedOwnerBuildsCurrentSongCacheOnSameSongSpareBank(false, true);
+})
+STEMWISE_FOCUSED_CASE("--cached-seek-late-stems", [] {
+    stemsAttachedAfterCachedSeekBuildFromZeroWhileOriginalPlays();
+})
+STEMWISE_FOCUSED_CASE("--invalid-same-owner-cache-update", [] {
+    stemsAttachedAfterCachedSeekBuildFromZeroWhileOriginalPlays(false, false, true);
+})
+STEMWISE_FOCUSED_CASE("--cached-seek-streamed-stems", [] {
+    stemsAttachedAfterCachedSeekBuildFromZeroWhileOriginalPlays(true, false);
+    stemsAttachedAfterCachedSeekBuildFromZeroWhileOriginalPlays(true, true);
+})
+STEMWISE_FOCUSED_CASE("--unsealed-cache-repeated-seek", [] {
+    unsealedCurrentSongCacheSurvivesRepeatedSeekWithItsFrameZeroBuilder();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-engagement-latch", [] {
+    directLoopEngagementStaysLatchedAtExactB();
+    directLoopEngagementPreservesAtomicPointerDecision();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-dormant", [] {
+    dormantPastDirectLoopCannotFenceAutomaticSuccessor();
+    dormantDirectLoopPreparesBeforeAudibleRangeEntry();
+})
+STEMWISE_FOCUSED_CASE("--dormant-seek-loop-eos", [] {
+    dormantSeekLoopStageCannotFenceNaturalEnd();
+    dormantSeekLoopStageCannotFenceNaturalEnd(true);
+})
+STEMWISE_FOCUSED_CASE("--bounded-loop-seek-reentry", [] {
+    boundedHeadReentryRetiresCancelledSpareReaders();
+    boundedHeadReentryRetiresCancelledSpareReaders(true);
+    boundedHeadReentryRetiresCancelledSpareReaders(false, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-cancel-restore", [] {
+    cancelledDirectLoopRestoreClearsStagedEndEvidence();
+})
+STEMWISE_FOCUSED_CASE("--drain-cancellation-claim", [] {
+    unloadWaitsForCommittedDrainCancellationBeforeHardFlush();
+})
+STEMWISE_FOCUSED_CASE("--paused-tail-drain-wake", [] {
+    pausedTerminalTailCannotAutoAdvance();
+    unloadRetriesRealCallbackPublicationThenReusesOneUnselectedEpoch();
+})
+STEMWISE_FOCUSED_CASE("--loop-expansion-adoption", [] {
+    rapidBOnlyLoopBurstReusesPreparedA(false, true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-adoption-race", [] {
+    rapidBOnlyLoopBurstReusesPreparedA(true);
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-rapid-burst", [] {
+    adoptedLoopContinuationReplaysNewerCanonicalControls();
+    rapidBOnlyLoopBurstReusesPreparedA();
+    rapidDirectLoopRevertCancelsObsoleteOpenStage();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-rapid-a-replacement", [] {
+    rapidDirectLoopBurstCancelsObsoleteOpenStageBeforeCommit();
+})
+STEMWISE_FOCUSED_CASE("--direct-loop-output-priority", [] {
+    directLoopStageNeverPreemptsAudibleOutputRefill();
+    directLoopStageNeverPreemptsAudibleOutputRefill(960U);
+})
+STEMWISE_FOCUSED_CASE("--off-worker-resources", [] {
+    blockedResourcesCannotOwnTheRenderWorker();
+})
+STEMWISE_FOCUSED_CASE("--transient-cache-offer-retry", [] {
+    originalPublicationReevaluatesTransientStemOfferReceipts();
+})
+STEMWISE_FOCUSED_CASE("--repeat-owner-retirement", [] {
+    replacementOwnerCannotResolveRetiredRepeatEos();
+})
+STEMWISE_FOCUSED_CASE("--canonical-random-access-44100-0-parts", [] {
+    canonicalRandomAccessWorkIsIndependentOfPosition(44100U, 0U);
+})
+STEMWISE_FOCUSED_CASE("--canonical-random-access-44100-4-parts", [] {
+    canonicalRandomAccessWorkIsIndependentOfPosition(44100U, 4U);
+})
+STEMWISE_FOCUSED_CASE("--canonical-random-access-44100-9-parts", [] {
+    canonicalRandomAccessWorkIsIndependentOfPosition(44100U, 9U);
+})
+STEMWISE_FOCUSED_CASE("--canonical-random-access-48000-0-parts", [] {
+    canonicalRandomAccessWorkIsIndependentOfPosition(48000U, 0U);
+})
+STEMWISE_FOCUSED_CASE("--canonical-random-access-48000-4-parts", [] {
+    canonicalRandomAccessWorkIsIndependentOfPosition(48000U, 4U);
+})
+STEMWISE_FOCUSED_CASE("--canonical-random-access-48000-9-parts", [] {
+    canonicalRandomAccessWorkIsIndependentOfPosition(48000U, 9U);
+})
+STEMWISE_FOCUSED_CASE("--unsealed-loop-head-reuse-body", [] {
+    partialCachePromotionFinishesItsRetainedOriginalPrefix();
+    sameSongSeekPreservesOrdinaryOriginalAfterUnsealedHeadReuse();
+})
+STEMWISE_FOCUSED_CASE("--core", [] {
+    commandSelectionFenceMatrixIsExact();
+    sameSongSeekReusesUnconsumedPreparedLoopHead(false);
+    sameSongSeekReusesUnconsumedPreparedLoopHead(true);
+    sameSongSeekReusesUnconsumedPreparedLoopHead(false, 12'000U);
+    sameSongSeekReusesUnconsumedPreparedLoopHead(true, 12'000U);
+    sameSongSeekReusesUnconsumedPreparedLoopHead(false, 4'096U, false);
+    sameSongSeekReusesUnconsumedPreparedLoopHead(true, 4'096U, false);
+    fullCurrentIngressPrefixCannotDeadlockFutureLoopEpochPriming();
+    deadlineFirstIngressPlanIsBoundedFairAndSelectedOriginalFirst();
+    outputReserveUsesFiftyMillisecondFloorEndToEnd();
+    audibleControlEvidenceRequiresAWholeSettledCallbackAndExactOwner();
+    latestOfFourHundredSelectionsWinsAndCommitsOnlyOnPresentation();
+    metronomeAndBeatGridSchemaRejectInvalidValuesWithoutClamping();
+    selectedOwnerAfterAcceptedEmptyEpochMustAdvanceProducerHighWater();
+    automaticSuccessorCommandContractRejectsMalformedFences();
+    openStageIsSupersededAndCommittedStageConflatesNewestSelection();
+    partialOutputSuffixesAndCacheIngressAreNeverLost();
+    absoluteFiveSecondSeekStagesExactNewGeneration();
+    nonzeroColdOwnerAudibleEndIsExactOnce();
+    unloadQuiescesBanksClearsGhostAndCanSelectAgain();
+    administrativeFlushRetryIsBackpressureWhileStaleRemainsFault();
+    pausedSelectionsInstallMetadataWithoutAudibleEvidenceOrGhostOwner();
+    pauseAfterCommitBeforeCallbackInstallsExactOwner();
+    repeatCacheSurvivesCommandRevisionsAndOwnerRebind();
+    managedOriginalEosBoundaryComesFromActiveDecoderForExactAndLongSongs();
+    lateShortRepeatCacheClearsOnlyMatchingNaturalEosAndResumesRendering();
+    processLifecycleCountersReturnAfterScopedRuntimeDestruction();
+    startedStemGainPreviewHonorsCommandFloorAndEqualCoversRetirement();
+    stemGainCallbackSettlementRequiresExactCommittedOwnerAndPreservesTuple();
+})
+STEMWISE_FOCUSED_CASE("--preview-aba", startedStemGainPreviewIsSelectedOnlyAndCannotSurviveABA)
+
+STEMWISE_FOCUSED_CASE("--resource-read-service", [] {
+    residentCopyContentionWakesTheCoordinatorWithoutMoreDiskIo();
+    activeCanonicalReadsSurviveHeldDspPreparation(true, 0U);
+    activeCanonicalReadsSurviveHeldDspPreparation(false, 0U);
+    activeCanonicalReadsSurviveHeldDspPreparation(true, kSongRenderLaneCount - 1U);
+    activeCanonicalReadsSurviveHeldDspPreparation(false, kSongRenderLaneCount - 1U);
+    retiredPreparationCannotReplaceTheNewCanonicalOwner();
+    cacheInheritanceWaitsForHeldPreparationRetirement();
+})
+
+STEMWISE_FOCUSED_CASE("--cleared-role-identity", [] {
+    clearedDirectRoleRetainsItsPhysicalIdentityUntilOwnerRetirement();
+    clearedDirectRoleRetainsItsPhysicalIdentityUntilOwnerRetirement(true);
+})
+
+STEMWISE_FOCUSED_CASE("--waveform-canonical-read", [] {
+    boundedWaveformReadsUseCanonicalPcmAndRejectStaleOrCancelledOwners();
+})
+
+STEMWISE_FOCUSED_CASE("--route-beat-grid-replay", [] {
+    recoveredRuntimeRendersReplayedAccentedBeatGrid(false);
+    recoveredRuntimeRendersReplayedAccentedBeatGrid(true);
+})

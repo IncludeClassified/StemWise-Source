@@ -1,0 +1,21 @@
+[
+  "TestConcurrentAppsSerializeNativeSelectionAndSubmission",
+  "TestCloseDrainsBackgroundWorkerBeforeClosingStores",
+  "TestWorkerKeepsIndependentAppsMovingDuringHeldTransfer",
+  "TestRunningCoordinatorRetainsPendingWakeUntilLeasedCapacityRetires",
+  "TestOutputHashDoesNotHoldAppStateAndRevalidatesChangedOutputs",
+  "TestStreamedPreparationKeepsStatusAndCancellationAndPreservesSettings",
+  "TestStreamedOutputKeepsSavedStatusAndCannotResurrectRemovedJob",
+  "TestSuspendedJobBodyLeavesReadsAndCancellationResponsive",
+  "TestSuspendedBodyCannotMutateDeletedOrReplacedRegistration",
+  "TestHTTPObservationsOwnCallerAndServiceLifetimeWithoutSavingCancelledSettings",
+  "TestCancelledAdmissionResponsePreservesAcceptedJobAndOriginalExecution",
+  "TestInputUploadCancellationReleasesBodyAndBothAppsRemainResponsive",
+  "TestInputUploadDeadlineRetiresActualBlockedHTTPBody",
+  "TestInputUploadRetiredCancellationCannotPoisonReusedHTTPConnection",
+  "TestCancellationIntentSurvivesUnknownSendAndRetriesOnlyExactTurn",
+  "TestRetirementWaitLeavesSavedStatusResponsiveAndFencesNewerResult",
+  "TestCancellationRestoresExactWriterBeforeRecoveryAndNeverInterruptsDeniedWriter",
+  "TestBlockedAppResponsePreservesSnapshotAndAllowsDurableCancellation",
+  "TestCancellationBeforeExactAuthRefusalNeverRequeuesOrExecutes"
+]

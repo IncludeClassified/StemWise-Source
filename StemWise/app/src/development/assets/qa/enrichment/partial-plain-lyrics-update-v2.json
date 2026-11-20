@@ -1,0 +1,30 @@
+{
+  "formatVersion": 2,
+  "kind": "stemwise.song-enrichment",
+  "source": {
+    "provider": "youtube",
+    "videoId": "FIXTURE0001"
+  },
+  "generatedAt": "2026-07-29T08:05:00Z",
+  "generator": {
+    "name": "stemwise-pc",
+    "version": "2.1.0"
+  },
+  "lyrics": {
+    "status": "partial",
+    "reason": "Only reviewed plain original lyrics are available in this update fixture.",
+    "tracks": [
+      {
+        "id": "original-tr",
+        "kind": "original",
+        "language": "tr",
+        "script": "Latn",
+        "format": "plain",
+        "text": "Altın ışık devrede\nHer veri yerli yerinde\nMüzik akıyor sessizce",
+        "source": {
+          "name": "StemWise synthetic fixture lyrics"
+        }
+      }
+    ]
+  }
+}

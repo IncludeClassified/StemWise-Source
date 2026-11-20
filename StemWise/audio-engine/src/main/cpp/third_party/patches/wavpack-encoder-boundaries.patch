@@ -1,0 +1,34 @@
+--- a/src/pack_utils.c
++++ b/src/pack_utils.c
+@@ -552,7 +552,8 @@
+     int stream_index;
+ 
+     if (wpc->metabytes > 16384)             // 16384 bytes still leaves plenty of room for audio
+-        write_metadata_block (wpc);         //  in this block (otherwise write a special one)
++        if (!write_metadata_block (wpc))     //  in this block (otherwise write a special one)
++            return FALSE;
+ 
+ #ifdef ENABLE_THREADS
+     // if multithreading is enabled and requested, configure and start the workers here
+@@ -816,8 +817,8 @@
+             return FALSE;
+     }
+ 
+-    if (wpc->metacount)
+-        write_metadata_block (wpc);
++    if (wpc->metacount && !write_metadata_block (wpc))
++        return FALSE;
+ 
+     return TRUE;
+ }
+--- a/src/pack_dns.c
++++ b/src/pack_dns.c
+@@ -243,7 +243,7 @@
+     for (i = filtered_count - 1; i; --i)
+         low_freq [i] -= low_freq [i - 1];
+ 
+-    low_freq [0] = low_freq [1];    // simply duplicate for the "unknown" sample
++    low_freq [0] = filtered_count > 1 ? low_freq [1] : 0.0f;
+ 
+     // Next we determine the averaged (absolute) levels for each sample using a box filter.
+ 

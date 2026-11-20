@@ -1,0 +1,137 @@
+// One executable case registry drives selectors, aggregate execution and normal CTest entries.
+STEMWISE_FOCUSED_CASE("--equivalent-active-head", [] {
+    newerEquivalentHeadRebindPreservesActiveOriginalWhileStemsArePending();
+})
+STEMWISE_FOCUSED_CASE("--playback-window", [] {
+    playbackWindowMatchesPhysicalCutWithoutChangingOriginalEof();
+})
+STEMWISE_FOCUSED_CASE("--async-retained-window", [] {
+    asynchronousRetainedHeadMissIsPendingInputRatherThanMixerFailure();
+})
+STEMWISE_FOCUSED_CASE("--original-head-stem-reservoir", [] {
+    originalOnlyRawHeadDoesNotShadowContiguousStemReservoirs();
+})
+STEMWISE_FOCUSED_CASE("--cache-reader-working-set", [] {
+    speculativePrefetchCannotEvictTwoLivePipelineWorkingSets();
+})
+STEMWISE_FOCUSED_CASE("--recreated-stem-lanes", [] {
+    recreatedStemLanesStartWithFreshTimelineAndEndState();
+})
+STEMWISE_FOCUSED_CASE("--required-input-reserve", [] {
+    requiredInputReserveUsesBoundedCanonicalReadsBeforeAnAudibleMiss();
+})
+STEMWISE_FOCUSED_CASE("--async-loop-prime", [] {
+    asynchronousSealedLoopPrimeRetainsItsOptionalBusPlan(false);
+    asynchronousSealedLoopPrimeRetainsItsOptionalBusPlan(true);
+})
+STEMWISE_FOCUSED_CASE("--optional-cache-buses", [] {
+    optionalOriginalBusesNeverBlockOnColdReadWindows();
+    productionMultibusPreservesEveryAlignedLaneBeforeCallbackMix();
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-6s-neutral-0-parts", [] {
+    longLoopsReadTheirCanonicalBody(6U, 1.0F, 0U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-6s-neutral-9-parts", [] {
+    longLoopsReadTheirCanonicalBody(6U, 1.0F, 9U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-6s-tuned-0-parts", [] {
+    longLoopsReadTheirCanonicalBody(6U, .83F, 0U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-6s-tuned-9-parts", [] {
+    longLoopsReadTheirCanonicalBody(6U, .83F, 9U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-30s-neutral-0-parts", [] {
+    longLoopsReadTheirCanonicalBody(30U, 1.0F, 0U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-30s-neutral-9-parts", [] {
+    longLoopsReadTheirCanonicalBody(30U, 1.0F, 9U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-30s-tuned-0-parts", [] {
+    longLoopsReadTheirCanonicalBody(30U, .83F, 0U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-30s-tuned-9-parts", [] {
+    longLoopsReadTheirCanonicalBody(30U, .83F, 9U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-37s-neutral-0-parts", [] {
+    longLoopsReadTheirCanonicalBody(37U, 1.0F, 0U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-37s-neutral-9-parts", [] {
+    longLoopsReadTheirCanonicalBody(37U, 1.0F, 9U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-37s-tuned-0-parts", [] {
+    longLoopsReadTheirCanonicalBody(37U, .83F, 0U);
+})
+STEMWISE_FOCUSED_CASE("--long-loop-canonical-37s-tuned-9-parts", [] {
+    longLoopsReadTheirCanonicalBody(37U, .83F, 9U);
+})
+STEMWISE_FOCUSED_CASE("--bounded-late-loop", [] {
+    lateShortLoopsUseBoundedHeadsWithoutWholeSongReservation();
+    lateShortLoopsUseBoundedHeadsWithoutWholeSongReservation(true);
+})
+STEMWISE_FOCUSED_CASE("--range-ready", [] {
+    shortLoopsUseOnlyTheirPublishedRangeBeforeRecordingEos();
+})
+STEMWISE_FOCUSED_CASE("--zero-input-stems", [] {
+    processedStemsRemainReadyAcrossZeroInputSteps();
+})
+STEMWISE_FOCUSED_CASE("--dynamic-parts", [] {
+    unusedLaneChangesPreserveOriginalDspAndFractionalPhase();
+    optionalStemRetirementPreservesTunedOriginalTail();
+    maximumMusicalGridRendersItsAuthoredTwoHourEndpoint();
+    authoredBeatAccentsSurviveSeekAndRetainedLoopWrap();
+    tunedLateStemsKeepAudibleOriginalUntilTheirProcessedOutputIsValid();
+    dynamicSelectedPartsUseExactMasksAndPreserveOriginalOnAttachment();
+})
+STEMWISE_FOCUSED_CASE("--neutral-return", [] {
+    neutralReturnPreservesPcmAndCanReverseWhileMovingTune();
+    tuneExtremesAutomateAndReturnToDirectAtNeutral();
+    tunedSeekReadinessUsesConsumedFeedCursorInsteadOfAudibleCursor();
+    shortLoopHitsExactBoundaryReprimesAndNeverLeaksAnOldGeneration();
+})
+STEMWISE_FOCUSED_CASE("--diagnostic-payload-hash", [] {
+    ordinaryRenderingKeepsIdentityWithoutPayloadHashing();
+})
+STEMWISE_FOCUSED_CASE("--atomic-loop-clear", [] {
+    disabledAtomicCutoverRetiresAStaleManagedLoop();
+})
+STEMWISE_FOCUSED_CASE("--atomic-loop-neutral-continuation", [] {
+    atomicContinuationReturnsToDirectAtNeutral();
+    earlyTunedContinuationPrimesItsActualHeadInsteadOfAnActivationCrossfade();
+})
+STEMWISE_FOCUSED_CASE("--managed-head-authority", [] {
+    managedRepeatHeadOwnsTheWrappedPrefixOverAnAtomicContinuationHead();
+})
+STEMWISE_FOCUSED_CASE("--core", [] {
+    directArbitraryChunkingFingerprintsAndExplicitEos();
+    stemsWaitForAllSixAndFallBackBeforeMissingPcm();
+    lateStemLanesAlignOnceWithoutWeakeningGapRejection();
+    directLoopRetargetCancelsTheObsoleteBoundaryFade();
+    rapidHundredOwnershipResetsRejectEveryStaleLaneAndRender();
+    tenThousandBoundaryControlsAndSteadyRenderingAllocateNothing();
+    gainOnlyPreviewPreservesCanonicalControlsAndNeverDirtiesTune();
+    heldSliderGainOverridesMuteWithoutChangingCanonicalMuteOrSolo();
+    ownerRetirementIsExactAndResetPreservesPreviewHighWater();
+    processedLoopPressureAllocatesNothing();
+    twoResidentBanksHaveIndependentOwnershipAndEvidence();
+    appendBackpressurePreservesRetrySuffixContract();
+    managedLoopUsesExactFourSecondCacheAndWaitsAtB();
+    oneFramePastFourSecondsStreamsBodyWithIndependentEpoch();
+    thirtySecondLoopStreamsFixedMemoryWithoutChangingOwner();
+    streamedPostWrapClearBridgesExactNinetySixFramesAndCurrentBodyEpoch();
+    allLaneStemsClearBridgePreservesMaskAndExactSeamProvenance();
+    cacheOnlyOriginalEosClearFinishesExactlyOnceAndReleasesPinnedSlot();
+    physicalLengthOriginalEosCacheOnlyWrapsKeepEmittingAudiblePcm();
+    processedTempoPitchClearCrossesRetiredHeadIntoLiveBody();
+    managedOriginalEosRejectsAuthoredBoundaryMovesWithoutReprime();
+    retiredHeadRcuSurvivesRejectionAndHardDropsOnReplacementOrSeek();
+    ingressEpochIsIndependentFromAudibleOwnership();
+    applicationEpochReappliesCanonicalControlsWithoutChangingEvidence();
+    retainedContinuationRebindPreservesEverySample();
+})
+
+STEMWISE_FOCUSED_CASE("--resumable-retained-body", [] {
+    boundedHeadCloneKeepsOrdinarySuffixAfterCanonicalGap();
+    cancelledRetainedRefreshCannotAcceptAPartialRawBody();
+    retainedContinuationCopyIsBoundedAndKeepsSourceBody();
+    retainedContinuationCancellationReleasesOnlyItsSource();
+})

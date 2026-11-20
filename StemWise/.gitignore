@@ -1,0 +1,22 @@
+/.gradle/
+/.kotlin/
+/app/build/
+/app/.cxx/
+/build/
+/private/
+/local.properties
+
+# Signing inputs are external-only; ignore common accidental local copies as defense in depth.
+*.jks
+*.keystore
+**/stemwise-signing.properties
+**/stemwise-disposable-signing.properties
+
+# Host/native commands must write to build/, never beside production sources.
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exe
+*.exp
+*.lib

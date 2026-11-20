@@ -1,0 +1,98 @@
+{
+  "kind": "stemwise.lyrics-qualification-profile",
+  "formatVersion": 2,
+  "status": "unbound",
+  "qualificationClaimsAllowed": false,
+  "metricVersion": "stemwise.lyrics-qualification-metrics.v1",
+  "metricCodeSha256": "4642b9e9127049e78208781985401da94d3242a6947b8c93892b8e99706b1b60",
+  "producerSystem": {
+    "sourceSha256": null,
+    "lyricsPolicySemanticsSha256": null,
+    "generatorConfigSha256": null,
+    "externalSchemaSha256": null
+  },
+  "tokenizationVersion": "stemwise.display-words.v2",
+  "corpusManifestSha256": null,
+  "annotationProtocolSha256": null,
+  "hardwareProfiles": {
+    "pc": null,
+    "android": null
+  },
+  "androidQualification": {
+    "sourceSha256": null,
+    "deliverableArtifactSha256": null,
+    "hostQualificationSha256": null,
+    "appBuild": null,
+    "requiredLanes": []
+  },
+  "tolerancesMs": {
+    "lineStart": 300,
+    "lineEnd": 400,
+    "wordStart": 300,
+    "wordEnd": 400
+  },
+  "structurePredicates": {
+    "minimumIndependentSupport": 2,
+    "distinctPassingSequencesAllowed": 1,
+    "independentRouteFamilies": [
+      "manual-caption",
+      "unprompted-asr",
+      "mms-acoustic"
+    ]
+  },
+  "splitPolicy": {
+    "separateBy": [
+      "recordingSha256",
+      "songVersionFamilySha256",
+      "singerSha256"
+    ],
+    "values": [
+      "development",
+      "held-out"
+    ],
+    "scoredSplit": "held-out",
+    "heldOutMayTuneCandidate": false
+  },
+  "strata": {
+    "dimensions": [
+      "language",
+      "script",
+      "difficulty"
+    ],
+    "minimumCaseCount": null,
+    "inventory": []
+  },
+  "confidenceBound": {
+    "method": "wilson-one-sided-upper",
+    "alpha": 0.05
+  },
+  "gates": {
+    "applyToEachStratum": true,
+    "minimum": {
+      "lineBoundaryWithinToleranceRate": null,
+      "wordBoundaryWithinToleranceRate": null,
+      "performedOccurrenceAccuracy": null,
+      "wordBearingLineCoverage": null,
+      "safeAbstentionRate": null,
+      "intervalValidityRate": 1.0,
+      "monotonicityRate": 1.0,
+      "utf16ProjectionRate": 1.0,
+      "graphemeProjectionRate": 1.0,
+      "lexicalAuthorityIdentityRate": 1.0,
+      "exactRecordingIdentityRate": 1.0
+    },
+    "maximum": {
+      "falsePublicationUpperBound": null,
+      "crossViewBoundarySpreadP95Ms": null,
+      "chunkVsFullP95Ms": null,
+      "rerunP95Ms": null,
+      "canonicalTimelineResidualP95Ms": null,
+      "unresolvedRate": null,
+      "technicalFailureRate": null,
+      "runtimeP95Ms": null,
+      "peakMemoryMaxBytes": null,
+      "diskMaxBytes": null,
+      "retainedMaxBytes": null
+    }
+  }
+}

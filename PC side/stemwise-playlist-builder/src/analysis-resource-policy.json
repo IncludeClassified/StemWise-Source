@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "essentiaWindowMs": 30000,
+  "minimumProcessReserveBytes": 268435456,
+  "minimumScratchReserveBytes": 268435456
+}

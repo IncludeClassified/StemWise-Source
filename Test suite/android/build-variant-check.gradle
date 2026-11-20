@@ -1,0 +1,40 @@
+// Run with a Release task and -Pstemwise.developmentTargetAbi=x86_64 to exercise mixed requests.
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.plugins.withId('com.android.application') {
+            def outputs = [:]
+            def components = project.extensions.getByName('androidComponents')
+            components.onVariants(components.selector().all()) { variant ->
+                outputs[variant.name] = variant.outputs
+            }
+            project.tasks.register('checkBuildVariantContracts') {
+                doLast {
+                    def android = project.extensions.getByName('android')
+                    def engine = project.rootProject.project(':audio-engine').extensions.getByName('android')
+                    def abi = project.findProperty('stemwise.developmentTargetAbi') ?: 'arm64-v8a'
+                    assert android.buildTypes.names == ['debug', 'development', 'release'] as Set
+                    assert outputs.keySet() == ['development', 'release'] as Set
+                    assert engine.buildTypes.development.ndk.abiFilters == [abi] as Set
+                    assert engine.buildTypes.release.ndk.abiFilters == ['arm64-v8a'] as Set
+                    assert android.buildTypes.development.externalNativeBuild.cmake.abiFilters == [abi] as Set
+                    assert android.buildTypes.release.externalNativeBuild.cmake.abiFilters == ['arm64-v8a'] as Set
+                    outputs.each { name, variants ->
+                        def enabled = variants.findAll { it.enabled.get() }
+                        assert enabled.size() == 1
+                        assert enabled[0].filters.find { it.filterType.toString() == 'ABI' }.identifier ==
+                            (name == 'development' ? abi : 'arm64-v8a')
+                    }
+                    def minified = (project.findProperty('stemwiseMinifiedDevelopment') ?: 'false').toBoolean()
+                    assert android.buildTypes.development.minifyEnabled == minified
+                    assert android.buildTypes.development.shrinkResources == minified
+                    assert android.buildTypes.release.minifyEnabled
+                    assert android.buildTypes.release.shrinkResources
+                    if (!project.ext.disposableSigningReady) {
+                        assert android.buildTypes.development.signingConfig.name == 'debug'
+                    }
+                    println 'Development/Release ABI, signing and shrinking contracts passed'
+                }
+            }
+        }
+    }
+}

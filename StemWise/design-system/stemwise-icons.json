@@ -1,0 +1,3115 @@
+{
+  "schemaVersion": 1,
+  "roles": [
+    {
+      "role": "player.collapse",
+      "family": "disclosure",
+      "master": "material-rounded/keyboard_arrow_down",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M8.12 9.29 12 13.17l3.88-3.88a.996.996 0 1 1 1.41 1.41l-4.59 4.59a.996.996 0 0 1-1.41 0L6.7 10.7a.996.996 0 0 1 0-1.41c.39-.38 1.03-.39 1.42 0z"
+          }
+        }
+      ],
+      "svgSha256": "19c66ba7e454e0bf61e304b49166ac38c96d8e72c3c89c630882fd9119f1a1bb",
+      "rtl": "fixed",
+      "geometrySha256": "8d6e3edf4c2bfc6167f85d3d2b5941469bf82d5ce9c90687bba596e82f707710"
+    },
+    {
+      "role": "player.song_info",
+      "family": "information",
+      "master": "stemwise/more-vertical",
+      "source": "STEMWISE / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "cx": 12,
+            "cy": 5,
+            "r": 2
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "cx": 12,
+            "cy": 12,
+            "r": 2
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "cx": 12,
+            "cy": 19,
+            "r": 2
+          }
+        }
+      ],
+      "rtl": "fixed"
+    },
+    {
+      "role": "player.source.original",
+      "family": "source",
+      "master": "material-rounded/album",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"
+          }
+        }
+      ],
+      "svgSha256": "286bb058bbd93a9c512103ee8ecebc4388e66afc8529f06b37f73299ba5bc224",
+      "rtl": "fixed",
+      "geometrySha256": "e56cb2609d2e85b85d7a583015a61a37f08f6f91f9daeecc702fd3482480202f"
+    },
+    {
+      "role": "player.source.stems",
+      "family": "source",
+      "master": "material-rounded/graphic_eq",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M8 18c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1s-1 .45-1 1v10c0 .55.45 1 1 1zm4 4c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1s-1 .45-1 1v18c0 .55.45 1 1 1zm-8-8c.55 0 1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1v2c0 .55.45 1 1 1zm12 4c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1s-1 .45-1 1v10c0 .55.45 1 1 1zm3-7v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "ed00c44462c5cca27aec127fb5bcb19587bc39cf13f478dceb8cf35ed2ff668f",
+      "rtl": "fixed",
+      "geometrySha256": "c966c630716c30979323d5d2fe9330227c58aacf52b8bda99666b743031f7db8"
+    },
+    {
+      "role": "player.shuffle",
+      "family": "transport-mode",
+      "master": "material-rounded/shuffle",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M10.59 9.17 6.12 4.7a.996.996 0 1 0-1.41 1.41l4.46 4.46 1.42-1.4zm4.76-4.32 1.19 1.19L4.7 17.88a.996.996 0 1 0 1.41 1.41L17.96 7.46l1.19 1.19a.5.5 0 0 0 .85-.36V4.5c0-.28-.22-.5-.5-.5h-3.79a.5.5 0 0 0-.36.85zm-.52 8.56-1.41 1.41 3.13 3.13-1.2 1.2a.5.5 0 0 0 .36.85h3.79c.28 0 .5-.22.5-.5v-3.79c0-.45-.54-.67-.85-.35l-1.19 1.19-3.13-3.14z"
+          }
+        }
+      ],
+      "svgSha256": "169e9588b291a02d61d72bdd4ae1989827a65ccd012babb1114252fc5715606f",
+      "rtl": "fixed",
+      "geometrySha256": "a3cb0fd76d5e5d19dd344ac1822c48b816d79f5926e23a7d271fc62df60a5c9b"
+    },
+    {
+      "role": "player.previous",
+      "family": "transport-direction",
+      "master": "material-rounded/skip_previous",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M7 6c.55 0 1 .45 1 1v10c0 .55-.45 1-1 1s-1-.45-1-1V7c0-.55.45-1 1-1zm3.66 6.82 5.77 4.07c.66.47 1.58-.01 1.58-.82V7.93c0-.81-.91-1.28-1.58-.82l-5.77 4.07a1 1 0 0 0 0 1.64z"
+          }
+        }
+      ],
+      "svgSha256": "f47419cb6c639a997c7498a4dec883dd2d26634c0d490c75cd096c81170f2c5f",
+      "rtl": "fixed",
+      "geometrySha256": "b1c2974cafd54365deca06a36f1f20e2108fb9427a4cf51ccb7585e95f3592c5"
+    },
+    {
+      "role": "player.play",
+      "family": "transport-primary",
+      "master": "material-rounded/play_arrow",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18a1 1 0 0 0 0-1.69L9.54 5.98A.998.998 0 0 0 8 6.82z"
+          }
+        }
+      ],
+      "svgSha256": "bdf1c5c57bd45ab6d7b34f20962fcec9a41ee2881ca16649bd28e90d1ed8d671",
+      "rtl": "fixed",
+      "geometrySha256": "338b9584c860da61e3d2e55c43d0b131fd2fbda4d4f0eead339e69bfa638eda7"
+    },
+    {
+      "role": "player.pause",
+      "family": "transport-primary",
+      "master": "material-rounded/pause",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M8 19c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2s-2 .9-2 2v10c0 1.1.9 2 2 2zm6-12v10c0 1.1.9 2 2 2s2-.9 2-2V7c0-1.1-.9-2-2-2s-2 .9-2 2z"
+          }
+        }
+      ],
+      "svgSha256": "8aa1aa6b31c3fddcad9444fd47af8b081b0d9452d0f2d8009004d28172c6ffde",
+      "rtl": "fixed",
+      "geometrySha256": "709ed8fee1fc8ed2d7aca94d10f883e9d360caef116ca5413f16569dd6064e1e"
+    },
+    {
+      "role": "player.next",
+      "family": "transport-direction",
+      "master": "material-rounded/skip_next",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "m7.58 16.89 5.77-4.07c.56-.4.56-1.24 0-1.63L7.58 7.11C6.91 6.65 6 7.12 6 7.93v8.14c0 .81.91 1.28 1.58.82zM16 7v10c0 .55.45 1 1 1s1-.45 1-1V7c0-.55-.45-1-1-1s-1 .45-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "cdcd77d08ac3f95f7ba97dfce48109cff471f93c39bc63b2b434e7b6798ea469",
+      "rtl": "fixed",
+      "geometrySha256": "c2d62617613e3f8b71ebdf0737a93646e2fafe5703d00a79c32ced44679a4b86"
+    },
+    {
+      "role": "player.repeat_all",
+      "family": "repeat",
+      "master": "material-rounded/repeat",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M7 7h10v1.79c0 .45.54.67.85.35l2.79-2.79c.2-.2.2-.51 0-.71l-2.79-2.79a.5.5 0 0 0-.85.36V5H6c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1V7zm10 10H7v-1.79c0-.45-.54-.67-.85-.35l-2.79 2.79c-.2.2-.2.51 0 .71l2.79 2.79a.5.5 0 0 0 .85-.36V19h11c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1s-1 .45-1 1v3z"
+          }
+        }
+      ],
+      "svgSha256": "84a7ea0c93b74e76dedc745438a6e6232d015a94c55ec39fd7956d26889660c9",
+      "rtl": "fixed",
+      "geometrySha256": "c7477b9e7f4eabf58e48c081e0291a0c5050737222f7592a19586b4c21299290"
+    },
+    {
+      "role": "player.repeat_one",
+      "family": "repeat",
+      "master": "material-rounded/repeat_one",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M7 7h10v1.79c0 .45.54.67.85.35l2.79-2.79c.2-.2.2-.51 0-.71l-2.79-2.79a.5.5 0 0 0-.85.36V5H6c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1V7zm10 10H7v-1.79c0-.45-.54-.67-.85-.35l-2.79 2.79c-.2.2-.2.51 0 .71l2.79 2.79a.5.5 0 0 0 .85-.36V19h11c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1s-1 .45-1 1v3zm-4-2.75V9.81c0-.45-.36-.81-.81-.81a.74.74 0 0 0-.36.09l-1.49.74a.61.61 0 0 0-.34.55c0 .34.28.62.62.62h.88v3.25c0 .41.34.75.75.75s.75-.34.75-.75z"
+          }
+        }
+      ],
+      "svgSha256": "38933a2d63b20e32be62e8c70afb52b0b9438da010a6f508c04813056e23c0e3",
+      "rtl": "fixed",
+      "geometrySha256": "0c085d3978791f64fc8a5baa2e0831e111374a1b00c72c8b274f990439a584be"
+    },
+    {
+      "role": "player.tool.loop_ab",
+      "family": "loop",
+      "master": "stemwise/player.tool.loop_ab",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "g",
+          "attributes": {
+            "transform": "translate(0.45 0)"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 2,
+          "element": "path",
+          "attributes": {
+            "d": "M3.5 15.5 6.7 7l3.2 8.5M4.8 12.2h3.8"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 2,
+          "element": "path",
+          "attributes": {
+            "d": "M14 7v8.5M14 7h2.2c1.7 0 2.8.8 2.8 2.1s-1.1 2.1-2.8 2.1H14M14 11.2h2.7c1.8 0 2.9.8 2.9 2.15s-1.1 2.15-2.9 2.15H14"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M4 20v-2h16v2"
+          }
+        }
+      ],
+      "svgSha256": "9bac10cfdb56e8978cf9e6cd8b74ef616daf97b370b4a2e272e804ac2948e498",
+      "rtl": "fixed",
+      "geometrySha256": "0f95d9b7978fef235490f8f52d5e1c05f97f4724f01c8f207716ce0b3bb0a362"
+    },
+    {
+      "role": "player.tool.tune",
+      "family": "tune-action",
+      "master": "material-rounded/tune",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M3 18c0 .55.45 1 1 1h5v-2H4c-.55 0-1 .45-1 1zM3 6c0 .55.45 1 1 1h9V5H4c-.55 0-1 .45-1 1zm10 14v-1h7c.55 0 1-.45 1-1s-.45-1-1-1h-7v-1c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1zM7 10v1H4c-.55 0-1 .45-1 1s.45 1 1 1h3v1c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1s-1 .45-1 1zm14 2c0-.55-.45-1-1-1h-9v2h9c.55 0 1-.45 1-1zm-5-3c.55 0 1-.45 1-1V7h3c.55 0 1-.45 1-1s-.45-1-1-1h-3V4c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1z"
+          }
+        }
+      ],
+      "svgSha256": "ffbfdeac8c56f476cecbe1f3324d2bb704ac76dbc6dbcc607c07602a51a778db",
+      "rtl": "fixed",
+      "geometrySha256": "1dad70487713774220416025e981d263f4c57ebbc6d9a1077b98de884398cd6e"
+    },
+    {
+      "role": "player.tool.lyrics",
+      "family": "player-tool",
+      "master": "material-rounded/lyrics",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M14 9c0-2.04 1.24-3.79 3-4.57V4c0-1.1-.9-2-2-2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h9c1.1 0 2-.9 2-2v-2.42c-1.76-.78-3-2.53-3-4.58zm-4 5H6v-2h4v2zm3-3H6V9h7v2zm0-3H6V6h7v2z"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M20 6.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V3h2V1h-4v5.18z"
+          }
+        }
+      ],
+      "svgSha256": "d13ca9b9a8271140051ad3a870ab19cad092f1a7ffcedbb95ebfd8092d63dbd6",
+      "rtl": "fixed",
+      "geometrySha256": "e1d0ecd9cff9ea40b00a6d6ed7ba3bdd1d6cf8bc32a200493a118bd8a0021cc7"
+    },
+    {
+      "role": "player.tool.metronome",
+      "family": "metronome",
+      "master": "stemwise/player.tool.metronome",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M9 3.5h6l3.5 17H5.5L9 3.5Z"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M8.7 17h6.6"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M12 17 16.2 7.6"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "cx": "16.6",
+            "cy": "6.7",
+            "r": "1.25",
+            "fill": "currentColor",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "5d9dda0d1941d498084a8dc98c1f7ec1f8e49e2ea3366620a6144c6a3b05f1d0",
+      "rtl": "fixed",
+      "geometrySha256": "0b24aa98ec3d4555b645de35f78773ecd93fe17a772ec44647dd41017196a003"
+    },
+    {
+      "role": "player.status.downloading",
+      "family": "status",
+      "master": "material-rounded/cloud_download",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-4.65 4.65c-.2.2-.51.2-.71 0L7 13h3V9h4v4h3z"
+          }
+        }
+      ],
+      "svgSha256": "0d62e629e9c17955f2bdf5caa70316cc6279e9c622daf849642fc4f87e07ee26",
+      "rtl": "fixed",
+      "geometrySha256": "90df26aae784051ef30b7500272dfbf4a332e8f83bbfaf7b9da6020e548a5e9b"
+    },
+    {
+      "role": "player.status.error",
+      "family": "status",
+      "master": "material-rounded/error_outline",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M12 7c.55 0 1 .45 1 1v4c0 .55-.45 1-1 1s-1-.45-1-1V8c0-.55.45-1 1-1zm-.01-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm1-3h-2v-2h2v2z"
+          }
+        }
+      ],
+      "svgSha256": "865e05552af85a6915252e3b33172d855c9598c0e258c62250bd1228b022ec3f",
+      "rtl": "fixed",
+      "geometrySha256": "9116ec58c9a933f46ce423efbaa05f6d321da83038ce3003fbe92cdb18eb7d05"
+    },
+    {
+      "role": "player.info.copy",
+      "family": "copy",
+      "master": "material-rounded/content_copy",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M15 20H5V7c0-.55-.45-1-1-1s-1 .45-1 1v13c0 1.1.9 2 2 2h10c.55 0 1-.45 1-1s-.45-1-1-1zm5-4V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2zm-2 0H9V4h9v12z"
+          }
+        }
+      ],
+      "svgSha256": "ea7fc573260d577a828142abf983c3665f39bebd93193e88f50e49310b665a93",
+      "rtl": "fixed",
+      "geometrySha256": "7e69988c3958017819dd5ead3d2571fc6a16f450cf86bd7593beedde6fa92b72"
+    },
+    {
+      "role": "player.info.copied",
+      "family": "copy",
+      "master": "material-rounded/check_circle",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.29 16.29 5.7 12.7a.996.996 0 1 1 1.41-1.41L10 14.17l6.88-6.88a.996.996 0 1 1 1.41 1.41l-7.59 7.59a.996.996 0 0 1-1.41 0z"
+          }
+        }
+      ],
+      "svgSha256": "93a6d4a7a9655ef2dcee5738bf55dc5bd7354d45869171318865e16f0e2fd7c7",
+      "rtl": "fixed",
+      "geometrySha256": "1f16ab202c95d739203a54175f51cd07d1feadd5c0788ee7f298ee568e702fa9"
+    },
+    {
+      "role": "player.stem.vocals",
+      "family": "stem",
+      "master": "lucide/mic-vocal",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "cx": "16",
+            "cy": "7",
+            "r": "5"
+          }
+        }
+      ],
+      "svgSha256": "0d0c2acec475bb2968d3c82dd7b1f375f525ec8653324f03ec6dd5e98ab7823c",
+      "rtl": "fixed",
+      "geometrySha256": "5e89a213aaaae0371cac32fbd36b98dfab4114b1ae8a5e5d6f0bce7eac703aa3"
+    },
+    {
+      "role": "player.stem.drums",
+      "family": "stem",
+      "master": "stemwise/source-drums",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "cx": "12",
+            "cy": "16",
+            "r": "5"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M3 6h6m-3-3v8m-3 10 3-5m15 5-3-5M10 3h5v5h-5Zm9 3h3m-2-3v9M3 13h3v4H3Z"
+          }
+        }
+      ],
+      "svgSha256": "a6bcdf43735becf477817c02f836f8b92696d8fd31e606127b50293d912c2f1a",
+      "rtl": "fixed",
+      "geometrySha256": "936667e1cba9276c9240b35db729e449b337ebb96a869c77c8fddf074dc34987"
+    },
+    {
+      "role": "player.stem.bass",
+      "family": "stem",
+      "master": "stemwise/source-bass",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M12 12V2h3v10c3-4 5-1 4 2l-1 5c-2 4-10 4-12 0-2-3 0-8 3-8l3 1Zm1.5-9v14M10 18h6"
+          }
+        }
+      ],
+      "svgSha256": "6556870acb1c2b0da7cc3f1e518e9727bd77dcb54e53a218dd37b94b7e3af9a4",
+      "rtl": "fixed",
+      "geometrySha256": "2b556b535dd358be18ec7fdad5003e13ff9f740e38297f1ac7088cf4228be34c"
+    },
+    {
+      "role": "player.stem.guitar",
+      "family": "stem",
+      "master": "lucide/guitar",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "m11.9 12.1 4.514-4.514"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "m6 16 2 2"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M8.23 9.85A3 3 0 0 1 11 8a5 5 0 0 1 5 5 3 3 0 0 1-1.85 2.77l-.92.38A2 2 0 0 0 12 18a4 4 0 0 1-4 4 6 6 0 0 1-6-6 4 4 0 0 1 4-4 2 2 0 0 0 1.85-1.23z"
+          }
+        }
+      ],
+      "svgSha256": "b1d0802e6c902ac681df263b3d263b5f8e3ede17a7f4c478edd0d6c8d77b59c7",
+      "rtl": "fixed",
+      "geometrySha256": "c1ef1761a44b624fd761b6913b865de5cb1a199baf31c3e62e932b280e632f8e"
+    },
+    {
+      "role": "player.stem.piano",
+      "family": "stem",
+      "master": "lucide/piano",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M18.5 8c-1.4 0-2.6-.8-3.2-2A6.87 6.87 0 0 0 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8.5C22 9.6 20.4 8 18.5 8"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M2 14h20"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M6 14v4"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M10 14v4"
+          }
+        },
+        {
+          "order": 4,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M14 14v4"
+          }
+        },
+        {
+          "order": 5,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M18 14v4"
+          }
+        }
+      ],
+      "svgSha256": "332beb39e881221b855234f3351fef71f20772bb0e5dabe1b0019a96bf7b1274",
+      "rtl": "fixed",
+      "geometrySha256": "3bbc927c7dbfbe7e9c515c6317c7ff6f0a9b239cf233bdbc987fedb001faeeb6"
+    },
+    {
+      "role": "player.stem.other",
+      "family": "stem",
+      "master": "lucide/sparkles",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M20 2v4"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M22 4h-4"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 1,
+          "element": "circle",
+          "attributes": {
+            "cx": "4",
+            "cy": "20",
+            "r": "2"
+          }
+        }
+      ],
+      "svgSha256": "4ee48916597cf50d89120d308f7647bad7af3c152e96f7e11ca6cf58251e750b",
+      "rtl": "fixed",
+      "geometrySha256": "c40027cbdc04b77c06d86b8974e17bd1bf9b2e70b9581c65a48cba232ad26b80"
+    },
+    {
+      "role": "player.stem.generic",
+      "family": "stem",
+      "master": "lucide/file-audio-2",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M4 6.835V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-.343"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M14 2v5a1 1 0 0 0 1 1h5"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M2 19a2 2 0 0 1 4 0v1a2 2 0 0 1-4 0v-4a6 6 0 0 1 12 0v4a2 2 0 0 1-4 0v-1a2 2 0 0 1 4 0"
+          }
+        }
+      ],
+      "svgSha256": "4f963f8c73209e374955694fb6e55a7dc8054d4621ea848a84ee2445c002b70f",
+      "rtl": "fixed",
+      "geometrySha256": "ad7869e41df3cee29305a38e1009320fe99465acf6f6986459a579c5d25ef94e"
+    },
+    {
+      "role": "player.stem.mute",
+      "family": "volume",
+      "master": "lucide/volume-x",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "line",
+          "attributes": {
+            "x1": "22",
+            "x2": "16",
+            "y1": "9",
+            "y2": "15"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "line",
+          "attributes": {
+            "x1": "16",
+            "x2": "22",
+            "y1": "9",
+            "y2": "15"
+          }
+        }
+      ],
+      "svgSha256": "e64d8d57143c9c98bd425bc6b97a4a35dd3332212d83b3bd571d93c84edeefcc",
+      "rtl": "fixed",
+      "geometrySha256": "ca9ff214a212e4f58160e6182d2c20d138c1baed43229150f3d589a2e363c40b"
+    },
+    {
+      "role": "player.stem.solo",
+      "family": "stem-action",
+      "master": "lucide/headphones",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"
+          }
+        }
+      ],
+      "svgSha256": "7f331d274c46065cf4e2957338050fc8a9bc52a05ea3212bd1a0faf1f147461a",
+      "rtl": "fixed",
+      "geometrySha256": "1eb8abb4b80205a3e7cbdf9646557a1dad7b61e5732b58d54e65ca3a04f1f2f7"
+    },
+    {
+      "role": "player.loop.set_a",
+      "family": "loop-marker",
+      "master": "stemwise/loop-marker",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "rect",
+          "attributes": {
+            "x": "5",
+            "y": "3",
+            "width": "14",
+            "height": "14",
+            "rx": "3"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M8.3 14 12 6l3.7 8M9.7 11.2h4.6"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M12 17v4M8.5 21h7"
+          }
+        }
+      ],
+      "svgSha256": "b678ab38988450ed37786a732bb906e9f6243cab9899fc6e65d16ccecedd8469",
+      "rtl": "fixed",
+      "geometrySha256": "846cf204e89b5b296df79d26dccad14f4702ae2619e4fc36c34c136b5b86f2c5"
+    },
+    {
+      "role": "player.loop.set_b",
+      "family": "loop-marker",
+      "master": "stemwise/loop-marker",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "rect",
+          "attributes": {
+            "x": "5",
+            "y": "3",
+            "width": "14",
+            "height": "14",
+            "rx": "3"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M9 6v8M9 6h3.2c1.7 0 2.8.8 2.8 2s-1.1 2-2.8 2H9M9 10h3.7c1.8 0 2.9.8 2.9 2s-1.1 2-2.9 2H9"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M12 17v4M8.5 21h7"
+          }
+        }
+      ],
+      "svgSha256": "b802edc1df5a9ced774f00ce1d18782d2085d1b25b99e8ad376d8f4f278ce27c",
+      "rtl": "fixed",
+      "geometrySha256": "670bfb0eb8ccf3ced53bb7c87db048b474c10b581319b119000ca781e2ea4fbb"
+    },
+    {
+      "role": "player.loop.clear",
+      "family": "loop",
+      "master": "lucide/repeat-off",
+      "source": "LUCIDE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M11.656 6H21l-4-4"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M17.898 17.898A4 4 0 0 1 17 18H3l4-4"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "m2 2 20 20"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M21 13v1a4 4 0 0 1-.171 1.159"
+          }
+        },
+        {
+          "order": 4,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "m21 6-4 4"
+          }
+        },
+        {
+          "order": 5,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M3 11v-1a4 4 0 0 1 3.102-3.898"
+          }
+        },
+        {
+          "order": 6,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "m7 22-4-4"
+          }
+        }
+      ],
+      "svgSha256": "10900aa63d6e7cde097e7e93e7125e927d12810baf360214dca227a40c8958ac",
+      "rtl": "fixed",
+      "geometrySha256": "4bdca4f9d1a29bfdaeb2df7544f9ca0b80ba622c94136584de8bba6503288967"
+    },
+    {
+      "role": "player.tune.reset",
+      "family": "tune-action",
+      "master": "material-rounded/restart_alt",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M12 5V3.21c0-.45-.54-.67-.85-.35l-2.8 2.79c-.2.2-.2.51 0 .71l2.79 2.79c.32.31.86.09.86-.36V7c3.31 0 6 2.69 6 6 0 2.72-1.83 5.02-4.31 5.75-.42.12-.69.52-.69.95 0 .65.62 1.16 1.25.97A7.991 7.991 0 0 0 20 13c0-4.42-3.58-8-8-8zm-6 8c0-1.34.44-2.58 1.19-3.59.3-.4.26-.95-.09-1.31-.42-.42-1.14-.38-1.5.1a7.991 7.991 0 0 0 4.15 12.47c.63.19 1.25-.32 1.25-.97 0-.43-.27-.83-.69-.95C7.83 18.02 6 15.72 6 13z"
+          }
+        }
+      ],
+      "svgSha256": "eaecfcd5dd9c2f67413f7f91192b122f9935a3cbb0447dc68c1c9cf778d5dabe",
+      "rtl": "fixed",
+      "geometrySha256": "8bbb80bd588b05d42c31e3e90069fb5be6381027769caa944ddeaaca2c50182d"
+    },
+    {
+      "role": "player.metronome.note.whole",
+      "family": "note-duration",
+      "master": "stemwise/note-whole",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "ellipse",
+          "attributes": {
+            "cx": "12",
+            "cy": "12",
+            "rx": "6",
+            "ry": "3.8",
+            "transform": "rotate(-12 12 12)"
+          }
+        }
+      ],
+      "svgSha256": "a755e69929a3e8bd7e40efd9a6bf5f22348c557c2115b0c8c58849f53c2cd8af",
+      "rtl": "fixed",
+      "geometrySha256": "2c40dc08fedfcb7628ba143b6cfd0bdf7cc1709c4dfe7668090dc046f85e3198"
+    },
+    {
+      "role": "player.metronome.note.half",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M15.912 2.500L15.224 2.500L15.224 15.453C14.765 15.081 14.106 14.851 13.304 14.851C9.321 14.851 8.088 17.918 8.088 19.293C8.088 20.698 9.206 21.500 10.667 21.500C15.023 21.500 15.912 17.975 15.912 17.058ZM11.269 16.972C12.587 16.227 13.419 15.940 13.963 15.940C14.450 15.940 14.737 16.170 14.909 16.485C15.023 16.657 15.081 16.829 15.081 17.001C15.081 17.517 14.536 18.176 12.673 19.379C11.470 20.182 10.667 20.468 10.094 20.468C9.521 20.468 9.206 20.182 9.034 19.867C8.948 19.695 8.862 19.523 8.862 19.351C8.862 18.778 9.435 18.032 11.269 16.972Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "29a57888fd07838716badba506afccf1fafd184b218bcaaf44668fe2eda2f90c",
+      "rtl": "fixed",
+      "geometrySha256": "b988f715d342d25ba2d8b2038ffece530da7b895f21bdfe601bfae8802f920e3"
+    },
+    {
+      "role": "player.metronome.note.quarter",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M15.124 15.625C14.665 15.224 14.035 15.023 13.290 15.023C10.452 15.023 8.189 17.115 8.189 19.351C8.189 20.698 9.278 21.500 10.682 21.500C12.974 21.500 15.811 19.351 15.811 17.173L15.811 2.500L15.124 2.500Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "c51fc2c3cc49c9ca9348e760f1c674faf11a1ad71d4529eaa0e451560e1fa69e",
+      "rtl": "fixed",
+      "geometrySha256": "2fc709da357773b9f6273820d09f7e7cf29c11cf503e12199f9c796f99eb49a8"
+    },
+    {
+      "role": "player.metronome.note.eighth",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M13.021 2.500C12.907 2.500 12.822 2.500 12.822 2.670L12.822 15.687C12.369 15.290 11.745 15.091 11.007 15.091C8.200 15.091 5.960 17.161 5.960 19.373C5.960 20.706 7.037 21.500 8.427 21.500C10.696 21.500 13.503 19.373 13.503 17.218L13.503 7.775C14.382 7.945 15.857 8.569 16.736 11.007C16.963 11.631 17.190 12.596 17.190 13.673C17.190 14.439 17.048 15.290 16.736 16.084C16.679 16.197 16.679 16.282 16.679 16.339C16.679 16.622 16.849 16.793 16.991 16.849C17.019 16.878 17.076 16.878 17.133 16.878C17.275 16.878 17.416 16.793 17.558 16.537C17.615 16.310 18.040 14.751 18.040 13.616L18.040 13.475C17.955 11.263 17.019 9.164 15.772 7.406C14.751 6.016 13.957 4.542 13.616 2.897C13.503 2.557 13.333 2.500 13.163 2.500Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "44e07c7a56f24f9bf216d1d7a6380de663eebf975c6783dedff97843bdc6a9a2",
+      "rtl": "fixed",
+      "geometrySha256": "fb7a6d7f7cb1b5b2d3345037409e6f8a5fd631ac66734f52e0c3ded61a4066aa"
+    },
+    {
+      "role": "player.metronome.note.sixteenth",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M13.623 2.754L13.595 2.754L13.595 2.726C13.539 2.556 13.341 2.500 13.228 2.500C13.115 2.500 12.946 2.528 12.946 2.528L12.946 15.712C12.494 15.317 11.873 15.120 11.139 15.120C8.344 15.120 6.114 17.181 6.114 19.383C6.114 20.710 7.186 21.500 8.570 21.500C10.828 21.500 13.623 19.383 13.623 17.237L13.623 9.586C14.527 9.671 15.600 10.066 16.588 12.127C17.011 12.974 17.181 13.849 17.181 14.753C17.181 15.289 17.124 15.825 17.011 16.362C17.011 16.418 17.011 16.447 17.011 16.503C17.011 16.757 17.124 16.898 17.237 16.926C17.322 16.955 17.378 16.983 17.406 16.983C17.548 16.983 17.660 16.898 17.773 16.672C17.830 16.588 17.886 15.571 17.886 14.724L17.886 14.329C17.886 13.595 17.689 12.861 17.350 12.212C17.350 12.155 17.350 12.099 17.350 12.042C17.350 11.986 17.350 11.958 17.350 11.929C17.435 11.816 17.802 10.744 17.802 9.671C17.802 9.445 17.802 9.219 17.773 9.022C17.576 7.808 17.124 7.299 15.825 5.944C14.894 4.928 13.934 4.617 13.623 2.867ZM14.047 6.396C15.120 6.396 16.079 7.384 16.672 8.259C16.983 8.711 17.124 9.247 17.124 9.840C17.124 9.953 17.124 10.066 17.124 10.207C17.096 10.348 17.096 10.518 17.011 10.659C16.983 10.687 16.870 10.772 16.785 10.772C16.701 10.772 16.672 10.744 16.644 10.687C16.334 10.236 16.051 9.897 15.684 9.473C14.837 8.485 14.047 8.090 13.652 6.622C13.652 6.594 13.623 6.537 13.652 6.509C13.652 6.424 13.736 6.396 13.877 6.396Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "b4dfe260f5c1654c123349eadc0818890e63630ad2be984ab85784d0a0d13578",
+      "rtl": "fixed",
+      "geometrySha256": "cd57f819eb4fca4e68ada27961a75192411994a1a907173fcf804f8f91821baf"
+    },
+    {
+      "role": "player.metronome.note.32nd",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M13.139 18.129L13.139 11.699C13.942 11.788 14.835 12.056 15.729 13.842C16.063 14.556 16.197 15.271 16.197 16.030C16.197 16.499 16.175 16.945 16.086 17.414C16.086 17.459 16.063 17.481 16.063 17.504C16.063 17.704 16.175 17.861 16.264 17.905C16.309 17.928 16.354 17.950 16.354 17.950C16.465 17.950 16.577 17.861 16.689 17.682C16.733 17.593 16.800 16.834 16.800 16.164C16.800 15.985 16.800 15.851 16.800 15.695C16.756 15.070 16.622 14.467 16.354 13.887L16.354 13.663C16.398 13.574 16.733 12.681 16.733 11.766C16.733 11.565 16.711 11.386 16.689 11.185C16.622 10.828 16.532 10.538 16.398 10.270C16.532 9.845 16.711 9.198 16.711 8.573C16.711 8.394 16.711 8.260 16.689 8.126C16.532 7.144 16.153 6.697 15.081 5.536C14.277 4.643 13.407 4.398 13.139 2.790C13.116 2.656 12.893 2.500 12.804 2.500C12.692 2.500 12.603 2.679 12.603 2.679L12.603 16.923C12.246 16.610 11.754 16.454 11.174 16.454C8.964 16.454 7.200 18.084 7.200 19.825C7.200 20.875 8.048 21.500 9.142 21.500C10.928 21.500 13.139 19.825 13.139 18.129ZM16.153 8.908C16.108 9.064 16.041 9.332 15.952 9.600C15.729 9.310 15.438 9.019 15.081 8.618C14.277 7.747 13.496 7.479 13.228 5.894C14.121 5.894 15.081 6.296 15.952 7.791C16.130 8.126 16.197 8.350 16.197 8.573C16.197 8.684 16.175 8.774 16.153 8.908ZM14.925 11.587C14.255 10.761 13.541 10.426 13.228 9.198C13.228 9.176 13.317 8.997 13.429 8.975C14.434 8.975 15.260 9.801 15.751 10.538C16.019 10.917 16.175 11.341 16.175 11.833C16.175 11.967 16.153 12.078 16.130 12.212C16.086 12.324 16.086 12.480 16.041 12.592C16.041 12.636 15.952 12.681 15.885 12.681C15.818 12.681 15.773 12.659 15.751 12.614C15.528 12.257 15.282 11.989 15.014 11.676Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "b39493fcc5aeed63825755bd586b859b85f4ebd78402697cc500abade18ae912",
+      "rtl": "fixed",
+      "geometrySha256": "9c14a96f23fc9813dfa23dcc1900fe56ef6aa33c955577dd2ebc78fda86bf170"
+    },
+    {
+      "role": "player.metronome.note.64th",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M16.103 16.573C16.065 16.036 15.950 15.518 15.739 15.001C15.739 15.001 15.739 14.962 15.739 14.924C15.739 14.885 15.739 14.847 15.739 14.847C15.758 14.732 16.045 13.984 16.045 13.198C16.045 13.026 16.045 12.872 16.026 12.700C15.969 12.393 15.892 12.144 15.758 11.914C15.892 11.549 16.045 10.993 16.045 10.437C16.045 10.303 16.045 10.169 16.026 10.054C15.969 9.747 15.892 9.479 15.739 9.230C15.873 8.884 16.045 8.271 16.045 7.696C16.045 7.562 16.026 7.447 16.026 7.331C15.873 6.488 15.547 6.104 14.627 5.107C13.936 4.360 13.189 4.130 12.959 2.749C12.939 2.634 12.748 2.500 12.671 2.500C12.594 2.500 12.518 2.653 12.518 2.653L12.518 17.570C12.211 17.301 11.789 17.167 11.291 17.167C9.393 17.167 7.878 18.567 7.878 20.062C7.878 20.963 8.606 21.500 9.546 21.500C11.080 21.500 12.978 20.062 12.978 18.605L12.978 13.141C13.668 13.198 14.435 13.467 15.183 14.981C15.470 15.576 15.604 16.208 15.604 16.860C15.604 17.244 15.566 17.627 15.489 18.030C15.489 18.068 15.470 18.106 15.470 18.145C15.470 18.298 15.566 18.432 15.662 18.452C15.681 18.471 15.719 18.490 15.739 18.490C15.815 18.490 15.911 18.432 16.026 18.279C16.045 18.183 16.122 17.550 16.122 16.956C16.122 16.822 16.103 16.688 16.103 16.573ZM15.547 8.003L15.355 8.674C15.183 8.443 14.933 8.175 14.627 7.830C13.936 7.101 13.285 6.871 13.054 5.491C13.054 5.472 13.054 5.453 13.054 5.433C13.821 5.433 14.627 5.779 15.374 7.044C15.528 7.331 15.585 7.542 15.585 7.715C15.585 7.811 15.566 7.907 15.547 8.003ZM15.547 10.725C15.509 10.859 15.451 11.108 15.374 11.339C15.202 11.089 14.933 10.840 14.627 10.476C13.956 9.747 13.265 9.498 13.054 8.175C13.821 8.175 14.627 8.501 15.374 9.786C15.528 10.054 15.585 10.265 15.585 10.437C15.585 10.552 15.566 10.629 15.547 10.725ZM15.528 13.582C15.509 13.697 15.509 13.793 15.470 13.888C15.451 13.927 15.374 13.984 15.317 13.984C15.279 13.984 15.221 13.965 15.202 13.927C15.010 13.620 14.818 13.390 14.588 13.102L14.512 13.045C13.917 12.336 13.304 12.048 13.035 10.993C13.035 10.974 13.131 10.821 13.208 10.802C14.090 10.802 14.780 11.511 15.202 12.144C15.432 12.470 15.566 12.853 15.566 13.237C15.566 13.352 15.547 13.467 15.528 13.582Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "b0d1759b5117a3a2df2491aeefa4629b96c7be4fbdd94b75c4a4b3f13fbcd4d6",
+      "rtl": "fixed",
+      "geometrySha256": "dabb8e7319e2406474da0704fdda2df5d8660f53b34c1a866c29863e40504283"
+    },
+    {
+      "role": "player.metronome.note.128th",
+      "family": "note-duration",
+      "master": "smufl/metronome-note",
+      "source": "SMUFL BRAVURA TEXT / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M12.860 18.954L12.860 14.116C13.467 14.166 14.141 14.402 14.799 15.717C15.051 16.257 15.153 16.796 15.153 17.403C15.153 17.740 15.136 18.078 15.068 18.415C15.068 18.465 15.051 18.482 15.051 18.499C15.051 18.651 15.136 18.752 15.220 18.803C15.237 18.819 15.271 18.819 15.287 18.819C15.355 18.819 15.439 18.752 15.524 18.617C15.557 18.550 15.625 18.010 15.625 17.471C15.625 17.353 15.608 17.252 15.608 17.134C15.574 16.661 15.473 16.189 15.287 15.768L15.287 15.599C15.304 15.515 15.557 14.841 15.557 14.166C15.557 14.015 15.557 13.880 15.524 13.745C15.490 13.458 15.406 13.239 15.304 13.020C15.422 12.717 15.557 12.211 15.557 11.739C15.557 11.621 15.557 11.520 15.524 11.402C15.490 11.132 15.406 10.896 15.287 10.677C15.406 10.373 15.557 9.850 15.557 9.328C15.557 9.227 15.540 9.109 15.524 9.008C15.490 8.755 15.422 8.535 15.321 8.333C15.422 8.030 15.557 7.558 15.557 7.086C15.557 6.968 15.557 6.850 15.524 6.748C15.406 6.007 15.119 5.669 14.310 4.793C13.703 4.135 13.045 3.933 12.843 2.719C12.826 2.618 12.657 2.500 12.590 2.500C12.523 2.500 12.455 2.635 12.455 2.635L12.455 18.044C12.185 17.808 11.815 17.690 11.376 17.690C9.707 17.690 8.375 18.921 8.375 20.236C8.375 21.028 9.016 21.500 9.842 21.500C11.191 21.500 12.860 20.236 12.860 18.954ZM15.119 7.339C15.085 7.440 15.035 7.625 14.984 7.827C14.815 7.608 14.596 7.355 14.310 7.052C13.720 6.411 13.113 6.209 12.910 5.079C13.585 5.079 14.310 5.383 14.967 6.496C15.102 6.748 15.153 6.934 15.153 7.086C15.153 7.187 15.136 7.254 15.119 7.339ZM14.950 10.188C14.799 9.985 14.579 9.749 14.310 9.446C13.703 8.788 13.130 8.603 12.927 7.389C12.927 7.372 12.927 7.355 12.910 7.339C13.602 7.339 14.310 7.642 14.967 8.772C15.102 9.008 15.153 9.176 15.153 9.345C15.153 9.446 15.136 9.513 15.119 9.598ZM15.119 12.008C15.085 12.126 15.035 12.329 14.967 12.548C14.799 12.312 14.579 12.076 14.310 11.789C13.703 11.132 13.113 10.929 12.927 9.749C13.585 9.749 14.310 10.036 14.967 11.165C15.102 11.402 15.153 11.587 15.153 11.739C15.153 11.840 15.136 11.924 15.119 12.008ZM14.209 14.031C13.686 13.408 13.146 13.155 12.910 12.211C12.910 12.211 12.995 12.076 13.062 12.059C13.821 12.059 14.445 12.683 14.815 13.239C15.018 13.526 15.136 13.863 15.136 14.217C15.136 14.301 15.119 14.402 15.102 14.504C15.085 14.605 15.085 14.706 15.035 14.773C15.035 14.824 14.967 14.841 14.917 14.841C14.883 14.841 14.832 14.841 14.815 14.807C14.647 14.537 14.478 14.335 14.276 14.099Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "bd3aed288a82a5b6e886c90572655b3f157f2b867fd122f6b1a24e4929f1f2a5",
+      "rtl": "fixed",
+      "geometrySha256": "26442fb267b0a3a17fb053e2d0be6e3ed613dc7006aca92f212ea635994befdd"
+    },
+    {
+      "role": "player.metronome.subdivision.one",
+      "family": "metronome-subdivision",
+      "master": "smufl/subdivision-ratio",
+      "source": "SMUFL BRAVURA / SUBDIVISION GROUP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M14.959 15.434C14.525 15.081 13.928 14.864 13.222 14.864C10.534 14.864 8.389 16.846 8.389 18.964C8.389 20.240 9.421 21 10.751 21C12.923 21 15.584 18.964 15.611 16.928L15.611 3L14.959 3Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "7c1d4a93de2f24e0187a84c54813e9c784d95fdc3b59716025a2189edf6708d8",
+      "rtl": "fixed",
+      "geometrySha256": "2675558b9a66455423b59c9e1d6df071edb43ad3fd3c97af76128a2531072a99"
+    },
+    {
+      "role": "player.metronome.subdivision.two",
+      "family": "metronome-subdivision",
+      "master": "smufl/subdivision-ratio",
+      "source": "SMUFL BRAVURA / SUBDIVISION GROUP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M8.205 14.982C7.828 14.676 7.309 14.487 6.696 14.487C4.362 14.487 2.500 16.208 2.500 18.047C2.500 19.154 3.396 19.815 4.551 19.815C6.437 19.815 8.747 18.047 8.770 16.279L8.770 4.185L8.205 4.185ZM15.135 4.185L8.676 4.185L8.676 6.543L15.135 6.543ZM15.041 4.185L15.041 6.543L20.934 6.543L20.934 14.982C20.557 14.676 20.038 14.487 19.426 14.487C17.092 14.487 15.230 16.208 15.230 18.047C15.230 19.154 16.125 19.815 17.280 19.815C19.166 19.815 21.476 18.047 21.500 16.279L21.500 4.185Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "844630f842a2514c63e34127d3017bf97f3539dc18e34e15bb20ff5a6a540646",
+      "rtl": "fixed",
+      "geometrySha256": "08b76e206a7254a1cd66ed5a130ab2bb8b0fd34ec2871f2648cee0aa743754ee"
+    },
+    {
+      "role": "player.metronome.subdivision.four",
+      "family": "metronome-subdivision",
+      "master": "smufl/subdivision-ratio",
+      "source": "SMUFL-DERIVED / ANGLED DOUBLE-BEAM",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M2 18.1C1.8 17 3 15.9 4.5 15.6C5.8 15.3 6.8 15.9 6.8 16.9C6.8 18 5.5 19.1 4.1 19.4C2.9 19.6 2.1 19.1 2 18.1Z M7.1 18.1C6.9 17 8.1 15.9 9.6 15.6C10.9 15.3 11.9 15.9 11.9 16.9C11.9 18 10.6 19.1 9.2 19.4C8 19.6 7.2 19.1 7.1 18.1Z M12.2 18.1C12 17 13.2 15.9 14.7 15.6C16 15.3 17 15.9 17 16.9C17 18 15.7 19.1 14.3 19.4C13.1 19.6 12.3 19.1 12.2 18.1Z M17.3 18.1C17.1 17 18.3 15.9 19.8 15.6C21.1 15.3 22.1 15.9 22.1 16.9C22.1 18 20.8 19.1 19.4 19.4C18.2 19.6 17.4 19.1 17.3 18.1Z M5.2 5.1H6.5V17.8H5.2Z M10.3 4.8H11.6V17.8H10.3Z M15.4 4.5H16.7V17.8H15.4Z M20.5 4.2H21.8V17.8H20.5Z M5.2 5.1L21.8 4.1V6.2L5.2 7.2Z M5.2 8.2L21.8 7.2V9.3L5.2 10.3Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "6ebadc0192d5dda1644e0568f0a76c52e92e5e134060d81672895f5df5b12b2f",
+      "rtl": "fixed",
+      "geometrySha256": "162f788cdbbdcdfa39f0f158ca7253881b9b48b6b158955a7102066267687816"
+    },
+    {
+      "role": "player.metronome.beats_decrease",
+      "family": "stepper",
+      "master": "material-rounded/remove",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M18 13H6c-.55 0-1-.45-1-1s.45-1 1-1h12c.55 0 1 .45 1 1s-.45 1-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "18ec712db5219a2098c98d091e3d1ca73c0abeb6f271ed57e7f85b2b96f12c6d",
+      "rtl": "fixed",
+      "geometrySha256": "92388167945ab6faefb5f5bd506cb5f50c923dadd0fa0a80018b33e2126be569"
+    },
+    {
+      "role": "player.metronome.beats_increase",
+      "family": "stepper",
+      "master": "material-rounded/add",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M18 13h-5v5c0 .55-.45 1-1 1s-1-.45-1-1v-5H6c-.55 0-1-.45-1-1s.45-1 1-1h5V6c0-.55.45-1 1-1s1 .45 1 1v5h5c.55 0 1 .45 1 1s-.45 1-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "7f7552adad09e7e2fd30162cadcfdcf39d0594fd2489228bf953b217b6c052a0",
+      "rtl": "fixed",
+      "geometrySha256": "2d02c1f0dd7eaa66b81a802c65a3533bacf2a5081b1af0b9f86f0576d70676ac"
+    },
+    {
+      "role": "player.metronome.unit_previous",
+      "family": "note-unit-navigation",
+      "master": "stemwise/note-unit-navigation",
+      "source": "SMUFL + MATERIAL ROUNDED DISCLOSURE / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "g",
+          "attributes": {
+            "transform": "translate(17.5 0) scale(-1 1)"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 2,
+          "element": "path",
+          "attributes": {
+            "d": "M9.29 6.71a.996.996 0 0 0 0 1.41L13.17 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z",
+            "fill": "currentColor",
+            "stroke": "none"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M17.648 14.957C17.274 14.630 16.760 14.466 16.152 14.466C13.838 14.466 11.991 16.173 11.991 17.997C11.991 19.095 12.879 19.750 14.025 19.750C15.895 19.750 18.209 17.997 18.209 16.220L18.209 4.250L17.648 4.250Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "f83fa75b6ac1a6e8fb1fef1b5d90a8b1a43c619101d05d4d1ccadbe9fd2af49c",
+      "rtl": "fixed",
+      "geometrySha256": "6b1bd0e876240d0ea106b3bba3d0917ad9f41ccd8332d1bfe53e3e934eb31a4a"
+    },
+    {
+      "role": "player.metronome.unit_next",
+      "family": "note-unit-navigation",
+      "master": "stemwise/note-unit-navigation",
+      "source": "SMUFL + MATERIAL ROUNDED DISCLOSURE / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "g",
+          "attributes": {
+            "transform": "translate(24 0) scale(-1 1)"
+          }
+        },
+        {
+          "order": 1,
+          "depth": 2,
+          "element": "path",
+          "attributes": {
+            "d": "M17.648 14.957C17.274 14.630 16.760 14.466 16.152 14.466C13.838 14.466 11.991 16.173 11.991 17.997C11.991 19.095 12.879 19.750 14.025 19.750C15.895 19.750 18.209 17.997 18.209 16.220L18.209 4.250L17.648 4.250Z",
+            "fill": "currentColor",
+            "fill-rule": "nonzero",
+            "stroke": "none"
+          }
+        },
+        {
+          "order": 2,
+          "depth": 1,
+          "element": "g",
+          "attributes": {
+            "transform": "translate(6.5 0)"
+          }
+        },
+        {
+          "order": 3,
+          "depth": 2,
+          "element": "path",
+          "attributes": {
+            "d": "M9.29 6.71a.996.996 0 0 0 0 1.41L13.17 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z",
+            "fill": "currentColor",
+            "stroke": "none"
+          }
+        }
+      ],
+      "svgSha256": "25e5c7a02534ee94be47fd98476723d75bbdbcf1db2d2e7b2a99a4d0a82b78ef",
+      "rtl": "fixed",
+      "geometrySha256": "09e9e40910432f7f957c5428e8c420334968c0ef85a5a3871467144742ba13ca"
+    },
+    {
+      "role": "player.metronome.volume_off",
+      "family": "volume",
+      "master": "material-rounded/volume_off",
+      "source": "SHARED MASTER",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M3.63 3.63a.996.996 0 0 0 0 1.41L7.29 8.7 7 9H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71v-4.17l4.18 4.18c-.49.37-1.02.68-1.6.91-.36.15-.58.53-.58.92 0 .72.73 1.18 1.39.91.8-.33 1.55-.77 2.22-1.31l1.34 1.34a.996.996 0 1 0 1.41-1.41L5.05 3.63c-.39-.39-1.02-.39-1.42 0zM19 12c0 .82-.15 1.61-.41 2.34l1.53 1.53c.56-1.17.88-2.48.88-3.87 0-3.83-2.4-7.11-5.78-8.4-.59-.23-1.22.23-1.22.86v.19c0 .38.25.71.61.85C17.18 6.54 19 9.06 19 12zm-8.71-6.29-.17.17L12 7.76V6.41c0-.89-1.08-1.33-1.71-.7zM16.5 12A4.5 4.5 0 0 0 14 7.97v1.79l2.48 2.48c.01-.08.02-.16.02-.24z"
+          }
+        }
+      ],
+      "svgSha256": "ee24545fbc54a6173f86dd914ef322c01de521608c31bc8e671fb1641750af63",
+      "rtl": "fixed",
+      "geometrySha256": "107cfe4d0fd9fa24b013e3209483e4b05ea7f62991de8686783b0831d91f4853"
+    },
+    {
+      "role": "player.metronome.volume_low",
+      "family": "volume",
+      "master": "material-rounded/volume_down",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L9 9H6c-.55 0-1 .45-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "66af1af94d516be7650a3ce1e98cb736d374276c780db44672509280ad5d1dcf",
+      "rtl": "fixed",
+      "geometrySha256": "a75a44542921eb6a50779777b05568e1f879b59bb5fe80f00813964539ce0f1d"
+    },
+    {
+      "role": "player.metronome.volume_high",
+      "family": "volume",
+      "master": "material-rounded/volume_up",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 4.45v.2c0 .38.25.71.6.85C17.18 6.53 19 9.06 19 12s-1.82 5.47-4.4 6.5c-.36.14-.6.47-.6.85v.2c0 .63.63 1.07 1.21.85C18.6 19.11 21 15.84 21 12s-2.4-7.11-5.79-8.4c-.58-.23-1.21.22-1.21.85z"
+          }
+        }
+      ],
+      "svgSha256": "d5b7007f3cceec4520299577f3abf867252be2b4285a3c3b89620c83cf9830ee",
+      "rtl": "fixed",
+      "geometrySha256": "a4758654b304867a964030a669274dd97781edbad1b4ab9f81f6169414e6cf4c"
+    },
+    {
+      "role": "navigation.library",
+      "family": "navigation",
+      "master": "material-rounded/library_music",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 5h-2v5.37c0 1.27-.9 2.44-2.16 2.6a2.505 2.505 0 0 1-2.8-2.95c.2-1.1 1.18-1.95 2.3-2.02.63-.04 1.2.16 1.66.51V6c0-.55.45-1 1-1h2c.55 0 1 .45 1 1s-.45 1-1 1zM3 6c-.55 0-1 .45-1 1v13c0 1.1.9 2 2 2h13c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1-.45-1-1V7c0-.55-.45-1-1-1z"
+          }
+        }
+      ],
+      "svgSha256": "30dc06f0d9af015902e698b9d8906aa8485ec1e196a9edab5416757140e556ec",
+      "rtl": "fixed",
+      "geometrySha256": "9d959d8e224a795dfe91442532be77bd29e14dd2c82e393f7897a5a4ec54b0e9"
+    },
+    {
+      "role": "navigation.tasks",
+      "family": "navigation",
+      "master": "material-rounded/checklist",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M22 8c0-.55-.45-1-1-1h-7c-.55 0-1 .45-1 1s.45 1 1 1h7c.55 0 1-.45 1-1zm-9 8c0 .55.45 1 1 1h7c.55 0 1-.45 1-1s-.45-1-1-1h-7c-.55 0-1 .45-1 1zM10.47 4.63c.39.39.39 1.02 0 1.41l-4.23 4.25c-.39.39-1.02.39-1.42 0L2.7 8.16a.996.996 0 1 1 1.41-1.41l1.42 1.42 3.54-3.54c.38-.38 1.02-.38 1.4 0zm.01 8.01c.39.39.39 1.02 0 1.41L6.25 18.3c-.39.39-1.02.39-1.42 0L2.7 16.16a.996.996 0 1 1 1.41-1.41l1.42 1.42 3.54-3.54c.38-.38 1.02-.38 1.41.01z"
+          }
+        }
+      ],
+      "svgSha256": "99a8dc15cc2aaa1c0b0c0ed7cfc434f53ddd9dca4be8f8d83718f6c527180372",
+      "rtl": "fixed",
+      "geometrySha256": "f6f8d6832a4db0bb99db9e1a5a09d5864b4337c440ed259cb2648c6ab0c7937c"
+    },
+    {
+      "role": "navigation.system",
+      "family": "navigation",
+      "master": "material-rounded/settings",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M19.5 12c0-.23-.01-.45-.03-.68l1.86-1.41c.4-.3.51-.86.26-1.3l-1.87-3.23a.987.987 0 0 0-1.25-.42l-2.15.91c-.37-.26-.76-.49-1.17-.68l-.29-2.31c-.06-.5-.49-.88-.99-.88h-3.73c-.51 0-.94.38-1 .88l-.29 2.31c-.41.19-.8.42-1.17.68l-2.15-.91c-.46-.2-1-.02-1.25.42L2.41 8.62c-.25.44-.14.99.26 1.3l1.86 1.41a7.343 7.343 0 0 0 0 1.35l-1.86 1.41c-.4.3-.51.86-.26 1.3l1.87 3.23c.25.44.79.62 1.25.42l2.15-.91c.37.26.76.49 1.17.68l.29 2.31c.06.5.49.88.99.88h3.73c.5 0 .93-.38.99-.88l.29-2.31c.41-.19.8-.42 1.17-.68l2.15.91c.46.2 1 .02 1.25-.42l1.87-3.23c.25-.44.14-.99-.26-1.3l-1.86-1.41c.03-.23.04-.45.04-.68zm-7.46 3.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"
+          }
+        }
+      ],
+      "svgSha256": "179fa8d2ac21aa7b88dd9b6b3d4fee03379b4e0a9321f1f7037083cd422a93be",
+      "rtl": "fixed",
+      "geometrySha256": "19908c1ef281e1d226bd2620e9544ad13d7f194acc3fa13f14cf775ed0df190a"
+    },
+    {
+      "role": "library.search",
+      "family": "search",
+      "master": "material-rounded/search",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+          }
+        }
+      ],
+      "svgSha256": "33e43d0bc8c2d111e18330526831ab0bd239ac18e4d4f129b1532e18ed295804",
+      "rtl": "fixed",
+      "geometrySha256": "8daf35cbd7a58c350d8e55d9239ff2ee4ce920d65e30f0f349b7dddb10a36589"
+    },
+    {
+      "role": "library.clear_search",
+      "family": "search",
+      "master": "material-rounded/close",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"
+          }
+        }
+      ],
+      "svgSha256": "246f465f9638c5a0d6f2624197801a2fa2f7ca1586a545171dc13f2b235a8a12",
+      "rtl": "fixed",
+      "geometrySha256": "97bf3a352ebb27c14b4385a4fc4acbc331e6bcff46e6f7494ee4a3fc155acb2f"
+    },
+    {
+      "role": "library.queue_music",
+      "family": "library-action",
+      "master": "material-rounded/queue_music",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M14 6H4c-.55 0-1 .45-1 1s.45 1 1 1h10c.55 0 1-.45 1-1s-.45-1-1-1zm0 4H4c-.55 0-1 .45-1 1s.45 1 1 1h10c.55 0 1-.45 1-1s-.45-1-1-1zM4 16h6c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM19 6c-1.1 0-2 .9-2 2v6.18c-.31-.11-.65-.18-1-.18-1.84 0-3.28 1.64-2.95 3.54.21 1.21 1.2 2.2 2.41 2.41 1.9.33 3.54-1.11 3.54-2.95V8h2c.55 0 1-.45 1-1s-.45-1-1-1h-2z"
+          }
+        }
+      ],
+      "svgSha256": "cd58b9005b7cf9a067ca4289cdf9637d47a087e8a8e1e09f9122edff96f7d740",
+      "rtl": "mirror",
+      "geometrySha256": "6bb2c3dd582ab70639b2a5ce1c0a713116bf86015bb8b5f135e28c46f1f7e19b"
+    },
+    {
+      "role": "library.open_external",
+      "family": "library-action",
+      "master": "material-rounded/open_in_new",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M18 19H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h5c.55 0 1-.45 1-1s-.45-1-1-1H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6c0-.55-.45-1-1-1s-1 .45-1 1v5c0 .55-.45 1-1 1zM14 4c0 .55.45 1 1 1h2.59l-9.13 9.13a.996.996 0 1 0 1.41 1.41L19 6.41V9c0 .55.45 1 1 1s1-.45 1-1V4c0-.55-.45-1-1-1h-5c-.55 0-1 .45-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "a941940be43239589277feb54b69d0dea5f25aaede977b623a214bb9830122fa",
+      "rtl": "mirror",
+      "geometrySha256": "62a730ace08ac57ba7482a0e10c25efa768f4956f9b48fe8b56738d9eee1acdd"
+    },
+    {
+      "role": "library.complete",
+      "family": "status",
+      "master": "material-rounded/check",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M9 16.17 5.53 12.7a.996.996 0 1 0-1.41 1.41l4.18 4.18c.39.39 1.02.39 1.41 0L20.29 7.71a.996.996 0 1 0-1.41-1.41L9 16.17z"
+          }
+        }
+      ],
+      "svgSha256": "f155c97664875888b86b8f5a4d84b2e26faead609c25c001ed4741017ef20fd8",
+      "rtl": "fixed",
+      "geometrySha256": "9686839e70740030ac7e9b3c890d23eafa2247567bde8f98a4ada98ab0145fcf"
+    },
+    {
+      "role": "library.now_playing_bars",
+      "family": "playback-indicator",
+      "master": "stemwise/library.now_playing_bars",
+      "source": "STEMWISE / 2DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "none",
+        "stroke": "currentColor",
+        "strokeWidth": 2,
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "d": "M5 16V9M9.5 18V6M14 16v-5M18.5 18V8"
+          }
+        }
+      ],
+      "svgSha256": "8a1e7d0bb6237eb46bba9292d3c296276b400ca74772f546f3c1399d101fe7b9",
+      "rtl": "fixed",
+      "geometrySha256": "4d5ad5538eec6397c30ab26984a4757e38a2ebc7fa89a420320660890e5c0497"
+    },
+    {
+      "role": "library.missing_artwork_disc",
+      "family": "artwork",
+      "master": "material-rounded/hide_image",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M19 3H5.83L21 18.17V5c0-1.1-.9-2-2-2zm-15.49.51A.996.996 0 1 0 2.1 4.92l.9.91V19c0 1.1.9 2 2 2h13.17l.9.9a.996.996 0 1 0 1.41-1.41L3.51 3.51zM7 17a.5.5 0 0 1-.4-.8l2-2.67c.2-.27.6-.27.8 0L11.25 16l.82-1.1 2.1 2.1H7z"
+          }
+        }
+      ],
+      "svgSha256": "0721e011a87697d09a931d1a237eeab6fbdcdb40844ea4b98fe325b75445a5b2",
+      "rtl": "fixed",
+      "geometrySha256": "8c84f921f651f369dc67f3f0722e3789be14d598e773bdc5cc18e175e42eaba9"
+    },
+    {
+      "role": "tasks.sync",
+      "family": "task-action",
+      "master": "material-rounded/sync",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M12 4V2.21c0-.45-.54-.67-.85-.35l-2.8 2.79c-.2.2-.2.51 0 .71l2.79 2.79c.32.31.86.09.86-.36V6c3.31 0 6 2.69 6 6 0 .79-.15 1.56-.44 2.25-.15.36-.04.77.23 1.04.51.51 1.37.33 1.64-.34.37-.91.57-1.91.57-2.95 0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-.79.15-1.56.44-2.25.15-.36.04-.77-.23-1.04-.51-.51-1.37-.33-1.64.34C4.2 9.96 4 10.96 4 12c0 4.42 3.58 8 8 8v1.79c0 .45.54.67.85.35l2.79-2.79c.2-.2.2-.51 0-.71l-2.79-2.79a.5.5 0 0 0-.85.36V18z"
+          }
+        }
+      ],
+      "svgSha256": "79106d5c1e5798c17c0d26b275dc65ba8c12424d0ea3419448b0d269bd5d4385",
+      "rtl": "fixed",
+      "geometrySha256": "fe41feea42fe6fefd7feecf6e693e2d2e0d6f40d1142fd0e2d29fedaa3653c5e"
+    },
+    {
+      "role": "tasks.download",
+      "family": "task-action",
+      "master": "material-rounded/download",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M16.59 9H15V4c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v5H7.41c-.89 0-1.34 1.08-.71 1.71l4.59 4.59c.39.39 1.02.39 1.41 0l4.59-4.59c.63-.63.19-1.71-.7-1.71zM5 19c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "000a8184479c0cc3f8a25f644f8677128a0541df6f09fc327747e6f3fc3ee29b",
+      "rtl": "fixed",
+      "geometrySha256": "58529d0c8a78a9244d4cd6ecbc58d9a609b57e85fc2165faeaab1970d38bf123"
+    },
+    {
+      "role": "tasks.import_zip",
+      "family": "task-action",
+      "master": "material-rounded/folder_zip",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M20 6h-8l-1.41-1.41C10.21 4.21 9.7 4 9.17 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 6h-2v2h2v2h-2v2h-2v-2h2v-2h-2v-2h2v-2h-2V8h2v2h2v2z"
+          }
+        }
+      ],
+      "svgSha256": "43e0ec25c09bd434608524503526e656a6ffa81b93aa461b17dca9fd51ae7627",
+      "rtl": "fixed",
+      "geometrySha256": "fd69de69573ea8e80546e3720a750d11f1f4e0e4256ac8a8158ecf3794128a1a"
+    },
+    {
+      "role": "system.disclosure",
+      "family": "disclosure",
+      "master": "material-rounded/chevron_right",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M9.29 6.71a.996.996 0 0 0 0 1.41L13.17 12l-3.88 3.88a.996.996 0 1 0 1.41 1.41l4.59-4.59a.996.996 0 0 0 0-1.41L10.7 6.7c-.38-.38-1.02-.38-1.41.01z"
+          }
+        }
+      ],
+      "svgSha256": "ca8467cd4b4787f70d618d86f2f9c1764cae15c7b472343b224d9fea3313a792",
+      "rtl": "mirror",
+      "geometrySha256": "1c2ae27e622972dfd3d9ef8a9cc38a57e8dd282fd557a0110f60bb2a6b5d3770"
+    },
+    {
+      "role": "system.folder_open",
+      "family": "system-item",
+      "master": "material-rounded/folder_open",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M20 6h-8l-1.41-1.41C10.21 4.21 9.7 4 9.17 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 12H5c-.55 0-1-.45-1-1V9c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v8c0 .55-.45 1-1 1z"
+          }
+        }
+      ],
+      "svgSha256": "bad1c965c8e64d4ce39763fd422b67e049c40bcd5353862540939e330bea8a29",
+      "rtl": "fixed",
+      "geometrySha256": "9ff8dedbc973f157b4bccf61de945b052dc6b54b9c433679438b332b4bf3ee8c"
+    },
+    {
+      "role": "system.refresh",
+      "family": "system-action",
+      "master": "material-rounded/refresh",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M17.65 6.35a7.95 7.95 0 0 0-6.48-2.31c-3.67.37-6.69 3.35-7.1 7.02C3.52 15.91 7.27 20 12 20a7.98 7.98 0 0 0 7.21-4.56c.32-.67-.16-1.44-.9-1.44-.37 0-.72.2-.88.53a5.994 5.994 0 0 1-6.8 3.31c-2.22-.49-4.01-2.3-4.48-4.52A6.002 6.002 0 0 1 12 6c1.66 0 3.14.69 4.22 1.78l-1.51 1.51c-.63.63-.19 1.71.7 1.71H19c.55 0 1-.45 1-1V6.41c0-.89-1.08-1.34-1.71-.71l-.64.65z"
+          }
+        }
+      ],
+      "svgSha256": "33a89542e9df2d00261782584adde9abccc9a9955f7806f3f35f31f7eb3d6be4",
+      "rtl": "fixed",
+      "geometrySha256": "b58420546619863e346823f78c84b9d6062d7340434cc3068ecbbf579879df4a"
+    },
+    {
+      "role": "system.storage",
+      "family": "system-item",
+      "master": "material-rounded/storage",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M4 20h16c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2zm0-3h2v2H4v-2zM2 6c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2zm4 1H4V5h2v2zm-2 7h16c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2zm0-3h2v2H4v-2z"
+          }
+        }
+      ],
+      "svgSha256": "586ee04108a2b964e31d7f59de4ae06fdee5395fb3284c8c3de242464e669eb9",
+      "rtl": "fixed",
+      "geometrySha256": "2d952b3e65500f8ae7a3ed059608929500f108966b1126c337fd95e106945723"
+    },
+    {
+      "role": "system.artwork",
+      "family": "system-item",
+      "master": "material-rounded/image",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.9 13.98l2.1 2.53 3.1-3.99c.2-.26.6-.26.8.01l3.51 4.68a.5.5 0 0 1-.4.8H6.02c-.42 0-.65-.48-.39-.81L8.12 14c.19-.26.57-.27.78-.02z"
+          }
+        }
+      ],
+      "svgSha256": "b2f9e6841f0c7dd4fb7d4039b07ddb5c534fa63f1517e15bbb40d33b0e497da2",
+      "rtl": "fixed",
+      "geometrySha256": "8be3780a8f61b821befa9f24372104cf898e374feccb05ebc6b89682c04e3639"
+    },
+    {
+      "role": "system.document",
+      "family": "system-item",
+      "master": "material-rounded/description",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M14.59 2.59c-.38-.38-.89-.59-1.42-.59H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8.83c0-.53-.21-1.04-.59-1.41l-4.82-4.83zM15 18H9c-.55 0-1-.45-1-1s.45-1 1-1h6c.55 0 1 .45 1 1s-.45 1-1 1zm0-4H9c-.55 0-1-.45-1-1s.45-1 1-1h6c.55 0 1 .45 1 1s-.45 1-1 1zm-2-6V3.5L18.5 9H14c-.55 0-1-.45-1-1z"
+          }
+        }
+      ],
+      "svgSha256": "d253c01a70d3147e3ddf406b7c5bdaede0d83c2bf90151e163bc5a32435aa4c1",
+      "rtl": "fixed",
+      "geometrySha256": "0e990e83d6a7ef7a8530625a9ef262162d0aa0d11f3be1a77c2e98923c29b943"
+    },
+    {
+      "role": "system.cloud_upload",
+      "family": "system-item",
+      "master": "material-rounded/cloud_upload",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l4.65-4.65c.2-.2.51-.2.71 0L17 13h-3z"
+          }
+        }
+      ],
+      "svgSha256": "395503e3e4a59b1f32bacb5b450e5561eb44a39c3a00138829b76cfd1136e332",
+      "rtl": "fixed",
+      "geometrySha256": "57652549b09186e8e239d95f0d75fcb1e7ba048b65e5a0a14e2a3f9710d64ff3"
+    },
+    {
+      "role": "system.verified_user",
+      "family": "system-item",
+      "master": "material-rounded/verified_user",
+      "source": "MATERIAL ROUNDED / 24DP",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24,
+        "unit": "dp"
+      },
+      "opticalSize": {
+        "width": 20,
+        "height": 20,
+        "inset": 2,
+        "unit": "dp"
+      },
+      "rootPaint": {
+        "fill": "currentColor",
+        "stroke": "none"
+      },
+      "layers": [
+        {
+          "order": 0,
+          "depth": 1,
+          "element": "path",
+          "attributes": {
+            "fill": "currentColor",
+            "stroke": "none",
+            "d": "m11.19 1.36-7 3.11C3.47 4.79 3 5.51 3 6.3V11c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6.3c0-.79-.47-1.51-1.19-1.83l-7-3.11c-.51-.23-1.11-.23-1.62 0zm-1.9 14.93L6.7 13.7a.996.996 0 1 1 1.41-1.41L10 14.17l5.88-5.88a.996.996 0 1 1 1.41 1.41l-6.59 6.59a.996.996 0 0 1-1.41 0z"
+          }
+        }
+      ],
+      "svgSha256": "77c89680d43fc339c82e46cab2efef7bbbf447b23d0819030d81b5f28925f426",
+      "rtl": "fixed",
+      "geometrySha256": "c07b8548f42f6708784ab79aadac711fc764280700717f3d019ce33ac03698ff"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "kind": "stemwise.installed-enrichment.timestamp-corpus",
+  "positive": [
+    "0001-01-01T00:00:00Z",
+    "2000-02-29T23:59:59Z",
+    "2024-02-29T12:34:56Z",
+    "2026-08-09T12:00:00Z",
+    "2026-08-09T12:00:00.000Z",
+    "2026-08-09T12:00:00.123Z",
+    "2026-08-09T12:00:00.123000Z",
+    "2026-08-09T12:00:00.123456789Z",
+    "9999-12-31T23:59:59.999999999Z"
+  ],
+  "negative": [
+    { "name": "year-zero", "value": "0000-01-01T00:00:00Z" },
+    { "name": "leap-second", "value": "2016-12-31T23:59:60Z" },
+    { "name": "non-leap-century", "value": "1900-02-29T00:00:00Z" },
+    { "name": "non-leap-year", "value": "2023-02-29T00:00:00Z" },
+    { "name": "month-zero", "value": "2026-00-09T12:00:00Z" },
+    { "name": "month-thirteen", "value": "2026-13-09T12:00:00Z" },
+    { "name": "day-zero", "value": "2026-08-00T12:00:00Z" },
+    { "name": "impossible-date", "value": "2026-02-30T12:00:00Z" },
+    { "name": "hour-24", "value": "2026-08-09T24:00:00Z" },
+    { "name": "minute-60", "value": "2026-08-09T12:60:00Z" },
+    { "name": "impossible-time", "value": "2026-08-09T25:00:00Z" },
+    { "name": "one-fraction-digit", "value": "2026-08-09T12:00:00.1Z" },
+    { "name": "two-fraction-digits", "value": "2026-08-09T12:00:00.12Z" },
+    { "name": "four-fraction-digits", "value": "2026-08-09T12:00:00.1234Z" },
+    { "name": "five-fraction-digits", "value": "2026-08-09T12:00:00.12345Z" },
+    { "name": "seven-fraction-digits", "value": "2026-08-09T12:00:00.1234567Z" },
+    { "name": "eight-fraction-digits", "value": "2026-08-09T12:00:00.12345678Z" },
+    { "name": "ten-fraction-digits", "value": "2026-08-09T12:00:00.1234567890Z" },
+    { "name": "numeric-offset", "value": "2026-08-09T12:00:00+00:00" },
+    { "name": "lowercase-z", "value": "2026-08-09T12:00:00z" },
+    { "name": "leading-space", "value": " 2026-08-09T12:00:00Z" },
+    { "name": "trailing-space", "value": "2026-08-09T12:00:00Z " },
+    { "name": "trailing-data", "value": "2026-08-09T12:00:00Zx" },
+    { "name": "five-digit-year", "value": "10000-01-01T00:00:00Z" },
+    { "name": "wrong-json-type", "value": 1786276800 }
+  ]
+}

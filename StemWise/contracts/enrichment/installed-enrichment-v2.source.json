@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stemwise.app/schemas/installed-enrichment-v2.schema.json",
+  "title": "StemWise installed enrichment v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "source",
+    "generatedAt",
+    "generator",
+    "media",
+    "artwork",
+    "install"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "required": [
+              "recording"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "media": {
+            "properties": {
+              "files": {
+                "prefixItems": [
+                  {
+                    "properties": {
+                      "path": {
+                        "const": "original.flac"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "kind": {
+      "const": "stemwise.installed-enrichment"
+    },
+    "source": {
+      "$ref": "song-enrichment-v2.schema.json#/$defs/sourceIdentity"
+    },
+    "generatedAt": {
+      "$ref": "song-enrichment-v2.schema.json#/properties/generatedAt"
+    },
+    "generator": {
+      "$ref": "song-enrichment-v2.schema.json#/$defs/generator"
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/originalMedia"
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "lyrics": {
+      "$ref": "song-enrichment-v2.schema.json#/$defs/lyrics"
+    },
+    "analysis": {
+      "type": "object"
+    },
+    "artwork": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delivery",
+        "file",
+        "mimeType",
+        "byteLength",
+        "sha256",
+        "kind",
+        "source"
+      ],
+      "properties": {
+        "delivery": {
+          "const": "selected-root"
+        },
+        "file": {
+          "const": "cover.png"
+        },
+        "mimeType": {
+          "const": "image/png"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "enum": [
+            "album-cover",
+            "single-cover",
+            "youtube-thumbnail",
+            "other"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/sourceDescriptor"
+        }
+      }
+    },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "originalSha256",
+        "contentRevision",
+        "payloadSha256",
+        "generatedDigest"
+      ],
+      "properties": {
+        "contractVersion": {
+          "const": "stemwise.installed-enrichment.v2"
+        },
+        "originalSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contentRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "payloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generatedDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "mediaBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "byteLength",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "originalMedia": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/mediaBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "enum": [
+                "original.opus",
+                "original.flac"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

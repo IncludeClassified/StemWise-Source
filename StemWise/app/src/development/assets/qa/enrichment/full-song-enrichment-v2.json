@@ -1,0 +1,625 @@
+{
+  "formatVersion": 2,
+  "kind": "stemwise.song-enrichment",
+  "source": {
+    "provider": "youtube",
+    "videoId": "FIXTURE0001"
+  },
+  "generatedAt": "2026-07-29T08:00:00Z",
+  "generator": {
+    "name": "stemwise-pc",
+    "version": "2.1.0"
+  },
+  "metadata": {
+    "matchStatus": "verified",
+    "title": "Golden Hour Circuit",
+    "artists": [
+      "StemWise Fixture Artist",
+      "Contract Ensemble"
+    ],
+    "album": {
+      "title": "Executable Examples",
+      "type": "album",
+      "artists": [
+        "StemWise Fixture Artist"
+      ],
+      "releaseDate": "2026-07-29",
+      "trackNumber": 1,
+      "trackTotal": 10,
+      "discNumber": 1,
+      "discTotal": 2
+    },
+    "genres": [
+      "Electronic",
+      "Test fixture"
+    ],
+    "description": "A synthetic local recording that exercises every supported StemWise enrichment group.",
+    "explicit": false,
+    "recordLabel": "StemWise Local Lab",
+    "copyright": "Synthetic fixture; no third-party recording or lyrics.",
+    "credits": [
+      {
+        "name": "Fixture Composer",
+        "roles": [
+          "composer",
+          "producer"
+        ]
+      },
+      {
+        "name": "Fixture Performer",
+        "roles": [
+          "performer"
+        ]
+      }
+    ],
+    "identifiers": {
+      "isrc": "USSWI2600001",
+      "musicBrainzRecordingId": "00000000-0000-4000-8000-000000000001",
+      "musicBrainzReleaseId": "00000000-0000-4000-8000-000000000002",
+      "discogsReleaseId": "123456",
+      "wikidataId": "Q12345"
+    },
+    "links": [
+      {
+        "type": "youtube",
+        "url": "https://www.youtube.com/watch?v=FIXTURE0001"
+      },
+      {
+        "type": "project",
+        "url": "https://stemwise.local/fixtures/FIXTURE0001"
+      }
+    ],
+    "sources": [
+      {
+        "name": "StemWise golden-fixture catalog",
+        "url": "https://stemwise.local/fixtures/FIXTURE0001"
+      },
+      {
+        "name": "YouTube identity record",
+        "url": "https://www.youtube.com/watch?v=FIXTURE0001"
+      }
+    ]
+  },
+  "artwork": {
+    "file": "cover.png",
+    "kind": "album-cover",
+    "source": {
+      "name": "StemWise generated fixture artwork",
+      "url": "https://stemwise.local/fixtures/FIXTURE0001/cover"
+    }
+  },
+  "lyrics": {
+    "status": "complete",
+    "tokenizationVersion": "stemwise.display-words.v2",
+    "tracks": [
+      {
+        "id": "original-mul",
+        "kind": "original",
+        "language": "mul",
+        "componentLanguages": [
+          "en",
+          "tr"
+        ],
+        "script": "Zyyy",
+        "format": "synced",
+        "lines": [
+          {
+            "startMs": 500,
+            "endMs": 2800,
+            "text": "Altın ışık devrede",
+            "words": [
+              {
+                "startUtf16": 0,
+                "endUtf16": 5,
+                "startMs": 500,
+                "endMs": 1200
+              },
+              {
+                "startUtf16": 6,
+                "endUtf16": 10,
+                "startMs": 1100,
+                "endMs": 1900
+              },
+              {
+                "startUtf16": 11,
+                "endUtf16": 18,
+                "startMs": 1900,
+                "endMs": 2800
+              }
+            ]
+          },
+          {
+            "startMs": 3200,
+            "endMs": 5900,
+            "text": "Every datum is in its place",
+            "words": [
+              {
+                "startUtf16": 0,
+                "endUtf16": 5,
+                "startMs": 3200,
+                "endMs": 3650
+              },
+              {
+                "startUtf16": 6,
+                "endUtf16": 11,
+                "startMs": 3650,
+                "endMs": 4100
+              },
+              {
+                "startUtf16": 12,
+                "endUtf16": 14,
+                "startMs": 4100,
+                "endMs": 4450
+              },
+              {
+                "startUtf16": 15,
+                "endUtf16": 17,
+                "startMs": 4450,
+                "endMs": 4800
+              },
+              {
+                "startUtf16": 18,
+                "endUtf16": 21,
+                "startMs": 4800,
+                "endMs": 5200
+              },
+              {
+                "startUtf16": 22,
+                "endUtf16": 27,
+                "startMs": 5200,
+                "endMs": 5900
+              }
+            ]
+          },
+          {
+            "startMs": 7000,
+            "endMs": 10500,
+            "text": "Müzik akıyor sessizce",
+            "words": [
+              {
+                "startUtf16": 0,
+                "endUtf16": 5,
+                "startMs": 7000,
+                "endMs": 8000
+              },
+              {
+                "startUtf16": 6,
+                "endUtf16": 12,
+                "startMs": 8000,
+                "endMs": 9100
+              },
+              {
+                "startUtf16": 13,
+                "endUtf16": 21,
+                "startMs": 9100,
+                "endMs": 10500
+              }
+            ]
+          }
+        ],
+        "source": {
+          "name": "StemWise synthetic fixture lyrics",
+          "url": "https://stemwise.local/fixtures/FIXTURE0001/lyrics/mul"
+        }
+      },
+      {
+        "id": "translation-en",
+        "kind": "translation",
+        "basedOnTrackId": "original-mul",
+        "language": "en",
+        "script": "Latn",
+        "format": "synced",
+        "lines": [
+          {
+            "startMs": 500,
+            "endMs": 2800,
+            "text": "The golden light is online"
+          },
+          {
+            "startMs": 3200,
+            "endMs": 5900,
+            "text": "Every datum is in its place"
+          },
+          {
+            "startMs": 7000,
+            "endMs": 10500,
+            "text": "The music flows without a hitch"
+          }
+        ],
+        "source": {
+          "name": "StemWise synthetic fixture translation",
+          "url": "https://stemwise.local/fixtures/FIXTURE0001/lyrics/en"
+        }
+      },
+      {
+        "id": "transliteration-tr-fonipa",
+        "kind": "transliteration",
+        "basedOnTrackId": "original-mul",
+        "language": "tr-fonipa",
+        "script": "Latn",
+        "format": "synced",
+        "lines": [
+          {
+            "startMs": 500,
+            "endMs": 2800,
+            "text": "ɑɫtɯn ɯʃɯk devɾede"
+          },
+          {
+            "startMs": 3200,
+            "endMs": 5900,
+            "text": "heɾ veɾi jeɾli jeɾinde"
+          },
+          {
+            "startMs": 7000,
+            "endMs": 10500,
+            "text": "myzik ɑkɯjoɾ sessizdʒe"
+          }
+        ],
+        "source": {
+          "name": "StemWise synthetic fixture IPA"
+        }
+      }
+    ]
+  },
+  "analysis": {
+    "status": "complete",
+    "durationMs": 12000,
+    "rhythm": {
+      "status": "complete",
+      "bpm": 128.0,
+      "alternativeBpms": [
+        64.0,
+        256.0
+      ],
+      "meter": {
+        "numerator": 4,
+        "denominator": 4
+      },
+      "beats": [
+        {
+          "timeMs": 500,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 0
+        },
+        {
+          "timeMs": 969,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 0
+        },
+        {
+          "timeMs": 1438,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 0
+        },
+        {
+          "timeMs": 1906,
+          "isDownbeat": false,
+          "beatInBar": 4,
+          "barIndex": 0
+        },
+        {
+          "timeMs": 2375,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 1
+        },
+        {
+          "timeMs": 2844,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 1
+        },
+        {
+          "timeMs": 3313,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 1
+        },
+        {
+          "timeMs": 3781,
+          "isDownbeat": false,
+          "beatInBar": 4,
+          "barIndex": 1
+        },
+        {
+          "timeMs": 4250,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 2
+        },
+        {
+          "timeMs": 4719,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 2
+        },
+        {
+          "timeMs": 5188,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 2
+        },
+        {
+          "timeMs": 5656,
+          "isDownbeat": false,
+          "beatInBar": 4,
+          "barIndex": 2
+        },
+        {
+          "timeMs": 6127,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 3
+        },
+        {
+          "timeMs": 6603,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 3
+        },
+        {
+          "timeMs": 7079,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 3
+        },
+        {
+          "timeMs": 7556,
+          "isDownbeat": false,
+          "beatInBar": 4,
+          "barIndex": 3
+        },
+        {
+          "timeMs": 8032,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 4
+        },
+        {
+          "timeMs": 8508,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 4
+        },
+        {
+          "timeMs": 8984,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 4
+        },
+        {
+          "timeMs": 9460,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 5
+        },
+        {
+          "timeMs": 9937,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 5
+        },
+        {
+          "timeMs": 10413,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 5
+        },
+        {
+          "timeMs": 10889,
+          "isDownbeat": true,
+          "beatInBar": 1,
+          "barIndex": 6
+        },
+        {
+          "timeMs": 11365,
+          "isDownbeat": false,
+          "beatInBar": 2,
+          "barIndex": 6
+        },
+        {
+          "timeMs": 11841,
+          "isDownbeat": false,
+          "beatInBar": 3,
+          "barIndex": 6
+        }
+      ],
+      "tempoSegments": [
+        {
+          "startMs": 0,
+          "endMs": 6000,
+          "bpm": 128.0
+        },
+        {
+          "startMs": 6000,
+          "endMs": 12000,
+          "bpm": 126.0
+        }
+      ],
+      "meterSegments": [
+        {
+          "startMs": 0,
+          "endMs": 9000,
+          "numerator": 4,
+          "denominator": 4
+        },
+        {
+          "startMs": 9000,
+          "endMs": 12000,
+          "numerator": 3,
+          "denominator": 4
+        }
+      ]
+    },
+    "key": {
+      "status": "complete",
+      "tonic": "C#",
+      "mode": "minor",
+      "confidence": 0.87,
+      "alternatives": [
+        {
+          "tonic": "E",
+          "mode": "major",
+          "confidence": 0.09
+        },
+        {
+          "tonic": "A",
+          "mode": "major",
+          "confidence": 0.04
+        }
+      ]
+    },
+    "structure": {
+      "status": "complete",
+      "sections": [
+        {
+          "startMs": 0,
+          "endMs": 3000,
+          "label": "intro",
+          "confidence": 0.93
+        },
+        {
+          "startMs": 3000,
+          "endMs": 7500,
+          "label": "verse",
+          "confidence": 0.88
+        },
+        {
+          "startMs": 7500,
+          "endMs": 12000,
+          "label": "chorus",
+          "confidence": 0.91
+        }
+      ]
+    },
+    "tuning": {
+      "status": "complete",
+      "frequencyHz": 440.2,
+      "centsFromA440": 0.79,
+      "confidence": 0.95
+    },
+    "loudness": {
+      "status": "complete",
+      "integratedLufs": -10.7,
+      "loudnessRangeLu": 6.2,
+      "truePeakDbtp": -0.8,
+      "descriptors": [
+        {
+          "id": "dynamic-complexity",
+          "value": 4.1,
+          "unit": "dB"
+        },
+        {
+          "id": "spectral-centroid-mean",
+          "value": 1860.5,
+          "unit": "Hz"
+        }
+      ]
+    },
+    "waveform": {
+      "status": "complete",
+      "encoding": "s16le-min-max-rms-base64-v1",
+      "levels": [
+        {
+          "frameDurationMs": 5,
+          "frameCount": 2400,
+          "data": "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"
+        },
+        {
+          "frameDurationMs": 50,
+          "frameCount": 240,
+          "data": "AID/f8Z4QZC/b4pogaB/X09YwbA/TxZIAMEAP+I3QNHALrYnIYDff5MuwYE/fgd3AZL/bcpmQaK/XZBWgbJ/TVdGwMJAPSM2ANMALfklQYC/f348gYN/fEd1wZM/bAtlAaT/W9BUQbS/S5hEgMSAO2U0wNRAKz0kYYCff4FHQYW/eodzgZV/aktjwaU/WhFTAbb/SdlCQMbAOacygNaAKYEigYB/f9FQAYf/eMhxQZe/aIxhgad/WFJRwbc/SBpBAMgAOOkwQNjAJ8UgoYBff/VYwYg/dwhwAZn/ZsxfQam/VpJPgbl/Rlw/wMlANisvANoAJgofwYA/fzpggYp/dUhuwZo/ZQ1eAav/VNNNQbu/RJ09gMuANG0twNtAJFAd4YAff9BmQYy/c4lsgZx/Y05cwaw/UxRMAb3/Qt47QM3AMrArgN2AIpYbAYH/ftVsAY7/cclqQZ6/YY5aga5/UVVKwb4/QSA6AM8AMfIpQN/AIN0ZIYHffmJywY8/cAppAaD/X89YQbC/T5ZIgMCAP2E4wNBALzUoAOEAHyQYQYG/foZ3gZF/bkpnwaE/Xg9XAbL/TddGQMLAPaM2gNKALXgmYYGffqktAYP/fMd1QZO/bItlgaN/XFBVwbM/TBhFAMQAPOQ0QNTAK7wkgYF/fpc7wYQ/ewd0AZX/astjQaW/WpFTgbV/SllDwMVAOiYzANYAKgAjAID/fzRRgYZ/eUhywZY/aQxiAaf/WNFRQbe/SJpBgMeAOGgxwNdAKEQhIYDff11ZQYi/d4hwgZh/Z0xgwag/VxJQAbn/Rts/QMnANqovgNmAJokfQYC/f6dgAYr/dchuQZq/ZY1egap/VVNOwbo/RRw+AMsANe0tQNvAJM4dYYCff0FnwYs/dAltAZz/Y81cQay/U5RMgbx/Q148wMxAMy8sAN0AIxQcgYB/f0xtgY1/cklrwZ0/Yg5bAa7/USk7Qb6/QVgugM6AMY4hwN5AIdYUoYBff89aQY+/cG9TgZ9/YJpGwa8/UMc5AMAAQPcsQNDALy4ggOCAH3kTwYA/f+NeAZH/bg1SQaG/XjlFgbF/TmY4wMFAPpYrANIALs4e4YAff2MkgYJ/fYFdwZI/baxQAaP/XNdDQbO/TAQ3gMOAPDUqwNNALG8dAYH/fmUvQYS/ex9cgZR/a0pPwaQ/W3VCAbX/SqM1QMXAOtUogNWAKhAcIYHffhc4AYb/eb5aQZa/aehNgaZ/WRRBwbY/SUI0AMcAOXQnQNfAKLEaQYG/fm4/wYc/eFxZAZj/Z4ZMQai/V7I/gbh/R+EywMhANxMmANkAJ1IZYYGfftlFgYl/dvpXwZk/ZiVLAar/VVE+Qbq/RX8xgMqANbMkwNpAJfQXgYF/fpJLQYu/dJhWgZt/ZMNJwas/VO88Abz/Qx4wQMzAM1MjgNyAI5YWAID/f8VWAY3/cjZVQZ2/YmFIga1/Uo47wb0/Qr0uAM4AMvMhQN7AITkVIYDffzBbwY4/cdRTAZ//YP9GQa+/UCw6gb9/QFwtwM9AMJMgAOAAIN0TQYC/f0hfgZB/b3NSwaA/X55FAbH/Tss4QMHAPvsrgNGALjMfYYCff60kAYL/feZdQZK/bRFRgaJ/XTxEwbI/TWk3AMMAPZoqQNPALNMdgYB/f64vwYM/fIVcAZT/a69PQaS/W9tCgbR/Swg2wMRAOzkpANUAK3QcoYBff2I4gYV/eiNbwZU/ak1OAab/WXlBQba/Sac0gMaAOdknwNZAKRUbwYA/f70/QYe/eMFZgZd/aOtMwac/WBdAAbj/R0UzQMjAN3gmgNiAJ7YZ4YAffytGAYn/dl9YQZm/ZopLgal/VrY+wbk/RuQxAMoANhglQNrAJVgYAYH/fuhLwYo/df1WAZv/ZChKQau/VFQ9gbt/RIMwwMtANLcj"
+        },
+        {
+          "frameDurationMs": 250,
+          "frameCount": 48,
+          "data": "AID/f0BbIYDff9JUQYC/fx9JwZM/bFdIYYCffxhZgYB/f+5QoYBff65CwYg/d9NSwYA/f1tW4YAffz9MgZx/YyBAAYH/ftZZIYHffvxSQYG/fp5GgZF/bnlKYYGffotXgYF/fuROAID/f0NCgYZ/efxUIYDff4lWQYC/fxpMQZq/ZTpCYYCffzBagYB/fw1ToYBff5g3QY+/cJE8wYA/f2lF4YAff1Q+AYH/fgwyQYS/e+ZEIYHffgpDQYG/flM6AZj/ZwY2YYGffiRGgYF/fiRAAID/f1g3AY3/ckM+IYDff5lFQYC/f0Y+YYCff6YxAYL/fZ1GgYB/fyVDoYBffyk6wZU/arM3wYA/f2NG4YAffyhAAYH/fjQ1wYo/dfc/"
+        }
+      ]
+    },
+    "diagnostics": {
+      "allInOneRhythm": {
+        "status": "complete",
+        "bpm": 127.8,
+        "beatsMs": [
+          500,
+          969,
+          1438,
+          1906,
+          2375,
+          2844,
+          3313,
+          3781,
+          4250,
+          4719,
+          5188,
+          5656,
+          6127,
+          6603,
+          7079,
+          7556,
+          8032,
+          8508,
+          8984,
+          9460,
+          9937,
+          10413,
+          10889,
+          11365,
+          11841
+        ],
+        "downbeatsMs": [
+          500,
+          2375,
+          4250,
+          6127,
+          8032,
+          9460,
+          10889
+        ]
+      }
+    },
+    "toolRuns": [
+      {
+        "name": "beat-this-full",
+        "status": "complete",
+        "version": "1.0.0",
+        "model": "final0",
+        "warnings": [
+          "Synthetic fixture values; not a real recording analysis."
+        ]
+      },
+      {
+        "name": "stemwise-rhythm-normalizer",
+        "status": "complete",
+        "version": "1"
+      },
+      {
+        "name": "s-key",
+        "status": "complete",
+        "version": "1.1.0",
+        "model": "skey-fixture.pt"
+      },
+      {
+        "name": "all-in-one",
+        "status": "complete",
+        "version": "0.1.0",
+        "model": "harmonix-fixture"
+      },
+      {
+        "name": "essentia",
+        "status": "complete",
+        "version": "2.1-beta6",
+        "profile": "stemwise-v1"
+      },
+      {
+        "name": "stemwise-waveform",
+        "status": "complete",
+        "version": "1"
+      }
+    ]
+  }
+}

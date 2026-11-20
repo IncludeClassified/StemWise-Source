@@ -1,0 +1,72 @@
+diff --git a/signalsmith-stretch.h b/signalsmith-stretch.h
+index 3759b9a..7ae8660 100644
+--- a/signalsmith-stretch.h
++++ b/signalsmith-stretch.h
+@@ -1,5 +1,10 @@
+-#ifndef SIGNALSMITH_STRETCH_H
+-#define SIGNALSMITH_STRETCH_H
++#ifndef SIGNALSMITH_STRETCH_H
++#define SIGNALSMITH_STRETCH_H
++
++#ifndef SIGNALSMITH_STRETCH_MAX_CLEAN_TIME_FACTOR
++// Optional compile-time policy hook; upstream behaviour remains the default when unspecified.
++#define SIGNALSMITH_STRETCH_MAX_CLEAN_TIME_FACTOR 2
++#endif
+ 
+ #include "signalsmith-linear/stft.h" // https://github.com/Signalsmith-Audio/linear
+ 
+@@ -202,9 +207,40 @@ struct SignalsmithStretch {
+ 			stft.addOutput(c, preRollOutput.length, preRollOutput[c]);
+ 		}
+ 	}
+-	int outputSeekLength(Sample playbackRate) const {
+-		return inputLatency() + playbackRate*outputLatency();
+-	}
++	int outputSeekLength(Sample playbackRate) const {
++		return inputLatency() + playbackRate*outputLatency();
++	}
++
++	// StemWise: bounded equivalent of outputSeek(), sharing its pre-roll storage. The caller
++	// retains inputs and advances outputOffset only after a successful step.
++	template<class Inputs>
++	void outputSeekStep(Inputs &&inputs, int inputLength, int outputOffset, int outputCount) {
++		int latency = outputLatency();
++		int surplus = std::max(inputLength - inputLatency(), 0);
++		int seekSamples = inputLength - surplus;
++		if (outputOffset == 0) {
++			reset();
++			seek(inputs, seekSamples, surplus/Sample(latency));
++			tmpPreRollBuffer.resize(latency*channels);
++		}
++		int inputBegin = int(double(outputOffset)*surplus/latency);
++		int inputEnd = int(double(outputOffset + outputCount)*surplus/latency);
++		struct BufferOutput {
++			Sample *samples;
++			int length;
++			Sample *operator[](int c) { return samples + c*length; }
++		} preRollOutput{tmpPreRollBuffer.data() + outputOffset, latency};
++		OffsetIO<Inputs> offsetInput{inputs, seekSamples + inputBegin};
++		process(offsetInput, inputEnd - inputBegin, preRollOutput, outputCount);
++		if (outputOffset + outputCount == latency) {
++			for (auto &v : tmpPreRollBuffer) v = -v;
++			for (int c = 0; c < channels; ++c) {
++				auto *channel = tmpPreRollBuffer.data() + c*latency;
++				std::reverse(channel, channel + latency);
++				stft.addOutput(c, latency, channel);
++			}
++		}
++	}
+ 
+ 	template<class Inputs, class Outputs>
+ 	void process(Inputs &&inputs, int inputSamples, Outputs &&outputs, int outputSamples) {
+@@ -506,7 +542,9 @@ private:
+ 
+ 	using Complex = std::complex<Sample>;
+ 	static constexpr Sample noiseFloor{Sample(1e-15)};
+-	static constexpr Sample maxCleanStretch{2}; // time-stretch ratio before we start randomising phases
++	static constexpr Sample maxCleanStretch{
++		Sample(SIGNALSMITH_STRETCH_MAX_CLEAN_TIME_FACTOR)
++	}; // time-stretch ratio before we start randomising phases
+ 	size_t silenceCounter = 0;
+ 	bool silenceFirst = true;
+ 

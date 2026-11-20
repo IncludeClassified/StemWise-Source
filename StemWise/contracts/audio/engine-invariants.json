@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "profiles": ["host", "android-scripted", "android-physical"],
+  "replay": {"firstSeed": 0, "seedCount": 20, "generatedActions": 60, "maximumActorSteps": 32},
+  "candidateProfile": {
+    "schemaVersion": 1,
+    "id": "android-physical-audiotrack-speaker-v1",
+    "buildConfiguration": {"buildType": "development", "debuggable": true, "minifyEnabled": true, "shrinkResources": true, "identity": "app.stemwise.development", "signing": "disposable"},
+    "route": "built-in-speaker",
+    "abi": "arm64-v8a",
+    "sampleRateHz": 48000,
+    "channels": 2,
+    "bufferFrames": 2048,
+    "blockFrames": 512,
+    "maximumCallbackDeadlineMisses": 0,
+    "maximumXrunCount": 0,
+    "workloads": [
+      {"id": "physical-retirement-resume", "test": "app.stemwise.playback.engine.AudioTrackEngineInstrumentationTest#persistent2048FrameBufferStartsWarmsAndPhysicallyRestartsWithoutFaults", "cycles": 25, "retainedResumesPerCycle": 3, "minimumPhysicalRuns": 25, "retirementLimitMs": 2000, "timeoutSeconds": 540},
+      {"id": "loop-interaction", "test": "app.stemwise.playback.LoopPlaybackInstrumentationTest#inputTimestampedLoopPoliciesPreserveAudioWithinTheOutputServiceBudget", "additionalTests": ["app.stemwise.playback.RuntimePlaybackControlsInstrumentationTest#nativeActorFatalFaultImmediatelySilencesAndQuarantinesWithoutPollSpin"], "sourceDurationMs": 30000, "minimumPhysicalRuns": 1, "atomicPublicationExclusiveLimitMicros": 10000, "adoptionLimit": "10000us + one 512-frame block at the observed sample rate", "timeoutSeconds": 540},
+      {"id": "continuous-stems-loop-matrix", "test": "app.stemwise.playback.LoopSourceHandoffInstrumentationTest#loopMatrixAndHundredMultiStemWrapsRemainCoordinated", "additionalTests": ["app.stemwise.playback.RuntimePlaybackControlsInstrumentationTest#nativeActorFatalFaultImmediatelySilencesAndQuarantinesWithoutPollSpin"], "sourceDurationMs": 30000, "minimumWraps": 100, "sourceReversals": 8, "minimumPhysicalRuns": 1, "timeoutSeconds": 540}
+    ],
+    "scope": "Finite deterministic workloads in the existing tests; no claim beyond their measured duration, configurations or speaker route. Native callback computation excludes intentional AudioTrack write waiting. Acoustic output and speaker-onset latency are not qualified by this profile."
+  },
+  "replayCoverage": [
+    {
+      "id": "selection-late-completion",
+      "orders": [
+        {
+          "id": "b-completes-before-c-admission",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#decoderCompletionBeforeAndAfterNewerAdmissionRetiresOnlyTheSupersededOwner"
+          ],
+          "boundaries": [
+            "B admitted with missing decoder PCM",
+            "B exact decoder head arrives",
+            "C admitted and only C publishes; B lease retires"
+          ]
+        },
+        {
+          "id": "b-completes-after-c-admission",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#decoderCompletionBeforeAndAfterNewerAdmissionRetiresOnlyTheSupersededOwner"
+          ],
+          "boundaries": [
+            "B admitted with missing decoder PCM",
+            "C admitted and installed",
+            "late B decoder head cannot publish; B lease retired"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "same-song-old-lease",
+      "orders": [
+        {
+          "id": "old-command-before-reservation",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativeAudioPlaybackSessionAdapterTest#oneCommandLeaseAtomicallyRejectsEveryControlAfterSameSongReload"
+          ],
+          "boundaries": [
+            "exact current command lease accepted",
+            "same song reload reserves a new token"
+          ]
+        },
+        {
+          "id": "old-command-after-reservation",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativeAudioPlaybackSessionAdapterTest#oneCommandLeaseAtomicallyRejectsEveryControlAfterSameSongReload"
+          ],
+          "boundaries": [
+            "new exact song owner reserved and installed",
+            "all old-lease mutations rejected and current desired state preserved"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "transport-during-replacement",
+      "orders": [
+        {
+          "id": "pause-stop-before-install",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#pauseBeforeAndAfterReplacementInstallRetainsTheExactTransportDisposition",
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#stopBeforeAndAfterReplacementInstallCannotBeUndoneByLateDecoderCompletion"
+          ],
+          "boundaries": [
+            "B admitted but decoder PCM withheld",
+            "Pause or STOP accepted",
+            "late PCM cannot restore retired transport demand"
+          ]
+        },
+        {
+          "id": "pause-stop-after-install",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#pauseBeforeAndAfterReplacementInstallRetainsTheExactTransportDisposition",
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#stopBeforeAndAfterReplacementInstallCannotBeUndoneByLateDecoderCompletion"
+          ],
+          "boundaries": [
+            "B exact PCM permits installation",
+            "Pause or STOP accepted",
+            "actual playing flag and exact retirement checked"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "partial-zero-pause-resume",
+      "orders": [
+        {
+          "id": "pause-before-write-receipt",
+          "tests": [
+            "native:stemwise_native_playback_push_output_acceptance_test",
+            "jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#pauseRetainsPartialSuffixAndResumeDoesNotRenderOrReplayThePrefix"
+          ],
+          "boundaries": [
+            "source block and partial sink prefix held",
+            "logical pause accepted before held receipt",
+            "zero acceptance and resume retain exact source suffix"
+          ]
+        },
+        {
+          "id": "pause-after-write-receipt",
+          "tests": [
+            "native:stemwise_native_playback_push_output_acceptance_test",
+            "device:app.stemwise.playback.engine.NativeControllerSinkReplayInstrumentationTest#partialZeroPauseResumePreservesPcmAndWaitsForActualPresentation"
+          ],
+          "boundaries": [
+            "partial prefix accepted",
+            "zero capacity then pause and resume adopted",
+            "actual remaining samples accepted exactly once; delayed presentation withheld"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "queued-source-replacement",
+      "orders": [
+        {
+          "id": "old-receipt-before-source-reset",
+          "tests": [
+            "native:stemwise_native_playback_push_output_acceptance_test",
+            "jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#persistentSeekRetiresOnlyTheUnacceptedSourceCopyWithoutRestartingTheTrack"
+          ],
+          "boundaries": [
+            "outgoing accepted queue and pending suffix exist",
+            "generation reset retires only unaccepted suffix",
+            "actual old/new sample sequence and presentation ownership checked"
+          ]
+        },
+        {
+          "id": "source-reset-before-old-write-completes",
+          "tests": [
+            "native:stemwise_native_playback_push_output_acceptance_test",
+            "jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#resetWaitsForAnInflightWriteThenDiscardsOnlyTheUnacceptedSuffixBeforeRebinding"
+          ],
+          "boundaries": [
+            "sink write held at actual receipt boundary",
+            "reset requested while consumer owns the write",
+            "positive old prefix retained before new epoch acknowledgement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "route-stop-source-change",
+      "orders": [
+        {
+          "id": "route-before-stop-or-selection",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#taskRemovalCompletesWhileOutputRouteIsWaitingAndNextSelectionCanReopenIt",
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#rapidSelectionsDuringRouteRetryConflateToLatestOwnerAndDrainOldBank"
+          ],
+          "boundaries": [
+            "physical route reopen deliberately fails",
+            "STOP or newer source admitted",
+            "joined runtime and exact current demand govern later reopen"
+          ]
+        },
+        {
+          "id": "stop-or-selection-before-route",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#routeChangeReportedAfterTaskRemovalIsRetainedUntilTheNextOwner",
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#routeRecoveryDuringUnpresentedSeekKeepsTheRequestedCursor"
+          ],
+          "boundaries": [
+            "STOP complete or unpresented source generation installed",
+            "route change reported",
+            "no stopped-owner reopen; exact new owner and requested cursor retained"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "seek-eof-cold-opus",
+      "orders": [
+        {
+          "id": "eof-before-seek",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#seekBeforeAndAfterOutgoingEofKeepsTheNewExactSeekOwner",
+            "device:app.stemwise.playback.engine.MediaCodecTrackDecoderInstrumentationTest#demoOpusResidentSeeksPreserveTheExactAudibleEndpoint"
+          ],
+          "boundaries": [
+            "exact outgoing EOF consumed",
+            "nonzero seek creates a newer generation",
+            "cold and resident Opus suffix CRC matches independent full decode"
+          ]
+        },
+        {
+          "id": "seek-before-eof",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#seekBeforeAndAfterOutgoingEofKeepsTheNewExactSeekOwner",
+            "device:app.stemwise.playback.engine.MediaCodecTrackDecoderInstrumentationTest#demoOpusResidentSeeksPreserveTheExactAudibleEndpoint"
+          ],
+          "boundaries": [
+            "nonzero seek generation accepted",
+            "old EOF arrives after the seek",
+            "new seek owner retained; stale EOF cannot terminate it"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clear-retarget-source-change",
+      "orders": [
+        {
+          "id": "clear-before-source-change",
+          "tests": [
+            "native:stemwise_native_playback_direct_loop_clear_pressure_test",
+            "native:stemwise_native_playback_direct_loop_clear_control_overlap_test"
+          ],
+          "boundaries": [
+            "Clear demand accepted against exact physical B",
+            "source and pause controls overtake held continuation receipt",
+            "resume supplies capacity; exact linear continuation adopts once"
+          ]
+        },
+        {
+          "id": "source-change-before-clear",
+          "tests": [
+            "native:stemwise_native_playback_direct_loop_clear_pressure_test",
+            "native:stemwise_native_playback_direct_loop_adoption_race_test"
+          ],
+          "boundaries": [
+            "source or pause command accepted before Clear",
+            "retarget/capture races callback adoption",
+            "actual next source cursor and loop physical revision remain exact"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "decoder-failure-replacement",
+      "orders": [
+        {
+          "id": "old-eof-before-replacement-outcome",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerSourceTest#recoveryPublicationAndFailedReplacementRespectLateEofAndExactRetirement"
+          ],
+          "boundaries": [
+            "Original fails and replacement begins",
+            "outgoing exact EOF arrives",
+            "replacement success or failure preserves authoritative publication and unassignment fence"
+          ]
+        },
+        {
+          "id": "replacement-outcome-before-old-eof",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerSourceTest#recoveryPublicationAndFailedReplacementRespectLateEofAndExactRetirement"
+          ],
+          "boundaries": [
+            "Original failure starts exact recovery",
+            "replacement success or failure settles",
+            "late old EOF cannot terminate replacement; retirement awaits exact acknowledgement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "writer-native-retirement",
+      "orders": [
+        {
+          "id": "retirement-before-native-ack",
+          "tests": [
+            "native:stemwise_native_playback_negative_consumer_lifetime_test",
+            "jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#failedConsumerRetirementCannotAuthorizeDeletionJustBecauseTheThreadJoined"
+          ],
+          "boundaries": [
+            "actual native consumer operation held",
+            "writer retirement or STOP attempted",
+            "unacknowledged owner retains PCM and resources"
+          ]
+        },
+        {
+          "id": "native-ack-before-retirement",
+          "tests": [
+            "native:stemwise_native_playback_negative_consumer_lifetime_test",
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#selectionRetirementWaitsForExactUnassignmentAndWorkerReleaseWithoutStoppingNewOwner"
+          ],
+          "boundaries": [
+            "native operation or unassignment acknowledges exact owner",
+            "decoder join held then released",
+            "only joined acknowledged resources retire; new owner remains live"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cache-refill-eviction",
+      "orders": [
+        {
+          "id": "required-range-before-speculation",
+          "tests": [
+            "native:stemwise_current_song_pcm_cache_test",
+            "native:stemwise_native_playback_resource_read_service_test"
+          ],
+          "boundaries": [
+            "three admitted owners publish required ranges",
+            "speculative warming and another reader compete",
+            "independent lane/cursor PCM retained across protected windows"
+          ]
+        },
+        {
+          "id": "eviction-refill-before-required-read",
+          "tests": [
+            "native:stemwise_current_song_pcm_cache_test",
+            "native:stemwise_native_playback_canonical_random_access_44100_9_parts_test"
+          ],
+          "boundaries": [
+            "working sets advance beyond previous residency",
+            "cold required slice refilled amid reader pressure",
+            "exact source PCM restored; failed read revokes authority without invented samples"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "controls-prepared-handoff",
+      "orders": [
+        {
+          "id": "controls-before-preparation",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#tuneAndMixBeforeAndAfterPreparedSourceRetainItsExactIntent",
+            "native:stemwise_native_playback_pcm_closure_test"
+          ],
+          "boundaries": [
+            "source intent accepted but native Stems readiness withheld",
+            "tempo pitch and gains change",
+            "readiness and processed PCM retain exact source intent and endpoint"
+          ]
+        },
+        {
+          "id": "preparation-before-controls",
+          "tests": [
+            "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#tuneAndMixBeforeAndAfterPreparedSourceRetainItsExactIntent",
+            "native:stemwise_native_playback_late_control_queue_full_test",
+            "native:stemwise_native_playback_pcm_closure_test"
+          ],
+          "boundaries": [
+            "exact source becomes prepared",
+            "tempo pitch and gains change before audible acknowledgement",
+            "source intent stays fixed and real processed PCM/control endpoint checked"
+          ]
+        }
+      ]
+    }
+  ],
+  "invariants": [
+    {
+      "id": "AE-01", "statement": "Only the exact selected source, generation and sink epoch may publish replacement audio.",
+      "owner": "NativePlaybackRuntime; NativePlaybackEngineController", "boundary": "command admission and exact output-owner acknowledgement",
+      "tests": ["native:stemwise_native_ownership_publication_test", "native:stemwise_manual_selection_render_gate_test"],
+      "negativeControls": ["negative-controls:stale-control"],
+      "oracle": "independent owner tuple and immutable sample tags", "acceptance": "zero stale-owner frames"
+    },
+    {
+      "id": "AE-02", "statement": "Only actual positive write receipts advance acceptance; the unaccepted suffix remains exact.",
+      "owner": "NativeAudioTrackFeeder; NativeAudioOutput", "boundary": "AudioTrack write return and native accepted-prefix acknowledgement",
+      "tests": ["jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#partialZeroAndRemainderWritesSubmitTheOriginalShortSourceExactlyOnce", "native:stemwise_native_playback_push_output_acceptance_test", "device:app.stemwise.playback.engine.NativeControllerSinkReplayInstrumentationTest#partialZeroPauseResumePreservesPcmAndWaitsForActualPresentation", "device:app.stemwise.playback.engine.NativeControllerSinkReplayInstrumentationTest#coldLowRateFlacStartsAtTheRequestedNativeCursorWithMatchingSignal"],
+      "negativeControls": ["negative-controls:zero-acceptance", "negative-controls:suffix-drop", "negative-controls:suffix-duplicate"],
+      "oracle": "independently generated samples compared to actual emitted sequence", "acceptance": "zero dropped or duplicated frames"
+    },
+    {
+      "id": "AE-03", "statement": "Acceptance never substitutes for presentation or audible EOS.",
+      "owner": "PlaybackPublicationReducer; PresentationSpanJournal", "boundary": "exact sink/reset presentation observation",
+      "tests": ["native:stemwise_native_playback_pcm_closure_test", "jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#playbackHeadWrapKeepsTheTimelineAndOnlyANewPhysicalInstanceResetsIt"],
+      "negativeControls": ["negative-controls:acceptance-is-presentation"],
+      "oracle": "independent presentation cursor and exact terminal sample", "acceptance": "no presentation claim beyond observed PCM"
+    },
+    {
+      "id": "AE-04", "statement": "Cancellation, worker exit and native-consumer retirement remain distinct fences.",
+      "owner": "NativeAudioTrackFeeder; OutputRingRoleCoordinator", "boundary": "exact consumer acknowledgement before resource reclamation",
+      "tests": ["native:stemwise_native_playback_callback_owner_retirement_test", "jvm:app.stemwise.playback.engine.NativeAudioTrackFeederTest#failedConsumerRetirementCannotAuthorizeDeletionJustBecauseTheThreadJoined"],
+      "negativeControls": ["negative-controls:premature-resource-release", "negative-controls-memory:premature-resource-release", "protocol:reject-early-ack"],
+      "oracle": "live owner/resource ledger before and after each fence", "acceptance": "zero early releases"
+    },
+    {
+      "id": "AE-05", "statement": "Latest valid selection wins; a failed replacement cannot invent a healthy outgoing owner.",
+      "owner": "NativePlaybackEngineController; PlaybackPublicationReducer", "boundary": "selection publication after exact preparation/presentation evidence",
+      "tests": ["jvm:app.stemwise.playback.engine.NativePlaybackControllerSourceTest#recoveryPublicationAndFailedReplacementRespectLateEofAndExactRetirement"],
+      "negativeControls": ["jvm:app.stemwise.playback.engine.NativePlaybackControllerSourceTest#recoveryPublicationAndFailedReplacementRespectLateEofAndExactRetirement"],
+      "oracle": "manual scheduler and authoritative owner/effect history", "acceptance": "no stale publication"
+    },
+    {
+      "id": "AE-06", "statement": "Loop edits preserve exact boundary/continuation semantics and make progress when input and sink prerequisites are supplied.",
+      "owner": "NativePlaybackRuntime::applyCacheBackedAtomicLoop; fillOutput; fillDirectLoopCutover", "boundary": "logical demand, staged PCM, committed role and exact consumer acknowledgement",
+      "tests": ["native:stemwise_native_playback_direct_loop_clear_pressure_test", "native:stemwise_native_playback_direct_loop_clear_control_overlap_test", "native:stemwise_native_playback_direct_loop_clear_cache_contention_test", "native:stemwise_native_playback_direct_loop_adoption_race_test"],
+      "negativeControls": ["negative-controls:ignore-loop-clear", "negative-controls:cache-read-starves-clear", "protocol:reject-old-loop-writes"],
+      "oracle": "actual B/A sample tags, independently expected next cursor and role acknowledgements", "acceptance": "exact next cursor; no dropped or duplicated boundary sample",
+      "liveness": {"prerequisites": "exact active owner, ready continuation PCM, nonzero output reserve, sink accepts a bounded continuation slice, worker scheduled", "bound": "4000 ms per host handshake; diagnostic deadline only, not an audio latency allowance"}
+    },
+    {
+      "id": "AE-07", "statement": "Decoded PCM corresponds to the requested source and position, including resampling and EOF.",
+      "owner": "MediaCodecTrackDecoder; DecoderNativeLaneAdapter; WavPackReader", "boundary": "authorized decoded PCM lane publication",
+      "tests": ["native:stemwise_wavpack_reader_test", "native:stemwise_native_playback_canonical_random_access_44100_9_parts_test", "jvm:app.stemwise.playback.engine.DecoderNativeLaneAdapterTest#exactFrameSeamSurvivesPartialAcceptanceAndIgnoresRoundedEosTimestamp"],
+      "negativeControls": ["negative-controls:wrong-cache-identity"],
+      "oracle": "independent marker/time mapping and full-decode reference", "acceptance": "fixture-specific sample correspondence; no invented samples"
+    },
+    {
+      "id": "AE-08", "statement": "Cache extent, EOF and residency do not confer each other's authority or another source's identity.",
+      "owner": "CurrentSongPcmCache; NativePlaybackResources", "boundary": "committed extent, protected resident read and exact cache binding",
+      "tests": ["native:stemwise_current_song_pcm_cache_test", "native:stemwise_native_playback_direct_loop_cache_identity_test", "native:stemwise_native_playback_retained_window_read_failure_test"],
+      "negativeControls": ["negative-controls:wrong-cache-identity", "native:stemwise_native_playback_retained_window_read_failure_test"],
+      "oracle": "independent cache keys and retained known PCM", "acceptance": "no wrong-source reuse or fabricated PCM"
+    },
+    {
+      "id": "AE-09", "statement": "Ready Stems binds the exact package, roles and controls, with independent per-lane correctness.",
+      "owner": "SongRenderPipeline; LateStemMixer", "boundary": "materialized buses and settled source/control evidence",
+      "tests": ["native:stemwise_mixer_test", "native:stemwise_late_stem_mixer_test", "native:stemwise_seven_lane_synchronization_test"],
+      "negativeControls": ["native:stemwise_mixer_test", "native:stemwise_late_stem_mixer_test", "native:stemwise_seven_lane_synchronization_test"],
+      "oracle": "known per-lane gain arithmetic independent of Remaining reconstruction", "acceptance": "existing fixture-specific numerical bounds; no Original labelled ready Stems"
+    },
+    {
+      "id": "AE-10", "statement": "Final output is finite and respects the current device ceiling.",
+      "owner": "NativeAudioOutputFinalDeviceStage", "boundary": "final device PCM",
+      "tests": ["native:stemwise_native_audio_output_final_device_stage_test"],
+      "negativeControls": ["native:stemwise_native_audio_output_final_device_stage_test"],
+      "oracle": "independent final-stage arithmetic and output bounds", "acceptance": "no nonfinite samples; current device ceiling unchanged"
+    },
+    {
+      "id": "AE-11", "statement": "Time-critical work retains bounded queue, allocation and service contracts.",
+      "owner": "NativePlaybackRuntime; EngineCommandMailbox", "boundary": "bounded render/output service and mailbox admission",
+      "tests": ["native:stemwise_native_playback_core_test", "native:stemwise_native_playback_off_worker_resources_test", "jvm:app.stemwise.playback.engine.EngineCommandMailboxTest#tenThousandControlChangesLeaveOnlyTheNewestRevision"],
+      "negativeControls": ["native:stemwise_native_playback_core_test", "jvm:app.stemwise.playback.engine.EngineCommandMailboxTest#tenThousandControlChangesLeaveOnlyTheNewestRevision"],
+      "oracle": "allocation counters, bounded service steps and retained causal commands", "acceptance": "existing work/allocation/queue limits unchanged"
+    },
+    {
+      "id": "AE-12", "statement": "Stale open/recovery cannot overtake STOP, focus suppression or current route demand.",
+      "owner": "NativePlaybackEngineController", "boundary": "physical-open authorization and latest lifecycle command",
+      "tests": ["jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#pauseAndFocusLossStopInitialOpenRetriesUntilCurrentPlayDemandReturns", "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#lateTransportStateAfterTaskRemovalStopCannotRestartAnOwnerlessRuntime"],
+      "negativeControls": ["negative-controls-managed:stale-route-recovery", "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#pauseAndFocusLossStopInitialOpenRetriesUntilCurrentPlayDemandReturns", "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#lateTransportStateAfterTaskRemovalStopCannotRestartAnOwnerlessRuntime"],
+      "oracle": "manual scheduler and actual environment open/close history", "acceptance": "zero stale reopen"
+    },
+    {
+      "id": "AE-13", "statement": "Resources return to their baseline only after required retirement; unsafe owners stay explicitly retained.",
+      "owner": "NativeBankDecoderRetirement; NativePreparationRetirement; NativeAudioTrackFeeder", "boundary": "joined worker plus exact final-consumer fence",
+      "tests": ["jvm:app.stemwise.playback.engine.NativeEngineResourceConstructionTest#everyPartialAcquisitionUnwindsBorrowersBeforeTheirOwners", "native:stemwise_native_playback_off_worker_resources_test"],
+      "negativeControls": ["negative-controls:premature-resource-release", "negative-controls-memory:premature-resource-release", "jvm:app.stemwise.playback.engine.NativeEngineResourceConstructionTest#everyPartialAcquisitionUnwindsBorrowersBeforeTheirOwners"],
+      "oracle": "before/after resource ledger and explicit quarantine", "acceptance": "zero unexplained leaks or early frees"
+    },
+    {
+      "id": "AE-14", "statement": "Invalid/stale commands preserve valid state; conflation retains required causal receipts.",
+      "owner": "EngineCommandMailbox; NativePlaybackRuntime", "boundary": "command disposition and exact promised receipt",
+      "tests": ["native:stemwise_latest_command_mailbox_test", "native:stemwise_native_packet_golden_test", "jvm:app.stemwise.playback.engine.NativePlaybackControllerLifecycleTest#aDrainedStopCannotCompleteTheReceiptOfASecondStopStillInTheMailbox", "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#generatedCommandsRetainLatestOwnerAndTransportAcrossActualActorTurns", "jvm:app.stemwise.playback.engine.NativePlaybackControllerTraceTest#lostPauseFailsTheSameOracleAndShrinksToItsCausalTrace"],
+      "negativeControls": ["negative-controls:stale-control", "native:stemwise_native_packet_golden_test"],
+      "oracle": "independent packet fixtures and causal receipt sequence", "acceptance": "no false application or borrowed receipt"
+    },
+    {
+      "id": "AE-15", "statement": "Qualification describes actual required executions and the exact current candidate and observation level.",
+      "owner": "Run-Tester; audio_evidence", "boundary": "aggregate validation before candidate promotion",
+      "tests": ["host:test_audio_evidence.AudioEvidenceTest.test_missing_duplicate_unexpected_and_skipped_execution_cannot_pass", "host:test_audio_evidence.AudioEvidenceTest.test_stale_or_changed_source_identity_cannot_reuse_results", "device:app.stemwise.qualification.StandardInstrumentationTargetGuardTest#installedApkGuardRejectsAbsentWrongAndChangedBytes"],
+      "negativeControls": ["host:test_audio_evidence.AudioEvidenceTest.test_missing_duplicate_unexpected_and_skipped_execution_cannot_pass", "host:test_audio_evidence.AudioEvidenceTest.test_stale_or_changed_source_identity_cannot_reuse_results", "host:test_audio_evidence.AudioEvidenceTest.test_absent_aggregate_and_blocked_or_forged_pass_cannot_promote", "host:test_audio_evidence.AudioEvidenceTest.test_ci_aggregate_rejects_unexpected_skip_cancel_failure_and_missing_job", "host:test_audio_evidence.AudioEvidenceTest.test_all_candidate_device_lanes_require_the_same_application_and_driver", "device:app.stemwise.qualification.StandardInstrumentationTargetGuardTest#installedApkGuardRejectsAbsentWrongAndChangedBytes"],
+      "oracle": "discovered test IDs reconciled with underlying execution records and input/artifact digests", "acceptance": "no unexplained missing execution or identity mismatch"
+    }
+  ]
+}

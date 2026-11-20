@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">StemWise</string>
+    <plurals name="song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="file_count">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <plurals name="item_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <plurals name="stems_verified">
+        <item quantity="one">%d stem verified</item>
+        <item quantity="other">%d stems verified</item>
+    </plurals>
+    <string name="ui_search_results" formatted="false">Search results</string>
+    <string name="ui_add_song" formatted="false">Add a song</string>
+    <string name="ui_2" formatted="false">2</string>
+    <string name="ui_3" formatted="false">3</string>
+    <string name="ui_folder" formatted="false">Folder</string>
+    <string name="ui_import" formatted="false">Import</string>
+    <string name="ui_stems" formatted="false">Stems</string>
+    <string name="ui_title_artist_or_album" formatted="false">Title, artist, or album</string>
+    <string name="ui_flac" formatted="false">FLAC</string>
+    <string name="ui_no_lyrics_to_display" formatted="false">No lyrics to display</string>
+    <string name="ui_song_parts" formatted="false">Song parts</string>
+    <string name="ui_cancel" formatted="false">Cancel</string>
+    <string name="ui_delete_this_song_s_stems" formatted="false">Delete this song’s stems?</string>
+    <string name="ui_this_removes_only_the_prepared_song_parts" formatted="false">This removes only the prepared song parts. The original, artwork, lyrics, song details, and analysis stay in your library.</string>
+    <string name="ui_delete_this_song_permanently" formatted="false">Delete this song permanently?</string>
+    <string name="ui_this_permanently_removes_the_original_all_stems" formatted="false">This permanently removes the original, all stems, song.json, artwork, lyrics, and saved song data. It cannot be undone. Automatic playlist discovery and same-ID copies stay blocked until you explicitly choose Send to PC in Activity.</string>
+    <string name="ui_song_details" formatted="false">Song details</string>
+    <string name="ui_close" formatted="false">Close</string>
+    <string name="ui_delete_stems_only" formatted="false">Delete stems only</string>
+    <string name="ui_delete_song_with_everything" formatted="false">Delete song with everything</string>
+    <string name="ui_bpm" formatted="false">BPM</string>
+    <string name="ui_volume" formatted="false">Volume</string>
+    <string name="ui_subdivision" formatted="false">Subdivision</string>
+    <string name="ui_beats" formatted="false">Beats</string>
+    <string name="ui_beat_unit" formatted="false">Beat unit</string>
+    <string name="ui_clear_loop" formatted="false">Clear loop</string>
+    <string name="ui_playlist_link" formatted="false">Playlist link</string>
+    <string name="ui_checking_playlist_details" formatted="false">Checking playlist details…</string>
+    <string name="ui_nothing_was_changed" formatted="false">Nothing was changed.</string>
+    <string name="ui_existing_library" formatted="false">Existing Library</string>
+    <string name="ui_connect_this_playlist" formatted="false">Connect this playlist?</string>
+    <string name="ui_queued" formatted="false">Queued</string>
+    <string name="ui_opening_library" formatted="false">Opening library</string>
+    <string name="ui_stemwise_needs_attention" formatted="false">StemWise needs attention</string>
+    <string name="ui_recovery_details" formatted="false">Recovery details</string>
+    <string name="ui_no_music_or_metadata_was_deleted" formatted="false">No music or metadata was deleted.</string>
+    <string name="ui_stemwise" formatted="false">StemWise</string>
+    <string name="ui_delete_permanently" formatted="false">Delete permanently</string>
+    <string name="ui_use_folder" formatted="false">USE FOLDER</string>
+    <string name="ui_cancel_2" formatted="false">CANCEL</string>
+    <string name="ui_could_not_use_this_folder" formatted="false">Could not use this folder</string>
+    <string name="ui_your_current_stemwise_library_is_still_connected">Your current StemWise Library is still connected. %1$s</string>
+    <string name="ui_done" formatted="false">Done</string>
+    <string name="ui_show_preparation_progress" formatted="false">Show preparation progress?</string>
+    <string name="ui_android_uses_a_notification_while_stemwise_prepares" formatted="false">Android uses a notification while StemWise prepares stems in the background. Preparation continues if notifications are denied.</string>
+    <string name="ui_continue" formatted="false">Continue</string>
+    <string name="ui_retry_an_uncertain_mvsep_request" formatted="false">Recover an uncertain MVSEP request</string>
+    <string name="ui_mvsep_may_already_be_processing_the_first" formatted="false">MVSEP may already be processing this request. Enter the exact job ID from your MVSEP account to recover it without submitting another job.</string>
+    <string name="ui_api_token" formatted="false">API token</string>
+    <string name="ui_paste" formatted="false">Paste</string>
+    <string name="ui_verify_connection" formatted="false">Verify connection</string>
+    <string name="ui_disconnect" formatted="false">Disconnect</string>
+    <string name="ui_disconnect_mvsep" formatted="false">Disconnect MVSEP?</string>
+    <string name="ui_new_songs_will_no_longer_be_separated" formatted="false">New songs will no longer be separated. Existing local stems stay in your library.</string>
+    <string name="ui_library_needs_attention" formatted="false">Library needs attention</string>
+    <string name="ui_reconnect_the_library_folder" formatted="false">Reconnect the Library folder</string>
+    <string name="ui_choose" formatted="false">Choose</string>
+    <string name="ui_used" formatted="false">used</string>
+    <plurals name="import_files_progress">
+        <item quantity="one">Copied %1$d of %2$d file · %3$s</item>
+        <item quantity="other">Copied %1$d of %2$d files · %3$s</item>
+    </plurals>
+    <string name="ui_task_details">Task details</string>
+    <string name="ui_view_task_details">View task details</string>
+    <string name="import_confirm">Import</string>
+    <string name="import_discard">Discard import</string>
+    <string name="bridge_song_link">Song link</string>
+    <string name="bridge_add_failure">Could not add the song</string>
+    <string name="bridge_sending">Sending to Bridge…</string>
+    <string name="bridge_send">Send to Bridge</string>
+    <string name="bridge_connect_to_add_song">Connect Bridge in Settings to add a song.</string>
+    <string name="bridge_resume_failure">Could not resume this song</string>
+    <string name="bridge_resuming">Resuming…</string>
+    <string name="bridge_resume_song">Resume song</string>
+    <string name="bridge_discard_damaged_record">Discard damaged local record</string>
+    <string name="bridge_forget_task">Forget task</string>
+    <string name="preparation_recovery_title">Repair song preparation</string>
+    <string name="preparation_recovery_description">Restore the affected song’s retained task files, then retry recovery: %1$s. Other verified songs can play. New preparation stays paused until the retained work is resolved.</string>
+    <string name="preparation_retry_recovery">Retry recovery</string>
+    <string name="bridge_action_failure">Bridge action failed</string>
+    <string name="bridge_authorization_missing">Bridge did not provide an authorization link</string>
+    <string name="bridge_authorization_invalid">Bridge returned an invalid authorization link</string>
+    <string name="bridge_unknown">Unknown</string>
+    <string name="bridge_title">Bridge</string>
+    <string name="bridge_address">Bridge Tailscale hostname</string>
+    <string name="bridge_identity">Bridge identity</string>
+    <string name="bridge_pc_identity">PC identity</string>
+    <string name="bridge_connection_scope">Use the lowercase hostname ending in .ts.net and the identities from your Bridge setup. Previously sent songs keep their saved connection.</string>
+    <string name="bridge_save_connection">Save connection</string>
+    <string name="bridge_saving_connection">Saving connection…</string>
+    <string name="bridge_edit_connection">Edit connection</string>
+    <string name="bridge_connection_status">Pi: %1$s · PC: %2$s</string>
+    <string name="bridge_connect">Connect Bridge</string>
+    <string name="bridge_connecting">Connecting…</string>
+    <string name="bridge_checking">Checking…</string>
+    <string name="bridge_check_connection">Check connection</string>
+    <string name="bridge_wake_pc">Wake PC</string>
+    <string name="bridge_waking">Waking PC…</string>
+</resources>
