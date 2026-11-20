@@ -1,0 +1,74 @@
+name: Public source smoke and synthetic demo
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-demo:
+    name: Actual native mixer + FFmpeg FLAC round-trip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Build two real StemWise C++ mixer stages
+        run: |
+          mkdir -p public-demo/output
+          c++ -std=c++20 -O2 -Wall -Wextra -Werror -UNDEBUG \
+            -I'StemWise/audio-engine/src/main/cpp' \
+            StemWise/audio-engine/src/main/cpp/StemwiseMixer.cpp \
+            StemWise/audio-engine/src/main/cpp/LateStemMixer.cpp \
+            public-demo/native_mixer_demo.cpp \
+            -o public-demo/output/stemwise-native-demo
+      - name: Run original versus two-stem synthetic audio comparison
+        run: public-demo/output/stemwise-native-demo public-demo/output
+      - name: Verify lossless FLAC round trip in FFmpeg
+        run: |
+          ffmpeg -nostdin -hide_banner -loglevel error -i public-demo/output/stems.wav \
+            -c:a flac public-demo/output/stems.flac
+          ffmpeg -nostdin -hide_banner -loglevel error -i public-demo/output/stems.wav \
+            -f s16le -acodec pcm_s16le -ac 2 -ar 48000 - | sha256sum | cut -d' ' -f1 > public-demo/output/wav-pcm.sha256
+          ffmpeg -nostdin -hide_banner -loglevel error -i public-demo/output/stems.flac \
+            -f s16le -acodec pcm_s16le -ac 2 -ar 48000 - | sha256sum | cut -d' ' -f1 > public-demo/output/flac-pcm.sha256
+          cmp public-demo/output/wav-pcm.sha256 public-demo/output/flac-pcm.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: synthetic-native-demo
+          path: |
+            public-demo/output/*.wav
+            public-demo/output/*.flac
+            public-demo/output/*.json
+            public-demo/output/*.sha256
+          if-no-files-found: error
+          retention-days: 7
+  timing-contract:
+    name: Python source test + synthetic endpoint scoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - name: Install source-only Python package
+        run: python -m pip install --no-deps --editable 'PC side'
+      - name: Run existing IPA validation tests
+        run: python -B 'Test suite/pc/run_tests.py' --directory 'Test suite/pc/unit' test_ipa_validation
+      - name: Run public timestamp scorer and deliberate negative controls
+        run: |
+          python -B public-bench/score_alignment.py --self-test \
+            --output public-bench/output/synthetic-report.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: synthetic-timing-contract
+          path: public-bench/output/synthetic-report.json
+          if-no-files-found: error
+          retention-days: 7

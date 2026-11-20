@@ -1,0 +1,153 @@
+{
+  "schema": "stemwise.public-synthetic-fixtures.v1",
+  "synthetic": true,
+  "note": "Short original examples only; hand-created timestamps and predictions, not recorded music or model outputs.",
+  "cases": [
+    {
+      "id": "english-exact",
+      "language": "en",
+      "duration_ms": 2000,
+      "reference": [
+        {
+          "text": "Sing",
+          "start_ms": 100,
+          "end_ms": 360
+        },
+        {
+          "text": "again",
+          "start_ms": 410,
+          "end_ms": 900
+        },
+        {
+          "text": "sing",
+          "start_ms": 1100,
+          "end_ms": 1390
+        },
+        {
+          "text": "again",
+          "start_ms": 1450,
+          "end_ms": 1830
+        }
+      ],
+      "prediction": [
+        {
+          "text": "Sing",
+          "start_ms": 100,
+          "end_ms": 360
+        },
+        {
+          "text": "again",
+          "start_ms": 410,
+          "end_ms": 900
+        },
+        {
+          "text": "sing",
+          "start_ms": 1100,
+          "end_ms": 1390
+        },
+        {
+          "text": "again",
+          "start_ms": 1450,
+          "end_ms": 1830
+        }
+      ]
+    },
+    {
+      "id": "arabic-shifted",
+      "language": "ar",
+      "duration_ms": 2200,
+      "reference": [
+        {
+          "text": "مَرْحَبًا",
+          "start_ms": 150,
+          "end_ms": 600
+        },
+        {
+          "text": "يا",
+          "start_ms": 650,
+          "end_ms": 820
+        },
+        {
+          "text": "عَالَم",
+          "start_ms": 840,
+          "end_ms": 1750
+        }
+      ],
+      "prediction": [
+        {
+          "text": "مَرْحَبًا",
+          "start_ms": 180,
+          "end_ms": 710
+        },
+        {
+          "text": "يا",
+          "start_ms": 650,
+          "end_ms": 840
+        },
+        {
+          "text": "عَالَم",
+          "start_ms": 1010,
+          "end_ms": 1930
+        }
+      ]
+    },
+    {
+      "id": "turkish-exact",
+      "language": "tr",
+      "duration_ms": 1800,
+      "reference": [
+        {
+          "text": "Merhaba",
+          "start_ms": 200,
+          "end_ms": 740
+        },
+        {
+          "text": "dünya",
+          "start_ms": 820,
+          "end_ms": 1600
+        }
+      ],
+      "prediction": [
+        {
+          "text": "Merhaba",
+          "start_ms": 200,
+          "end_ms": 740
+        },
+        {
+          "text": "dünya",
+          "start_ms": 820,
+          "end_ms": 1600
+        }
+      ]
+    },
+    {
+      "id": "english-content-dispute",
+      "language": "en",
+      "duration_ms": 1500,
+      "reference": [
+        {
+          "text": "You",
+          "start_ms": 100,
+          "end_ms": 380
+        },
+        {
+          "text": "feel",
+          "start_ms": 500,
+          "end_ms": 1100
+        }
+      ],
+      "prediction": [
+        {
+          "text": "We",
+          "start_ms": 100,
+          "end_ms": 380
+        },
+        {
+          "text": "feel",
+          "start_ms": 500,
+          "end_ms": 1100
+        }
+      ]
+    }
+  ]
+}
