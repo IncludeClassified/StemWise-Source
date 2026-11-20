@@ -26,6 +26,19 @@ The division of responsibilities is deliberate: Windows-side tooling researches 
 
 The Android player and Windows processor form a larger end-to-end engineering effort. The repository includes **1,760 retained source, configuration, and notice files**, plus this README. The code is provided so the architecture, experimental approach, and test organization can be inspected; the number of files is not a performance or quality metric.
 
+## Reproducible public checks and audio demonstration
+
+The [native C++ multi-stem demo](public-demo/README.md) compiles and executes StemWise's real render-stage and callback-stage mixer sources on original, synthetic stereo audio. Its WAV outputs distinguish unmodified playback from two-stem mixing with independent gains. The [public source CI workflow](.github/workflows/public-source-checks.yml) is intended to compile and run that demo and verify an **FFmpeg-only FLAC round trip**. This is **not** a complete Android or on-device FLAC-decoder qualification.
+
+The [word-timing scoring contract](public-bench/README.md) validates endpoint metrics and correct handling of content disagreements using original, synthetic English/Arabic/Turkish fixtures; it does not run an ASR or alignment model or establish real-song accuracy.
+
+- [How to build and what is not yet buildable](BUILDING.md)
+- [Roadmap and verifiable milestones](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+- [Open issues](https://github.com/IncludeClassified/StemWise-Source/issues)
+
+Check actual GitHub Actions run results before treating any CI check as passing.
+
 ## Current engineering priorities
 
 1. Investigate automatic lyric-content verification and end-of-word timing, including repeated and disputed passages.
