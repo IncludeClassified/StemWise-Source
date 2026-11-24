@@ -49,6 +49,18 @@ Check actual GitHub Actions run results before treating any CI check as passing.
 
 The primary maintainer is [IncludeClassified](https://github.com/IncludeClassified). The original development history is maintained separately; this public repository starts with a clean, curated publication snapshot.
 
+## Current alignment research: timing sanity checks
+
+A timestamp for every word measures coverage, not accuracy. A word can have a positive duration and still start late, end before a sustained vowel finishes, or be attached to the wrong repeat of a chorus.
+
+The next research milestone is to make those failures easier to find and verify:
+
+- **Place the right occurrence first.** Match repeated lines to their location in the recording. Use pronunciation guidance and recording evidence together so the aligner can distinguish identical lines sung at different points.
+- **Check starts and releases separately.** Use the vocal evidence to distinguish late starts, clipped endings, and possible lead/backing-vocal confusion. Flag unusually short intervals for inspection rather than automatically stretching or rejecting them.
+- **Show the evidence.** Report flagged words with their timestamps, the reason for review, and a short audio excerpt where rights permit. Compare before and after on the same independently checked examples, including normal-looking controls. Report coverage, start error, end error, and regressions separately.
+
+These are research targets, not capabilities or accuracy claims for this public snapshot. The [public scoring fixtures](public-bench/README.md) are synthetic and do not measure real-song alignment.
+
 ## Scope, provenance, and build status
 
 The source snapshot is based on development commit `a76feaeda265a42129dd025a5c3f46ae8fcd89d8`. The retained files were checked against their original Git blob hashes. Publication does **not** imply that the snapshot builds or tests successfully on a fresh machine.
