@@ -4147,11 +4147,13 @@ class LyricsAlignmentTests(unittest.TestCase):
             words = parse_youtube_json3(path)
         self.assertEqual([word.word for word in words], ["alpha", "beta", "gamma", "delta"])
 
-    def predicted_word_case(self, *, wav=False):
+    def predicted_word_case(self, *, wav=False, english=False):
         original = {**plain_original("🎵 Café l'été\n\n🎵 Café l'été"), 'language':'fr', 'source': {'name':'Known fixture'}}
+        if english:
+            original.update(text='See me\n\nSee me',language='en')
         companion = {'id':'english','kind':'translation','language':'en','script':'Latn','format':'plain',
             'basedOnTrackId':'original','text':'Coffee in summer\n\nCoffee in summer','source':{'name':'Reviewed fixture'}}
-        lyrics = {'status':'partial','reason':'Fixture timing pending','tracks':[original,companion]}
+        lyrics = {'status':'partial','reason':'Fixture timing pending','tracks':[original] if english else [original,companion]}
         mapping = build_lexical_occurrence_mapping('KbKqkR3Q6SA',original,(0,2))
         known = (((120,380),(800,1670)),((2410,2790),(4000,4970)))
         lines = []
@@ -4314,12 +4316,12 @@ class LyricsAlignmentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             lyrics_module.build_predicted_sidecar(lyrics,mapping,forced,5000,basis=' ')
 
-    def owner_prediction_case(self, root):
+    def owner_prediction_case(self, root, *, english=False):
         from stemwise_engine.common import atomic_write_json, json_bytes, sha256_file
         from stemwise_engine.lyrics_intake import read_recording_draft
         from stemwise_engine.lyric_content import OWNER_VERIFICATION_FILE
         import stemwise_engine.lyrics_align_pc as worker
-        lyrics,mapping,forced = self.predicted_word_case()
+        lyrics,mapping,forced = self.predicted_word_case(english=english)
         video = mapping['videoId']
         workspace = AlignmentWorkspace(root/'workflow', workspace_root=root)
         job = workspace.root.parent/'jobs'/video
@@ -4445,6 +4447,76 @@ class LyricsAlignmentTests(unittest.TestCase):
                     retained.write_bytes(retained_bytes)
                     case.proof.unlink()
                     with self.assertRaises(worker.LyricsContentBlocker): load()
+
+    def test_automatic_vowel_release_reaches_estimated_playback_and_replays_the_phones(self):
+        import copy
+        from contextlib import ExitStack
+        from stemwise_engine import endpoint_vowel_release as release, lyrics_align_pc as worker
+        from stemwise_engine.common import atomic_write_json, sha256_file
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT.parents[1]/'Test suite/work') as name:
+            case = self.owner_prediction_case(Path(name),english=True)
+            def numerical(**kwargs):
+                atomic_write_json(kwargs['output_path'],case.forced)
+                return SimpleNamespace(returncode=0,stdout='',stderr=''),kwargs['request'],None
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(worker,'PINNED_MMS_SHA256',sha256_file(case.model)))
+                stack.enter_context(patch.object(worker.audio_store,'file_identity',return_value=case.identity))
+                stack.enter_context(patch.object(worker,'_run_numerical_process',return_value=
+                    SimpleNamespace(returncode=0,stdout=json.dumps(case.runtime),stderr='')))
+                stack.enter_context(patch.object(worker,'_run_alignment_worker_batch',side_effect=numerical))
+                raw,mapping,forced,admission,_,_ = worker.run_owner_word_prediction(case.config,case.workspace,
+                    case.video,case.lyrics,case.canonical,case.audio,case.identity['sha256'],case.temporary,device='cpu')
+                word_id = mapping['performedOccurrences'][0]['words'][0]['occurrenceWordId']
+                words = [dict(wordId=word_id,text='See',startMs=120,endMs=300,timing='estimated'),
+                         dict(wordId='following',text='me',startMs=800,endMs=1670,timing='retained')]
+                guides = {word_id:(160,650),'following':(805,2000)}
+                jobs = release.plan(words,guides,5000)
+                self.assertEqual([w['wordId'] for w in jobs],[word_id])
+                # 40 voiced frames then 10 quiet frames; the next lyric begins another 100 ms later.
+                trace = {'startMs':300,'phones':[[['en/iy',40],['SP',10]],[['en/eh',50]]]}
+                observation = {**jobs[0],'estimatedEndMs':700,'cropEndsMs':[700,700],
+                               'traces':[trace,copy.deepcopy(trace)],'finalVowel':'iy'}
+                request = dict(candidates=jobs,durationMs=5000,recording=case.identity['sha256'],
+                    vocal='1'*64,backing='2'*64,model=release.MODEL,vocab=release.VOCAB,
+                    lexicon=release.LEXICON,producer=release._producer(),runtime='onnxruntime-1.23.2-CPU')
+                directory = case.workspace.job_dir(case.video)
+                packet = directory/f'held-vowel-{release._key(request)}.private.json'
+                atomic_write_json(packet,{'request':request,'estimates':{word_id:observation}})
+                ref = {'path':packet.name,'sha256':sha256_file(packet)}
+                atomic_write_json(case.workspace.state_path(case.video),{'estimatedVowelReleases':{
+                    'audioSha256':case.identity['sha256'],'canonicalPlainSha256':case.canonical,
+                    'mapping':lexical_mapping_identity(mapping),'evidence':ref}})
+                response = worker._owner_word_prediction_response(case.workspace,case.video,raw,mapping,forced,
+                    admission,case.canonical,case.identity['sha256'])
+                self.assertEqual(response['vowelReleaseEvidence'],ref)
+                # Issued output survives mutable state replacement and rechecks the retained numbers.
+                case.workspace.state_path(case.video).unlink()
+                def replay():
+                    return worker.load_owner_word_prediction(case.project,case.workspace,case.video,response,
+                        original=case.lyrics['tracks'][0],indices=(0,2),canonical_sha=case.canonical,
+                        audio_sha=case.identity['sha256'])[0]
+                actual = replay()
+                before = raw['tracks'][0]['lines']
+                after = actual['tracks'][0]['lines']
+                first = after[0]['words'][0]['timing']
+                self.assertEqual((before[0]['words'][0]['timing']['endMs'],first['status'],first['startMs'],first['endMs']),
+                                 (380,'estimated',120,700))
+                self.assertEqual((after[0]['words'][1:],after[1]),(before[0]['words'][1:],before[1]))
+                self.assertEqual(actual['tracks'][1:],raw['tracks'][1:])
+                bad = copy.deepcopy(observation)
+                bad['traces'][0]['phones'][1]=bad['traces'][0]['phones'][0]
+                self.assertFalse(release.refine_estimated_track(copy.deepcopy(raw),mapping,{word_id:bad},5000))
+                earlier = copy.deepcopy(raw)
+                earlier['tracks'][0]['lines'][0]['words'][1]['timing']['startMs']=620
+                self.assertFalse(release.refine_estimated_track(earlier,mapping,{word_id:observation},5000))
+                atomic_write_json(packet,{'request':request,'estimates':{word_id:bad}})
+                with self.assertRaises(ValueError):
+                    replay()
+                with self.assertRaises(ValueError):
+                    release.read_estimates(directory,{**ref,'sha256':sha256_file(packet)},case.identity['sha256'],5000)
+                self.assertFalse(release.english_track({'language':'ar'}))
+                self.assertFalse(release.english_track({'language':'tr'}))
+                self.assertFalse(release.english_track({'language':'en','componentLanguages':['en','ar']}))
 
     def test_owner_word_prediction_requires_exact_owner_before_pcm_or_model_and_preserves_terminal(self):
         from contextlib import ExitStack

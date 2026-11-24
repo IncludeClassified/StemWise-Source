@@ -31,6 +31,7 @@ def failure_source(context, job, *, reasons_allowed):
         raise FutureSongError('Endpoint baseline cascade is incomplete')
     allowed_routes = {f'{route}:{variant}' for route in required
                       for variant in ('baseline', 'anchored', 'cumulative', 'prior-recording-seed')}
+    allowed_routes.add('htdemucs-vocals:vocal-entry')
     endpoint = diagnostics.get('endpointEvidence')
     chosen = attempts[selected].get('endpointEvidence') if isinstance(attempts[selected], dict) else None
     if (run.get('failureCode') != 'line-unresolved' or run.get('summary', {}).get('reasons') != reasons

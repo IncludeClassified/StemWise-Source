@@ -236,6 +236,7 @@ class EndpointAudio:
     get_endpoint_audio: Callable[[str], tuple[Path, Record, Record]]
     mix_audio: Path | None = None
     mix_identity: Record | None = None
+    opening_stem_power: Callable | None = None
 
 
 class RouteAttemptSink(Protocol):

@@ -108,6 +108,82 @@ class AlignmentWindowSynchronizationTests(unittest.TestCase):
                 progress=progress, release_model=lambda:None, runtime_probe_cache={}))
         return stage, routes, failures, checkpoints
 
+    def test_instrumental_opening_remeasures_one_start_and_preserves_other_words(self):
+        import numpy as np
+        import soundfile as sf
+        from stemwise_engine.alignment_audio import AlignmentAudioViews
+
+        stage, routes, _, checkpoints = self.endpoint_baseline_case(TimeoutError('no optional verifier'), word_only=True)
+        route = routes[0]
+        native, _ = stage.load_baseline_mms(route)
+        line = native['lines'][0]
+        for word, (start, end) in zip(line['words'], [(100, 120), (670, 735), (760, 800)]):
+            word.update(startMs=start, endMs=end)
+        line['words'][0]['confidence'] = .02
+        verifier = list(copy.deepcopy(stage.request.evidence.verifier_candidates))
+        verifier[0] = {**copy.deepcopy(line), 'startMs':540, 'route':endpoints.WAV2VEC2_ROUTE}
+        verifier[0]['words'][0].update(startMs=540, endMs=600, confidence=.8)
+        witness = copy.deepcopy(verifier[0])
+        witness['startMs'] = witness['words'][0]['startMs'] = 550
+        stage.independent_witnesses[endpoints.OWSM_CTC_FAMILY] = (witness, *(None for _ in verifier[1:]))
+        root = stage.request.context.temp_root
+        root.mkdir(exist_ok=True)
+        v, b = root/'vocals.wav', root/'no_vocals.wav'
+        stream = {'sampleRate':8000, 'channelCount':1, 'frameCount':64000}
+        backing = np.full(64000, .15)
+        voice = np.zeros(64000)
+        voice[3200:6400] = .6
+        sf.write(v, voice, 8000)
+        sf.write(b, backing, 8000)
+        identity = {'sourceAudioSha256':stage.request.audio.expected_mix_sha256, 'routeId':route,
+                    'sha256':'b'*64, 'stream':stream}
+        views = AlignmentAudioViews(config={}, args=None, workspace=stage.request.context.workspace,
+            video_id=stage.request.context.video_id, duration_ms=8000,
+            expected_mix_sha256=identity['sourceAudioSha256'], temp_root=root, release_model=lambda:None,
+            pinned_models={}, state={}, runtime_cache={}, route_records=[], failure_codes={},
+            separate_vocals=None, run_roformer=None, worker_duration=None, analysis_audio=None)
+        views.htdemucs_output = (v, identity, {})
+        native.update(mappingIdentity='same-mapping', resolvedSegments=stage.request.evidence.baseline_segments,
+                      provenance={'audio': identity})
+        observed = []
+        move_neighbor = False
+        def worker(**opts):
+            result = copy.deepcopy(native)
+            if opts['request_variant'] == 'vocal-entry':
+                observed.append(opts['segments'][0]['windowStartMs'])
+                result['resolvedSegments'] = opts['segments']
+                result['lines'][0]['words'][0].update(startMs=545, endMs=565)
+                result['lines'][0]['startMs'] = 545
+                if move_neighbor:
+                    result['lines'][1]['words'][0]['endMs'] += 1
+            return result, True
+        stage.services = replace(stage.services, workers=replace(stage.services.workers, load_mms=worker))
+        stage.request = replace(stage.request, evidence=replace(stage.request.evidence, verifier_candidates=tuple(verifier)),
+            audio=replace(stage.request.audio, opening_stem_power=views.opening_stem_power))
+        _, selection = stage.evaluate_endpoint_route_pass(route)
+        receipt = selection.summary['openingWordRecovery']
+        self.assertEqual((receipt['previousStartMs'], receipt['startMs'], receipt['endMs']), (100,545,None))
+        self.assertEqual(observed, [240])
+        self.assertEqual(checkpoints[-1]['endpointRouteAttempts'][-1]['routeId'], route+':vocal-entry')
+        self.assertNotIn('words', selection.timings[0])
+        baseline = checkpoints[0]['endpointEvidence']['occurrenceCandidates']
+        self.assertEqual(selection.summary['occurrenceCandidates'][1:], baseline[1:])
+        # Even a 1 ms shift on a different occurrence invalidates this isolated repair.
+        move_neighbor = True
+        self.assertIsNone(stage.recover_opening(native, baseline[0]))
+        self.assertEqual(observed, [240,240])
+        # No retry on an instrumental-only target, a different word owner, a reviewed
+        # conflicting entrance, or an already timed occurrence.
+        sf.write(v, np.zeros(64000), 8000)
+        self.assertIsNone(stage.recover_opening(native, baseline[0]))
+        sf.write(v, voice, 8000)
+        other_audio = {**native, 'provenance':{'audio':{**identity, 'sha256':'c'*64}}}
+        self.assertIsNone(stage.recover_opening(other_audio, baseline[0]))
+        for changed in ({'occurrenceId':baseline[-1]['occurrenceId']}, {'reviewedLrcStartMs':100},
+                        {'publishDecision':{'result':'words'}}):
+            self.assertIsNone(stage.recover_opening(native, {**baseline[0], **changed}))
+        self.assertEqual(observed, [240,240])
+
     def test_word_goal_continues_routes_and_keeps_independent_completed_neighbors(self):
         for second_ready in (True, False):
             with self.subTest(second_ready=second_ready):

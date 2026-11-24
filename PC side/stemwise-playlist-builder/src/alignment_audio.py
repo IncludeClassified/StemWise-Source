@@ -684,6 +684,35 @@ def write_roformer_audio_provenance(
     return checked
 
 
+def opening_stem_power(vocal_path, backing_path, stream, times_ms):
+    import numpy as np
+    import soundfile as sf
+
+    if not backing_path.is_file():
+        return None
+    power = []
+    with sf.SoundFile(vocal_path) as vocal, sf.SoundFile(backing_path) as backing:
+        expected = stream['sampleRate'], stream['channelCount'], stream['frameCount']
+        if any((audio.samplerate, audio.channels, len(audio)) != expected for audio in (vocal, backing)):
+            return None
+        # Identical 200 ms listening windows. Energy can reject a search location,
+        # but has no word identity and cannot measure a word boundary.
+        radius = round(vocal.samplerate / 10)
+        for time_ms in times_ms:
+            center = round(time_ms * vocal.samplerate / 1000)
+            if center < radius or center + radius > len(vocal):
+                return None
+            pair = []
+            for audio in (vocal, backing):
+                audio.seek(center - radius)
+                samples = audio.read(2 * radius, dtype='float64')
+                if len(samples) != 2 * radius or not np.isfinite(samples).all():
+                    return None
+                pair.append(float(np.mean(np.square(samples))))
+            power.append({'atMs': time_ms, 'vocalPower': pair[0], 'backingPower': pair[1]})
+    return power
+
+
 class AlignmentAudioViews:
     """One song attempt owns separated audio, dependency records and temporary files."""
     def __init__(self, *, config, args, workspace, video_id, duration_ms, expected_mix_sha256,
@@ -795,6 +824,16 @@ class AlignmentAudioViews:
             {"routeId": "htdemucs-vocals"},
         )
         return self.htdemucs_output
+
+    def opening_stem_power(self, identity, times_ms):
+        """Compare both outputs of the same live separation on their native clock."""
+        if self.htdemucs_output is None:
+            return None
+        path, current, _ = self.htdemucs_output
+        if (current != identity or current.get('sourceAudioSha256') != self.expected_mix_sha256
+                or path.name != 'vocals.wav'):
+            return None
+        return opening_stem_power(path, path.with_name('no_vocals.wav'), current['stream'], times_ms)
 
     def refresh_roformer_cascade(self) -> None:
         state = self.state

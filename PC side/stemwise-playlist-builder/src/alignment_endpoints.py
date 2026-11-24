@@ -600,6 +600,64 @@ def _complete_word_support(candidate: dict, family: str) -> bool:
                     else _observed_confidence_supported(word) for word in candidate["words"]))
 
 
+def _opening_retry_plan(forced, occurrence, owner):
+    """Propose a new search edge only for a detached first word in the instrumental intro."""
+    if (occurrence.get('publishDecision', {}).get('result') != 'unresolved'
+            or occurrence.get('performedIndex') != 0 or owner.get('performedIndex') != 0):
+        return None
+    line = forced['lines'][0]
+    if (occurrence['occurrenceId'] != owner['occurrenceId'] or line['lineId'] != owner['occurrenceId']
+            or occurrence['sourcePhysicalIndex'] != owner['sourcePhysicalIndex']
+            or line['sourcePhysicalIndex'] != owner['sourcePhysicalIndex']):
+        return None
+    ids = [word['occurrenceWordId'] for word in owner['words']]
+    words = line['words']
+    segments = forced.get('resolvedSegments')
+    if (len(ids) < 2 or ids != [word['wordId'] for word in words] or not segments
+            or segments[0]['startLineIndex'] != 0 or segments[0]['windowStartMs'] != 0):
+        return None
+    starts = {}
+    following = [words[1]['startMs']]
+    for family, evidence in _applicable_endpoint_candidates(occurrence).items():
+        if family not in (WAV2VEC2_FAMILY, OWSM_CTC_FAMILY, NEMO_NFA_FAMILY):
+            continue
+        observations = evidence.get('words')
+        if not observations:
+            continue
+        if ids != [word.get('occurrenceWordId') for word in observations]:
+            return None
+        if not all(_observed_confidence_supported(word) for word in observations[:2]):
+            continue
+        starts[family] = observations[0]['startMs']
+        following.append(observations[1]['startMs'])
+    if len(starts) < 2:
+        return None
+    earliest, latest = min(starts.values()), max(starts.values())
+    edge = earliest - WORD_START_AGREEMENT_MS
+    if (latest - earliest > WORD_START_AGREEMENT_MS or words[0]['endMs'] >= edge
+            or max(following) - min(following) > WORD_START_AGREEMENT_MS
+            or latest >= min(following) or max(following) >= segments[0]['windowEndMs']
+            or any(not respects_reviewed_start(occurrence, {'startMs': t}, WORD_START_AGREEMENT_MS)
+                   for t in starts.values())):
+        return None
+    return [{**segments[0], 'windowStartMs': edge}, *segments[1:]], starts
+
+
+def _same_following_words(original, retry):
+    if len(original) != len(retry):
+        return False
+    for index, (before, after) in enumerate(zip(original, retry)):
+        if (before['lineId'] != after['lineId'] or before['sourcePhysicalIndex'] != after['sourcePhysicalIndex']
+                or len(before['words']) != len(after['words'])):
+            return False
+        for word_index, (old, new) in enumerate(zip(before['words'], after['words'])):
+            if old['wordId'] != new['wordId']:
+                return False
+            if (index, word_index) != (0, 0) and (old['startMs'], old['endMs']) != (new['startMs'], new['endMs']):
+                return False
+    return True
+
+
 def _qualified_word_candidates(occurrence: dict) -> dict[str, dict]:
     """Keep complete numerical observations; weak forced words cannot corroborate."""
     return {family: candidate for family, candidate in _eligible_endpoint_candidates(occurrence).items()
@@ -1540,6 +1598,47 @@ def _require_recoverable_endpoint_failure(error: Exception) -> None:
         raise error
 
 
+def private_vowel_estimates(request, summary, get_pair):
+    """Search the selected English sequence after ordinary endpoint adjudication."""
+    from stemwise_engine import endpoint_vowel_release as release
+    if (summary['resultClass']=='committed-words' or not release.english_track(request.text.original)
+            or request.text.lexical_mapping.get('_spokenTargets') is not None or not request.audio.expected_mix_sha256):
+        return {}
+    rows = summary['occurrenceCandidates']
+    guides = release.vocal_word_ends(rows)
+    if not guides:
+        return {}
+    words = []
+    for owner, row, display in zip(request.text.lexical_mapping['performedOccurrences'], rows,
+                                   request.text.display_word_lines, strict=True):
+        if (owner['occurrenceId']!=row['occurrenceId'] or owner['sourcePhysicalIndex']!=row['sourcePhysicalIndex']):
+            raise ValueError('Different performed occurrence for vowel estimate')
+        locked = row['publishDecision']['result']=='words'
+        family = row.get('selectedPublisherFamily') if locked else WAV2VEC2_FAMILY
+        values = row['familyCandidates'].get(family) or {}
+        if not values.get('words') or (not locked and values.get('route')!=WAV2VEC2_ROUTE):
+            words.extend([None]*len(display))
+            continue
+        for token,w,(_,_,text) in zip(owner['words'],values['words'],display,strict=True):
+            if token['occurrenceWordId']!=w['occurrenceWordId']:
+                raise ValueError('Different word in vowel estimate')
+            words.append({'wordId':w['occurrenceWordId'],'text':text,'startMs':w['startMs'],'endMs':w['endMs'],
+                          'timing':'retained' if locked else 'estimated'})
+    ctx = request.context
+    candidates = release.plan(words,guides,ctx.duration_ms)
+    project = Path(ctx.config['projectDir'])
+    if not candidates or not (project.parent/'model-cache'/release.MODEL_DIR/'model.onnx').is_file():
+        return {}
+    vocal, identity, _ = get_pair('htdemucs-vocals')
+    if (identity.get('sourceAudioSha256')!=request.audio.expected_mix_sha256
+            or identity.get('routeId')!='htdemucs-vocals' or vocal.name!='vocals.wav'):
+        raise ValueError('Different recording or stem for vowel estimates')
+    estimates, ref = release.estimate(project,ctx.workspace.job_dir(ctx.video_id),ctx.duration_ms,request.audio.expected_mix_sha256,
+        (vocal,vocal.with_name('no_vocals.wav'),identity['sha256']),candidates,int(ctx.config['analysisTimeoutMinutes'])*60)
+    return {'evidence':ref,'words':{k:{a:b for a,b in r.items() if a!='traces'}
+                                    for k,r in estimates.items()}} if estimates else {}
+
+
 @dataclass(kw_only=True)
 class EndpointAlignmentStage:
     """Own endpoint witnesses, route recovery and cumulative timing selection."""
@@ -1845,9 +1944,27 @@ class EndpointAlignmentStage:
                     baseline, witnesses, include_unresolved=True)
         return consensus_result, bool(witnesses), consensus_reused
 
-    def load_baseline_mms(self,
-        route_id: str, *, use_timing_seed: bool = False,
-    ) -> tuple[dict[str, Any], bool]:
+    def record_vowel_estimates(self, summary):
+        from stemwise_engine.lyrics_alignment import lexical_mapping_identity
+        state = self.services.progress.state
+        state.pop('estimatedVowelReleases',None)
+        try:
+            released = private_vowel_estimates(self.request,summary,self.request.audio.get_endpoint_audio)
+        except (OSError, RuntimeError, ValueError, TimeoutExpired) as error:
+            _require_recoverable_endpoint_failure(error)
+            self.services.events.attempt('private-vowel-release','htdemucs-vocals','failed',
+                code=self.route_diagnostic(error,'private-vowel-release','htdemucs-vocals'))
+            return
+        if released:
+            state['estimatedVowelReleases'] = {'audioSha256':self.request.audio.expected_mix_sha256,
+                'canonicalPlainSha256':state['canonicalPlainSha256'],
+                'mapping':lexical_mapping_identity(self.request.text.lexical_mapping),'quality':'estimated',**released}
+
+    def load_baseline_mms(self, route_id: str, *, use_timing_seed: bool = False):
+        return self.load_mms_plan(route_id, "prior-recording-seed" if use_timing_seed else "baseline",
+            self.request.evidence.seeded_mms_segments if use_timing_seed else self.request.evidence.baseline_segments)
+
+    def load_mms_plan(self, route_id, variant, segments):
         return self.services.workers.load_mms(
             config=self.request.context.config,
             video_id=self.request.context.video_id,
@@ -1863,11 +1980,64 @@ class EndpointAlignmentStage:
             analysis_audio=self.request.audio.analysis_audio,
             audio_view_id=route_id,
             get_audio=lambda route_id=route_id: self.request.audio.get_endpoint_audio(route_id),
-            request_variant="prior-recording-seed" if use_timing_seed else "baseline",
-            segments=self.request.evidence.seeded_mms_segments if use_timing_seed else self.request.evidence.baseline_segments,
+            request_variant=variant,
+            segments=segments,
             request_duration_ms=self.request.context.endpoint_duration_ms,
             runtime_cache=self.services.runtime_probe_cache,
         )
+
+    def recover_opening(self, forced, occurrence):
+        audio = self.request.audio
+        identity = forced.get('provenance', {}).get('audio', {})
+        if (not audio.opening_stem_power or not audio.expected_mix_sha256
+                or identity.get('sourceAudioSha256') != audio.expected_mix_sha256
+                or identity.get('routeId') != 'htdemucs-vocals'):
+            return None
+        plan = _opening_retry_plan(forced, occurrence, self.request.text.lexical_mapping['performedOccurrences'][0])
+        if plan is None:
+            return None
+        segments, starts = plan
+        first = forced['lines'][0]['words'][0]
+        power = audio.opening_stem_power(identity, [first['startMs'], *starts.values()])
+        if (not power or power[0]['vocalPower'] >= power[0]['backingPower']
+                or any(row['vocalPower'] <= row['backingPower'] for row in power[1:])):
+            return None
+        retry, reused = self.load_mms_plan('htdemucs-vocals', 'vocal-entry', segments)
+        if (retry.get('provenance') != forced['provenance']
+                or not forced.get('mappingIdentity') or retry.get('mappingIdentity') != forced['mappingIdentity']
+                or retry.get('resolvedSegments') != segments
+                or not _same_following_words(forced['lines'], retry['lines'])):
+            return None
+        start = retry['lines'][0]['words'][0]['startMs']
+        if (start - segments[0]['windowStartMs'] <= WORKER_SEGMENT_BOUNDARY_GUARD_MS
+                or start >= forced['lines'][0]['words'][1]['startMs']
+                or any(abs(start - t) > WORD_START_AGREEMENT_MS for t in starts.values())
+                or not respects_reviewed_start(occurrence, {'startMs': start}, WORD_START_AGREEMENT_MS)):
+            return None
+        return retry, reused, {'occurrenceId': occurrence['occurrenceId'], 'wordId': first['wordId'],
+            'sourceAudioSha256': audio.expected_mix_sha256, 'vocalSha256': identity['sha256'],
+            'previousStartMs': first['startMs'], 'witnessStartsMs': starts, 'stemPower': power,
+            'windowStartMs': segments[0]['windowStartMs'], 'startMs': start, 'endMs': None}
+
+    def assess_opening_retry(self, forced, opening, verifier, current):
+        recovered = self.recover_opening(forced, opening)
+        if recovered is None:
+            return None
+        measured, reused, entry = recovered
+        evidence = self.request.evidence
+        candidate = _refine_public_timings(measured, verifier, evidence.reviewed_lrc_starts,
+            verifier_family=evidence.verifier_family, free_family_candidates=evidence.free_family_candidates,
+            mms_route=evidence.route_names['htdemucs-vocals'], include_unresolved=True,
+            allowed_wav2vec2_routes=frozenset((WAV2VEC2_ROUTE, WAV2VEC2_ROUTES_BY_AUDIO_VIEW['htdemucs-vocals'])))
+        if self.independent_witnesses:
+            candidate = _apply_independent_endpoint_consensus(candidate, self.independent_witnesses, include_unresolved=True)
+        timings, summary = current
+        if candidate[1]['occurrenceCandidates'][0]['publishDecision']['result'] != 'unresolved':
+            merged, assessed = _merge_endpoint_route_passes(current, candidate)
+            if (assessed['occurrenceCandidates'][0]['publishDecision']['result'] != 'unresolved'
+                    and merged[1:] == timings[1:] and assessed['occurrenceCandidates'][1:] == summary['occurrenceCandidates'][1:]):
+                timings, summary = merged, {**summary, **assessed}
+        return timings, {**summary, 'openingWordRecovery': entry}, reused
 
     def load_route_wav2vec2(self,
         route_id: str,
@@ -1963,9 +2133,7 @@ class EndpointAlignmentStage:
     ) -> tuple[bool, EndpointSelectionResult]:
         if self.cumulative_endpoint_result is not None:
             self.require_timing_recovery(self.cumulative_endpoint_result)
-        forced_endpoints, mms_reused = self.load_baseline_mms(
-            route_id, use_timing_seed=use_timing_seed,
-        )
+        forced_endpoints, mms_reused = self.load_baseline_mms(route_id, use_timing_seed=use_timing_seed)
         _validate_occurrence_identity(self.request.text.source_occurrences)
         if route_id in ROFORMER_ROUTES:
             self.services.events.roformer(route_id, cache_reused=mms_reused)
@@ -2087,6 +2255,7 @@ class EndpointAlignmentStage:
             _,
             independent_consensus_reused,
         ) = self.apply_independent_consensus(baseline_result)
+        opening_baseline = route_summary["occurrenceCandidates"][0]
         route_summary.update(
             mixVerifierPublishedLineCount=mix_result[1]["lineReadyCount"],
             routeLocalVerifierAttempted=route_local_attempted,
@@ -2243,6 +2412,29 @@ class EndpointAlignmentStage:
                         selectedEndpointAttemptIndex=route_attempt_index,
                     )
                     self.services.progress.checkpoint()
+        prior = self.cumulative_endpoint_result
+        if (route_id == 'htdemucs-vocals' and (prior is None or
+                prior[1]['occurrenceCandidates'][0]['publishDecision']['result'] == 'unresolved')
+                and route_summary["occurrenceCandidates"][0]["publishDecision"]["result"] == 'unresolved'):
+            try:
+                recovered = self.assess_opening_retry(forced_endpoints, opening_baseline, verifier_for_route,
+                    (route_timings, route_summary))
+            except (LyricsContentBlocker, WorkerRetirementError, AcousticBudgetExceeded):
+                raise
+            except (OSError, RuntimeError, TimeoutExpired, ValueError) as error:
+                _require_recoverable_endpoint_failure(error)
+                self.services.events.attempt('endpoint-vocal-entry', route_id, 'failed',
+                    code=self.route_diagnostic(error, 'endpoint-vocal-entry', route_id))
+                recovered = None
+            if recovered is not None:
+                route_timings, route_summary, reused = recovered
+                route_reused = route_reused and reused
+                self.services.progress.endpoint_attempts.append({'routeId': route_id + ':vocal-entry',
+                    'reused': route_reused, 'endpointEvidence': route_summary})
+                route_attempt_index = len(self.services.progress.endpoint_attempts) - 1
+                self.services.progress.state.update(endpointEvidence=route_summary, endpointEvidenceReused=route_reused,
+                    endpointRouteAttempts=list(self.services.progress.endpoint_attempts), selectedEndpointAttemptIndex=route_attempt_index)
+                self.services.progress.checkpoint()
         return self._select_endpoint_result(route_id, route_timings, route_summary,
             route_reused, route_attempt_index)
 

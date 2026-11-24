@@ -59,7 +59,9 @@ The next research milestone is to make those failures easier to find and verify:
 - **Check starts and releases separately.** Use the vocal evidence to distinguish late starts, clipped endings, and possible lead/backing-vocal confusion. Flag unusually short intervals for inspection rather than automatically stretching or rejecting them.
 - **Show the evidence.** Report flagged words with their timestamps, the reason for review, and a short audio excerpt where rights permit. Compare before and after on the same independently checked examples, including normal-looking controls. Report coverage, start error, end error, and regressions separately.
 
-These are research targets, not capabilities or accuracy claims for this public snapshot. The [public scoring fixtures](public-bench/README.md) are synthetic and do not measure real-song alignment.
+The public PC engine includes narrowly scoped, fixture-tested recovery paths for a misplaced first word and for estimating a sustained final vowel on eligible English tracks. The vowel path requires a compatible local phoneme model and separated vocals; model assets are not bundled. This does not establish real-song accuracy.
+
+The broader timing sanity checker and repeated-passage improvements above are research targets. The [public scoring fixtures](public-bench/README.md) are synthetic and do not measure real-song alignment.
 
 ## Scope, provenance, and build status
 

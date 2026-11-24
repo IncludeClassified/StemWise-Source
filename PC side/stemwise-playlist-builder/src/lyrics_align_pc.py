@@ -3328,7 +3328,7 @@ def run_owner_word_prediction(config, workspace, video_id, lyrics, canonical_sha
 def load_owner_word_prediction(project, workspace, video_id, response, *, original, indices, canonical_sha, audio_sha):
     """Recheck functional references and current proof/producer without inference or PCM decoding."""
     video_id = validate_video_id(video_id)
-    if (not isinstance(response, dict) or set(response) != {'version','videoId','status','audioSha256',
+    if (not isinstance(response, dict) or set(response)-{'vowelReleaseEvidence'} != {'version','videoId','status','audioSha256',
             'canonicalPlainSha256','candidate','mapping','forced','admission'}
             or type(response.get('version')) is not int or response['version'] != 1
             or response['videoId'] != video_id or response['status'] != 'owner-predicted-words'
@@ -3359,7 +3359,14 @@ def load_owner_word_prediction(project, workspace, video_id, response, *, origin
     if not isinstance(source, dict) or not isinstance(source.get('tracks'), list):
         raise ValueError('owner word prediction candidate is malformed')
     source['tracks'] = [copy.deepcopy(original) if track.get('kind') == 'original' else track for track in source['tracks']]
-    if build_predicted_sidecar(source, mapping, projected, duration, basis=OWNER_WORD_PREDICTION_BASIS) != candidate:
+    expected = build_predicted_sidecar(source, mapping, projected, duration, basis=OWNER_WORD_PREDICTION_BASIS)
+    if 'vowelReleaseEvidence' in response:
+        from stemwise_engine import endpoint_vowel_release as release
+        observations = release.read_estimates(root,response['vowelReleaseEvidence'],audio_sha,duration)
+        if numerical_mapping.get('_spokenTargets') is not None or not release.refine_estimated_track(expected,mapping,observations,duration):
+            raise ValueError('Vowel evidence does not apply to this predicted performance')
+        validate_lyrics(expected,duration_ms=duration)
+    if expected != candidate:
         raise ValueError('owner word prediction candidate differs from acoustic words')
     return candidate, mapping, records['forced'], admission
 
@@ -3368,6 +3375,23 @@ def _owner_word_prediction_response(workspace, video_id, candidate, mapping, for
                                     canonical_sha, audio_sha):
     response = {'version':1, 'videoId':video_id, 'status':'owner-predicted-words',
         'audioSha256':audio_sha, 'canonicalPlainSha256':canonical_sha}
+    from stemwise_engine import endpoint_vowel_release as release
+    original = next(t for t in candidate['tracks'] if t['kind']=='original')
+    if release.english_track(original) and admission.spoken_targets is None:
+        retained = _retained_content_state(workspace,video_id).get('estimatedVowelReleases') or {}
+        if (retained.get('audioSha256')==audio_sha and retained.get('canonicalPlainSha256')==canonical_sha
+                and retained.get('mapping')==lexical_mapping_identity(mapping)):
+            try:
+                ref = retained['evidence']
+                duration = forced['provenance']['audio']['stream']['durationMs']
+                observations = release.read_estimates(workspace.job_dir(video_id),ref,audio_sha,duration)
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                print(f'Optional vowel evidence unavailable for this new prediction: {error}',file=sys.stderr)
+            else:
+                candidate = copy.deepcopy(candidate)
+                if release.refine_estimated_track(candidate,mapping,observations,duration):
+                    validate_lyrics(candidate,duration_ms=duration)
+                    response['vowelReleaseEvidence'] = ref
     for kind, value in (('candidate',candidate), ('mapping',mapping), ('forced',forced),
                         ('admission',admission.to_record())):
         digest = hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True,
@@ -4136,7 +4160,8 @@ def _load_final_mms_alignment(
     variant = variants.get(audio_view_id)
     if variant is None:
         raise ValueError("unsupported endpoint audio view")
-    if request_variant not in {"baseline", "anchored", "prior-recording-seed"}:
+    if request_variant not in {"baseline", "anchored", "prior-recording-seed"} and (
+            request_variant != "vocal-entry" or audio_view_id != "htdemucs-vocals"):
         raise ValueError("unsupported MMS endpoint request variant")
     if request_variant != "baseline":
         variant += "-" + request_variant
@@ -4802,7 +4827,8 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
                 route_names=endpoint_route_names, content_admission=state["contentAdmission"]),
             audio=EndpointAudio(expected_mix_sha256=expected_mix_sha256, analysis_audio=analysis_audio,
                 canonical_mix=canonical_mix, get_endpoint_audio=get_endpoint_audio,
-                mix_audio=mix_audio, mix_identity=mix_identity)),
+                mix_audio=mix_audio, mix_identity=mix_identity,
+                opening_stem_power=getattr(audio_views, 'opening_stem_power', None))),
         services=services)
 
     selected_mms_route, endpoint_selection = _run_conditional_cascade(
@@ -4827,6 +4853,7 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
         state["recoveredRouteFailures"] = recovered_failures
     state["routeFailures"] = blocking_failures
     endpoint_summary = endpoint_selection.summary
+    endpoint_stage.record_vowel_estimates(endpoint_summary)
     if selected_mms_route in endpoints.ROFORMER_ROUTES:
         state["roformerCascade"][
             "selectedEndpointRoute"

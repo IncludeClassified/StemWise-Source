@@ -3940,7 +3940,7 @@ class FutureSongWorkflow:
         prediction = job.get('ownerWordPrediction')
         if isinstance(prediction, dict):
             prediction_root = self._alignment_state_path(video_id).parent
-            for kind in ('candidate', 'mapping', 'forced', 'admission'):
+            for kind in ('candidate', 'mapping', 'forced', 'admission', 'vowelReleaseEvidence'):
                 ref = prediction.get(kind)
                 if isinstance(ref, dict) and isinstance(ref.get('path'), str):
                     files.append(validate_generated_path(prediction_root,

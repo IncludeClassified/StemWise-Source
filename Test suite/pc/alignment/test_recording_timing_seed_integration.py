@@ -24,8 +24,9 @@ from process_fixture import prepare_runtime_layout
 
 class NativeSeedIntegrationTests(unittest.TestCase):
     def test_complete_later_route_reconciles_prior_qualified_endpoints(self):
-        for offset, seeded in ((200,False), (-100,False), (None,False), (200,True), (-100,True), (None,True)):
-            with self.subTest(offset=offset, seeded=seeded):
+        cases = ((200, False), (200, True), (-100, False), (None, True))
+        for offset, weak_line, seeded in ((t, weak, seeded) for t, weak in cases for seeded in (False, True)):
+            with self.subTest(offset=offset, weak_line=weak_line, seeded=seeded):
                 self.stage.cumulative_endpoint_result = None
                 first = copy.deepcopy(self.forced)
                 later = copy.deepcopy(self.forced)
@@ -34,9 +35,11 @@ class NativeSeedIntegrationTests(unittest.TestCase):
                     forced['lines'][0]['words'][0]['startMs'] += shift
                 first['lines'][-1]['confidence'] = 0.01
                 first['lines'][-1]['minimumWordConfidence'] = 0.01
-                if offset is None:
+                if weak_line:
                     for line in later['lines']:
                         line['confidence'] = line['minimumWordConfidence'] = .01
+                        if offset is None:
+                            line['words'][0]['confidence'] = .01
                 self.stage.load_baseline_mms = lambda *a, **k: (first, True)
                 self.stage.services = replace(self.stage.services, workers=replace(
                     self.stage.services.workers, needs_local_verifier=lambda *a, **k: False))
