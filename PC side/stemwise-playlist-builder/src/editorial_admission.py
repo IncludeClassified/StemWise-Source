@@ -168,7 +168,8 @@ def companion_admissions(workflow, job, original, audio_identity, content_admiss
     return results
 
 
-def available_lyrics(workflow, job, audio_identity, *, on_blocker=None, prepare_acoustic=False):
+def available_lyrics(workflow, job, audio_identity, *, on_blocker=None, prepare_acoustic=False,
+                     refresh_retained_releases=False):
     """Project only claims whose current retained authority can be revalidated."""
     import copy
     import hashlib
@@ -261,7 +262,7 @@ def available_lyrics(workflow, job, audio_identity, *, on_blocker=None, prepare_
             and not job.get('endpointReview') and admission.owner_verification is None):
         from stemwise_engine.recording_word_placement import reviewed_placement
         retained_timing = reviewed_placement(workflow, job, workspace, original, admission, audio_identity,
-            prepare=prepare_acoustic)
+            prepare=prepare_acoustic, refresh_retained_releases=refresh_retained_releases)
     if retained_timing is not None:
         tracks[0] = retained_timing[0]
     approved = []

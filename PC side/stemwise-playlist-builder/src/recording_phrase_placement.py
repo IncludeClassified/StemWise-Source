@@ -8,6 +8,12 @@ from stemwise_engine.common import (atomic_write_json, heavy_worker_stage, json_
 from stemwise_engine.contract import MAX_JSON_BYTES
 from stemwise_engine.alignment_endpoints import WORD_START_AGREEMENT_MS, WORD_END_AGREEMENT_MS
 
+# Exact producer identities used by current recording-bound receipts. A prior
+# reference may replay its stored observations, but new searches use float64.
+PREVIOUS_PLACEMENT_RECIPE = 'e9fec7c297f9a4b45f2d760dc656b444e60f3528c818277cc509735a8f97dff8'
+PREVIOUS_CODA_RECIPE = 'eb75ac461d67aebd7d5e0da8799d455debf0d9ee724ad50f6fd186368768f912'
+
+
 def _digest(value):
     return hashlib.sha256(json_bytes(value)).hexdigest()
 
@@ -18,11 +24,24 @@ def correlate_word(source, search):
     from scipy.signal import correlate
     if not len(source) or len(source)>len(search):
         return 0.,0
-    energy=np.cumsum(np.r_[0.,search.astype('float64')**2])
-    norm=np.sqrt(np.maximum(0.,energy[len(source):]-energy[:-len(source)])*np.dot(source,source))
-    correlation=correlate(search,source,'valid',method='fft')/np.maximum(norm,1.e-8)
-    index=int(np.argmax(correlation))
-    return float(correlation[index]),index
+    source = np.asarray(source,dtype='float64')
+    search = np.asarray(search,dtype='float64')
+    source_energy = np.dot(source,source)
+    if not source_energy:
+        return 0.,0
+    sums = np.cumsum(np.r_[0.,search**2])
+    power = sums[len(source):]-sums[:-len(source)]
+    roundoff = sums[len(source):]*len(search)*np.finfo('float64').eps
+    eligible = power>roundoff
+    if not eligible.any():
+        return 0.,0
+    numerators = correlate(search,source,'valid',method='fft')
+    scores = np.full(len(power),-np.inf)
+    scores[eligible] = numerators[eligible]/np.sqrt(power[eligible]*source_energy)
+    index = int(np.argmax(scores))
+    actual = search[index:index+len(source)]
+    score = np.dot(actual,source)/(np.linalg.norm(actual)*np.sqrt(source_energy))
+    return float(np.clip(score,-1.,1.)),index
 
 
 def _voice(streams,start,end):
@@ -345,6 +364,11 @@ def recover(workspace,state,original,admission,audio,track,choices,confirmed,*,a
                  decoder=semantic_source_identity(Path(__file__).with_name('endpoint_mms_prediction.py'),portable=True),
                  runtime=state['pinnedRuntime'])
     name='phrase-placement-'+_digest(binding)+'.private.json'
+    if ref and ref['path']!=name:
+        prior={**binding,'recipe':PREVIOUS_PLACEMENT_RECIPE}
+        prior_name='phrase-placement-'+_digest(prior)+'.private.json'
+        if ref['path']==prior_name:
+            binding,name=prior,prior_name
     path=folder/name
     if ref and ref['path']!=name:
         raise ValueError('Bound chorus placement request differs')
@@ -365,6 +389,8 @@ def recover(workspace,state,original,admission,audio,track,choices,confirmed,*,a
     packet=observed['observations']
     if packet['lines']:
         validate_recorded_model(packet['model'], MODEL)
+        if any(not 0<=line['correlation']<=1 for line in packet['lines'].values()):
+            raise ValueError('A retained chorus match has an impossible vocal correlation')
     _apply(track,reqs,packet['lines'],confirmed,choices,all_native)
     # A failed ordering or a censored local decode can leave the old word
     # on another sound. Make that visible even if native timers agreed there.

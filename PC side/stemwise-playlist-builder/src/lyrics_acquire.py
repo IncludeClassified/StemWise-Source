@@ -362,7 +362,8 @@ def _normalize_text(value: str) -> str:
     if "\x00" in value:
         raise LyricsAcquisitionError("provider text contains a NUL character")
     from stemwise_engine.lyrics_normalize import trim_blank_outer_lines
-    normalized = trim_blank_outer_lines(value)
+    lines = trim_blank_outer_lines(value).split("\n")
+    normalized = "\n".join(line.rstrip(" \t") for line in lines)
     if not normalized.strip():
         raise LyricsAcquisitionError("provider returned blank lyric text")
     if _HTML_RE.search(normalized):

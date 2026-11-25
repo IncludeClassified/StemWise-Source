@@ -10,6 +10,12 @@ from stemwise_engine.vocal_span_estimate import _transitions
 from stemwise_engine.vocal_release_transition import _read
 
 
+PUBLISHED_RELEASE_PRODUCERS = (
+    '780e0c6d47443d2936ea88bb1aae87e4643d900a02a6cbff5608bece3d44e1e8',
+    'd3c512e2a2c41f70a847a8b06b194764911ff469c33f7eb88d6ee4ee5898405d',
+)
+
+
 def _connected_vowel_exit(acoustic, frames, end, fence, vowel_coverage):
     import numpy as np
 
@@ -106,10 +112,70 @@ def measured_end(target, trace, *, vowel_only=False):
     return None
 
 
-def _targets(track, lines, admission, original, folder, audio, protected, equivalent):
+def _terminal_breath_end(target, trace):
+    roles = ('vocal', 'lead')
+    if any(role not in trace['features'] for role in roles):
+        return None
+    release = measured_end(target, {key: {role: trace[key][role] for role in roles}
+                                    for key in ('features', 'frames')})
+    if release is None or abs(release - target['guideEnd']) > 65:
+        return None
+    for role in roles:
+        for left, right, phone in trace['frames'][role]:
+            after_release = min(right, target['fence']) - max(left, release)
+            if phone == 'SP' and after_release >= 90:
+                break
+            if phone == 'hh' and after_release >= 20:
+                return None
+    return release
+
+
+def _release_into_rest(features, phones, interval, hint, fence):
+    import numpy as np
+
+    time, level, periodic, _, _ = _read(features)
+    start, old_end = interval
+    candidates = []
+    for left, right, phone in phones:
+        if (phone != 'SP' or min(right, fence) - left < 200 or abs(left - hint) > 100
+                or left <= old_end + 100):
+            continue
+        if any(label == 'SP' and min(b, left) - max(a, start) >= 90
+               for a, b, label in phones if b <= left):
+            continue
+        core_start, core_end = left - 300, left - 100
+        vowel_ms = sum(max(0, min(core_end, b) - max(core_start, a))
+                       for a, b, label in phones if label in VOWELS)
+        core = (time >= core_start) & (time < core_end)
+        if vowel_ms < 120 or core.sum() < 12 or np.median(periodic[core]) < .55:
+            continue
+        floor = np.median(level[core]) - 18
+        steady_rest = level[(time >= left + 20) & (time <= left + 150)]
+        if len(steady_rest) < 10 or np.median(steady_rest) > floor:
+            continue
+        for k in np.flatnonzero((time >= left - 80) & (time <= left + 70)):
+            if k + 5 <= len(time) and level[k] <= floor and np.median(level[k:k+5]) <= floor:
+                candidates.append(round(time[k]))
+                break
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _masked_breath_end(target, trace):
+    # The same owned vocal must fade in both isolated views while backing may persist.
+    ends = [_release_into_rest(trace['features'][role], trace['frames'][role],
+                              target['interval'], target['guideEnd'], target['fence'])
+            for role in ('lead', 'vocal') if role in trace['features']]
+    if len(ends) == 2 and None not in ends and abs(ends[0] - ends[1]) <= 65:
+        return max(ends)
+    return None
+
+
+def _targets(track, lines, admission, original, folder, audio, protected, equivalent, *, allow_masked=True):
     from stemwise_engine import spoken_targets
     from stemwise_engine.alignment_endpoints import _component_phonemizer_languages
+    from stemwise_engine.arabic_coda_release import _base
     from stemwise_engine.lyrics_tokenization import display_words
+    from stemwise_engine.recording_repeat_words import _tight
 
     indices=admission.source_physical_indices
     plan=spoken_targets.load(folder.parents[2]/'jobs'/folder.name,folder.name,original,indices,audio['sha256'])
@@ -130,6 +196,14 @@ def _targets(track, lines, admission, original, folder, audio, protected, equiva
     for k,(position,t,g,reading,language) in enumerate(words):
         a,b=t['startMs'],t['endMs']
         stop=words[k+1][1]['startMs'] if k+1<len(words) else audio['durationMs']
+        line, index = position
+        crops = g.get('vocalCropRangeMs') or []
+        masked_breath = (allow_masked and language == 'ar' and _base(reading).endswith('ه')
+                         and index == len(lines[line]['words'])-1
+                         and _tight(g, 0) and not _tight(g, 1)
+                         and len(crops) == 2 and crops[1] and max(abs(t-g['endMs']) for t in crops[1]) <= 100)
+        if masked_breath:
+            stop = min(stop, g['endMs'] + 650)
         if (position in protected or position in beat_choices or t['status']!='estimated'
                 or language not in {'en','ar','tr','ur'}
                 or not 0<=a<b<=stop or stop-b<140 or abs(a-g['startMs'])>300
@@ -137,7 +211,8 @@ def _targets(track, lines, admission, original, folder, audio, protected, equiva
             continue
         if g['endMs']-b>150 or position[1]==0 and stop-b>=300:
             requests.append({'position':list(position),'wordId':g['wordId'],'text':reading,'language':language,
-                             'interval':[a,b],'fence':stop,'guideEnd':g['endMs']})
+                             'interval':[a,b],'fence':stop,'guideEnd':g['endMs'],
+                             **({'maskedBreath':True} if masked_breath else {})})
     return requests
 
 
@@ -163,10 +238,13 @@ def _observations(request):
     pronounce=lru_cache(maxsize=None)(_pronunciation)
     classify=_classifier(project)
     duration=request['durationMs']
+    breath_words = set(request.get('terminalBreathWords', ()))
     result={}
     for word in request['targets']:
         language=word['language']
         vowel_only=False
+        terminal_breath = False
+        masked_breath = word.get('maskedBreath', False)
         if language=='en':
             pronunciations=english.get(word['text'].lower().replace('’',"'"),())
             if (not pronunciations or any(p[-1] not in VOWELS for p in pronunciations)
@@ -175,7 +253,10 @@ def _observations(request):
             vowel_only=all(len(p)==1 for p in pronunciations)
         else:
             form=[_nucleus(p) for p in pronounce(word['text'],language) if p]
-            if (not form or form[-1] not in IPA_VOWELS or word['guideEnd']-word['interval'][1]<=150):
+            terminal_breath = (language == 'ar' and (masked_breath or word['wordId'] in breath_words) and len(form) >= 2
+                               and form[-1] == 'h' and form[-2] in IPA_VOWELS)
+            if (not form or (form[-1] not in IPA_VOWELS and not terminal_breath)
+                    or (masked_breath and not terminal_breath) or word['guideEnd']-word['interval'][1]<=150):
                 continue
         origin=max(0,(word['interval'][0]-420)//10*10)
         limit=min(duration//10*10,(max(word['fence'],word['guideEnd'])+450)//10*10)
@@ -187,7 +268,13 @@ def _observations(request):
             samples=_read_role(files[role][0],origin,limit,duration)
             frames[role]=classify(samples,origin)
             features[role]=extract(resample_poly(samples,160,441),backing,16000,origin)
-        edge=measured_end(word,{'frames':frames,'features':features},vowel_only=vowel_only)
+        trace = {'frames': frames, 'features': features}
+        if not terminal_breath:
+            edge = measured_end(word, trace, vowel_only=vowel_only)
+        elif masked_breath:
+            edge = _masked_breath_end(word, trace)
+        else:
+            edge = _terminal_breath_end(word, trace)
         if edge is not None:
             result[word['wordId']]=edge
     if any(sha256_file(Path(path))!=digest for path,digest in files.values()):
@@ -220,13 +307,33 @@ def recover(workspace,state,original,admission,audio,track,protected,equivalent=
                  producer=[semantic_source_identity(Path(__file__).with_name(m+'.py'),portable=True) for m in dependencies],
                  views={r:f[1] for r,f in files.items()},targets=repeat._digest(targets))
     path=folder/f'sustained-word-ends-{repeat._digest(binding)}.private.json'
+    if ref and ref.get('path') != path.name:
+        # A published measurement replays only its exact bound producer and inputs.
+        targets = _targets(track, lines, admission, original, folder, audio, protected, equivalent, allow_masked=False)
+        binding['targets'] = repeat._digest(targets)
+        for producer in PUBLISHED_RELEASE_PRODUCERS:
+            binding['producer'][0] = producer
+            path = folder/f'sustained-word-ends-{repeat._digest(binding)}.private.json'
+            if ref.get('path') == path.name:
+                break
     if ref and (ref.get('path')!=path.name or not path.is_file() or sha256_file(path)!=ref.get('sha256')):
         raise ValueError('Recorded sustained-release evidence changed')
     if not path.is_file():
         if not config:
             return None
         project=Path(config['projectDir'])
-        request=dict(files=files,targets=targets,durationMs=audio['durationMs'],project=str(project))
+        terminal_breath_words = []
+        for target in targets:
+            if target['language'] != 'ar':
+                continue
+            line, word = target['position']
+            guide_words = lines[line]['words']
+            if word != len(guide_words)-1 or not repeat._tight(guide_words[word], 0):
+                continue
+            if repeat._tight(guide_words[word], 1):
+                terminal_breath_words.append(target['wordId'])
+        request=dict(files=files,targets=targets,durationMs=audio['durationMs'],project=str(project),
+                     terminalBreathWords=terminal_breath_words)
         with environment_lease('main',builder=project),heavy_worker_stage(config):
             proc=run_process_tree([str(environment_python('main',project)),'-B','-m',__name__],
                  input=json.dumps(request),capture_output=True,text=True,encoding='utf-8',

@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 from stemwise_engine.common import (atomic_write_json, json_bytes, read_bounded_json,
-                                    read_bounded_regular_bytes, sha256_file, validate_generated_path)
+                                    parse_strict_json_bytes, read_bounded_regular_bytes, sha256_file, validate_generated_path)
 from stemwise_engine.contract import MAX_JSON_BYTES
 from stemwise_engine.lyrics_alignment import build_lexical_occurrence_mapping
 from stemwise_engine.lyrics_normalize import performance_lines
@@ -258,6 +258,17 @@ def resolve(workspace, state, original, admission, audio, track, confirmed, *, r
         if ref:
             raise ValueError('Current disputed word set differs from the recorded repair')
         return None
+    packet = raw = None
+    if ref is not None:
+        if set(ref)!={'path','sha256'} or not re.fullmatch(r'measured-word-releases-[0-9a-f]{64}\.private\.json',ref['path']):
+            raise ValueError('Invalid disputed release evidence reference')
+        raw = read_bounded_regular_bytes(folder/ref['path'],max_bytes=MAX_JSON_BYTES,root=folder)
+        if hashlib.sha256(raw).hexdigest()!=ref['sha256']:
+            raise ValueError('Disputed release measurement changed')
+        packet = parse_strict_json_bytes(raw)
+    # Replay exactly the observers in a retained measurement. Current releases
+    # can gain another observer only when preparing a new measurement.
+    measure_aspirate = prepare or (packet is not None and 'phraseFinalCoda' in packet['binding']['producer'])
     observers = {}
     languages = {t['language'] for t in targets}
     if 'en' in languages:
@@ -280,6 +291,13 @@ def resolve(workspace, state, original, admission, audio, track, confirmed, *, r
             if phrase:
                 identities.update(phrase)
                 observers['phraseFinal'] = phrase_final_release
+            if measure_aspirate:
+                from stemwise_engine import phrase_final_coda
+                timing = phrase_final_coda.attach(folder,audio,original,admission,targets,
+                                                   paths['leadAsr'],identities['leadAsrSha256'])
+                if timing:
+                    identities['phraseFinalCodaTimingSha256'] = timing
+                    observers['phraseFinalCoda'] = phrase_final_coda
             from stemwise_engine import arabic_coda_release, role_phrase_overlap
             coda=arabic_coda_release.attach(folder,audio,original,admission,targets)
             response=role_phrase_overlap.attach(folder,audio,original,admission,targets)
@@ -303,6 +321,10 @@ def resolve(workspace, state, original, admission, audio, track, confirmed, *, r
                 ('_spectrum','_band_energy','extract','_read','_core','decide','decide_transition'),portable=True)]
     if 'leadVowel' in observers:
         producer['leadAssets'] = list(lead_vowel_observer.ASSETS)
+    if 'phraseFinalCoda' in observers:
+        producer['aspirateLandmarks'] = semantic_source_identity(Path(phrase_final_release.__file__),portable=True)
+        producer['aspirateDecoder'] = semantic_source_identity(Path(arabic_coda_release.__file__),
+                                                              ('_classifier','_read_role'),portable=True)
     if 'arabicCoda' in observers:
         from stemwise_engine import arabic_role_letters, recording_phrase_placement
         producer['arabicLetters']=[arabic_role_letters.ASSETS,
@@ -310,6 +332,9 @@ def resolve(workspace, state, original, admission, audio, track, confirmed, *, r
         producer['rolePhraseOverlap']=semantic_source_identity(Path(role_phrase_overlap.__file__),portable=True)
         producer['codaCorrespondence']=semantic_source_identity(Path(recording_phrase_placement.__file__),
                                                                ('_voice','correlate_word'),portable=True)
+        if (packet is not None and packet['binding']['producer'].get('codaCorrespondence')
+                ==recording_phrase_placement.PREVIOUS_CODA_RECIPE):
+            producer['codaCorrespondence']=recording_phrase_placement.PREVIOUS_CODA_RECIPE
     if 'multilingual' in observers:
         from stemwise_engine import adjacent_release_onset
         producer['vocalTransition'] = semantic_source_identity(Path(vocal_release_transition.__file__),portable=True)
@@ -336,11 +361,15 @@ def resolve(workspace, state, original, admission, audio, track, confirmed, *, r
         if any(sha256_file(p)!=digest for p,digest in files):
             raise ValueError('Disputed release audio changed during measurement')
         atomic_write_json(path,{'binding':binding,'observations':traces},root=folder)
-    raw = read_bounded_regular_bytes(path,max_bytes=MAX_JSON_BYTES,root=folder)
-    from stemwise_engine.common import parse_strict_json_bytes
-    packet = parse_strict_json_bytes(raw)
+    if raw is None:
+        raw = read_bounded_regular_bytes(path,max_bytes=MAX_JSON_BYTES,root=folder)
+        packet = parse_strict_json_bytes(raw)
     current = {'path':name,'sha256':hashlib.sha256(raw).hexdigest()}
     if ref is not None and current!=ref or packet.get('binding')!=binding:
         raise ValueError('Disputed release measurement changed')
+    for trace in packet['observations'].get('arabicCoda',{}).values():
+        for coda in trace.get('coda',[]):
+            if 'peer' in coda and any(not 0<=score<=1 for score,_ in coda['peer']['matches']):
+                raise ValueError('A retained coda match has an impossible vocal correlation')
     _apply(track,targets,packet['observations'],observers,current,confirmed,audio['durationMs'])
     return current  # Retain a completed abstention too. Only _apply can confirm a boundary.

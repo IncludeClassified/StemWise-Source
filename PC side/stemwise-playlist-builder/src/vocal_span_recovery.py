@@ -330,7 +330,7 @@ def _requests(track, lines, mapping, readings, languages, choices, protected, du
     return requests
 
 
-def _apply(track, requests, observations, protected, digest):
+def _apply(track, requests, observations, protected, digest, *, require_anchored_decode=False):
     from stemwise_engine.recording_release_repair import _ordered_changes
     from stemwise_engine.vocal_span_estimate import estimate
     flat=[((i,j),w['timing']) for i,line in enumerate(track['lines']) for j,w in enumerate(line['words'])]
@@ -350,11 +350,13 @@ def _apply(track, requests, observations, protected, digest):
                 continue
             k=indices[pos]
             owned=readings[t['wordId']]
-            local=owned['local']
+            local=owned.get('fenced') if require_anchored_decode else owned['local']
+            if local is None:
+                continue
             value=_span(t,owned['reading'],local,trace['frames'],trace['spectrum'])
             if value is None:
                 value=estimate(t,local,trace['frames'],trace['spectrum'])
-            if value is None and 'fenced' in owned:
+            if value is None and not require_anchored_decode and 'fenced' in owned:
                 local=owned['fenced']
                 value=_span(t,owned['reading'],local,trace['frames'],trace['spectrum'])
                 if value is None:
@@ -409,15 +411,19 @@ def recover(workspace,state,original,admission,audio,track,choices,protected,*,r
             multilingual_release_observer, vocal_span_estimate)
     from stemwise_engine.common import atomic_write_json, heavy_worker_stage, read_bounded_json, run_process_tree, sha256_file
     from stemwise_engine.contract import MAX_JSON_BYTES
-    from stemwise_engine.lyrics_alignment import build_lexical_occurrence_mapping
+    from stemwise_engine.lyrics_alignment import build_lexical_occurrence_mapping, canonical_language
+    from stemwise_engine.lyrics_normalize import physical_lines
+    from stemwise_engine.lyrics_tokenization import display_words
     from stemwise_engine.provenance import semantic_source_identity
     from stemwise_engine.runtime_environment import environment_lease, environment_python
     from stemwise_engine.worker_protocol import require_worker_success,parse_worker_json
     folder=workspace.job_dir(state['videoId'])
     indices=admission.source_physical_indices
-    # A layered vocal needs attribution to the actual singer. A separate
-    # role observer owns it. This route consumes the reviewed multilingual plan.
-    if not admission.spoken_targets:
+    # A layered vocal needs the separate role observer. Single-language words
+    # use the same display forms as the native decoder unless a spoken plan owns them.
+    language = canonical_language(original.get('language'))
+    if not admission.spoken_targets and (language not in multilingual_release_observer.LANGUAGES
+            or spoken_targets.needed(original)):
         if ref:
             raise ValueError('Sung span pronunciation plan is missing')
         return None
@@ -429,10 +435,16 @@ def recover(workspace,state,original,admission,audio,track,choices,protected,*,r
         return None
     guide,lines,files=saved
     plan=spoken_targets.load(workspace.root.parent/'jobs'/folder.name,folder.name,original,indices,audio['sha256'])
-    if not plan or plan.reference!=admission.spoken_targets:
+    if (plan.reference if plan else None)!=admission.spoken_targets:
         raise ValueError('Sung span reviewed pronunciation changed')
+    if plan:
+        readings, languages = plan.word_lines(indices), plan.language_lines(indices)
+    else:
+        physical = physical_lines(original['text'])
+        readings = [[text for _, _, text in display_words(physical[i])] for i in indices]
+        languages = [[language] * len(words) for words in readings]
     mapping=build_lexical_occurrence_mapping(folder.name,original,indices)['performedOccurrences']
-    reqs=_requests(track,lines,mapping,plan.word_lines(indices),plan.language_lines(indices),choices,protected,audio['durationMs'])
+    reqs=_requests(track,lines,mapping,readings,languages,choices,protected,audio['durationMs'])
     if not reqs:
         if ref:
             raise ValueError('Sung span target selection changed')
@@ -467,8 +479,10 @@ def recover(workspace,state,original,admission,audio,track,choices,protected,*,r
     mms.validate_recorded_model(observed['model'],mms.MODEL)
     if packet['binding']!=binding or (ref and ref!=reference) or set(observed['lines'])!={str(r['index']) for r in reqs}:
         raise ValueError('Sung span acoustic evidence changed')
-    _apply(track,reqs,observed['lines'],protected,digest)
-    vocal_span_estimate.complete_adjacent_words(track,lines,reqs,observed['lines'],protected,digest)
+    # Default spoken forms need the decoded nucleus anchored to this occurrence.
+    _apply(track,reqs,observed['lines'],protected,digest,require_anchored_decode=plan is None)
+    if plan:
+        vocal_span_estimate.complete_adjacent_words(track,lines,reqs,observed['lines'],protected,digest)
     return reference
 
 

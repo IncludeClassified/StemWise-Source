@@ -7,6 +7,94 @@ from stemwise_engine import vocal_release_transition as spectral, vocal_span_rec
 
 
 class SungSpanTest(unittest.TestCase):
+    def test_final_word_does_not_follow_the_other_vocal_part_into_the_break(self):
+        import json
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        import soundfile as sf
+        from stemwise_engine.common import sha256_file
+        from stemwise_engine.instrumental_break import recover
+
+        with TemporaryDirectory(dir=Path('Test suite/work')) as scratch:
+            folder = Path(scratch)
+            view = folder/'vocal-overlap'/'view'
+            parts = view/'parts'
+            parts.mkdir(parents=True)
+            time = np.arange(6*44100)/44100
+            lead = np.sin(2*np.pi*230*time)*np.where(time<1.7,.8,np.where(time<2.9,.04,0))
+            backing = .2*np.sin(2*np.pi*230*time)+.3*np.sin(2*np.pi*790*time)
+            other = .4*np.sin(2*np.pi*420*time)*(time>=1.7)
+            files = {}
+            for name,path,pcm in (('lead',parts/'lead.wav',lead),
+                                  ('vocal',view/'vocals.wav',lead+other),
+                                  ('backing',view/'backing.wav',backing)):
+                sf.write(path,np.stack((pcm,pcm),axis=1),44100,subtype='FLOAT')
+                files[name] = (str(path),sha256_file(path))
+            words = [{'text':word,'startMs':a,'endMs':b} for word,a,b in
+                     (('sana',700,880),('kurban',880,1000),('olsun',1000,1770))]
+            for index, word in enumerate(words):
+                word.update(startUtf16=6*index,endUtf16=6*index+len(word['text']),
+                            vocalContrast=[True,True],vocalCropRangeMs=[[word['startMs']]*2,[word['endMs']]*2])
+            track = {'format':'regional','lines':[{'text':'sana kurban olsun','timing':{'endMs':4400},
+                'words':[{'startUtf16':w['startUtf16'],'endUtf16':w['endUtf16'],
+                          'timing':{'status':'estimated','startMs':w['startMs'],'endMs':w['endMs']}}
+                         for w in words]}]}
+            track['lines'][0]['words'][-1]['timing']['endMs'] = 4400
+            reference = copy.deepcopy(track)
+            workspace = SimpleNamespace(job_dir=lambda _: folder)
+            def readings(choir):
+                digests = {}
+                for role, observed in (('lead',words),('choir',choir),('backing',[])):
+                    path = parts/f'{role}-words.private.json'
+                    path.write_text(json.dumps({'words':observed}),encoding='utf-8')
+                    digests[role] = sha256_file(path)
+                policy = view/'backing-activity.private.json'
+                policy.write_text(json.dumps({'readings':digests}),encoding='utf-8')
+                (folder/'vocal-overlap/review.private.json').write_text(
+                    json.dumps({'backingActivitySha256':sha256_file(policy)}),encoding='utf-8')
+            def try_recover(protected):
+                return recover(workspace,{'videoId':'fixture'},{'language':'tr'},
+                               SimpleNamespace(source_physical_indices=(0,)),
+                               {'sha256':'a'*64,'durationMs':6000},track,protected)
+            guide = [{'text':'sana kurban olsun','words':words}]
+            with patch('stemwise_engine.recording_repeat_words._inputs',return_value=('b'*64,guide,files)):
+                readings(words)
+                self.assertIsNone(try_recover({}))
+                self.assertEqual(track, reference)
+                readings([])
+                self.assertIsNone(try_recover({(0,2)}))
+                self.assertEqual(track, reference)
+                result = try_recover({})
+                self.assertIsNotNone(result)
+                timing = track['lines'][0]['words'][-1]['timing']
+                self.assertEqual(timing['startMs'],1000)
+                self.assertAlmostEqual(timing['endMs'],1700,delta=50)
+                self.assertEqual(track['lines'][0]['words'][:-1],reference['lines'][0]['words'][:-1])
+
+                # A consonant can finish before the backing without a sustained pitch.
+                # The rest must extend past the old interval to be observable here.
+                track.update(copy.deepcopy(reference))
+                timing = track['lines'][0]['words'][-1]['timing']
+                timing['endMs'] = track['lines'][0]['timing']['endMs'] = 2900
+                words[-1]['vocalContrast'] = [False,False]
+                noise = np.random.default_rng(15).standard_normal(len(time))*.32
+                lead = lead*(time<1.55) + noise*((time>=1.55)&(time<1.7))
+                for kind in ('vocal','lead'):
+                    path = files[kind][0]
+                    sf.write(path,np.stack((lead,lead),axis=1),44100,subtype='FLOAT')
+                    files[kind] = (path,sha256_file(Path(path)))
+                readings(words)
+                self.assertIsNone(try_recover({}))
+                self.assertEqual(timing['endMs'],2900)
+                readings([])
+                terminal = try_recover({})
+                self.assertIsNotNone(terminal)
+                self.assertIn('terminalEndMs',terminal['boundaries'][0])
+                self.assertAlmostEqual(timing['endMs'],1700,delta=50)
+                self.assertEqual(timing['startMs'],1000)
+
     def test_instrumental_gap_blocks_delivery_and_release_uses_the_signal(self):
         from stemwise_engine.delivery_timing import checked_listening_review
         from stemwise_engine.instrumental_break import FLAG,_release
@@ -44,6 +132,72 @@ class SungSpanTest(unittest.TestCase):
         self.assertIsNone(measured_end({**target,'fence':600},trace))
         backing_only = spectral.extract(voice,voice,16000,0)
         self.assertIsNone(measured_end(target,{**trace,'features':{'vocal':quality,'choir':backing_only}}))
+
+    def test_terminal_breath_requires_the_lead_release_and_leaves_a_longer_breath_open(self):
+        from stemwise_engine.sustained_release import _terminal_breath_end
+
+        time = np.arange(24000)/16000
+        vowel = np.sin(2*np.pi*220*time)*((time>=.1)&(time<.7))
+        silence = np.zeros_like(vowel)
+        features = spectral.extract(vowel,silence,16000,0)
+        target = {'interval': [110, 320], 'guideEnd': 700, 'fence': 1010}
+        frames = [[0,100,'SP'],[100,700,'ao'],[700,1500,'SP']]
+        trace = {'features': {'vocal': features, 'lead': features},
+                 'frames': {'vocal': frames, 'lead': frames}}
+        self.assertAlmostEqual(_terminal_breath_end(target, trace), 700, delta=50)
+        self.assertIsNone(_terminal_breath_end({**target, 'guideEnd': 840}, trace))
+        with_breath = [[0,100,'SP'],[100,700,'ao'],[700,780,'hh'],[780,1500,'SP']]
+        self.assertIsNone(_terminal_breath_end(target, {**trace, 'frames': {**trace['frames'], 'lead': with_breath}}))
+        later_breath = [[0,100,'SP'],[100,700,'ao'],[700,900,'SP'],[900,960,'hh'],[960,1500,'SP']]
+        self.assertAlmostEqual(_terminal_breath_end(target, {**trace, 'frames': {**trace['frames'], 'vocal': later_breath}}),
+                               700, delta=50)
+        choir_only = {'features': {'vocal': features, 'choir': features},
+                      'frames': {'vocal': frames, 'choir': frames}}
+        self.assertIsNone(_terminal_breath_end(target, choir_only))
+
+    def test_masked_terminal_breath_needs_a_continuous_vowel_and_a_drop_in_both_views(self):
+        from stemwise_engine.sustained_release import _masked_breath_end
+
+        time = np.arange(24000)/16000
+        vowel = np.sin(2*np.pi*220*time) * (time>=.1)
+        backing = 1.2 * np.sin(2*np.pi*220*time)
+        faded = vowel * (time<.7)
+        quality = spectral.extract(faded, backing, 16000, 0)
+        self.assertTrue(np.all(np.asarray(quality['frames'])[32:57,2]<.35))
+        runs = [[0,100,'SP'], [100,700,'ao'], [700,1500,'SP']]
+        trace = {'features':{'lead':quality,'vocal':quality},'frames':{'lead':runs,'vocal':runs}}
+        target = {'interval':[110,280], 'guideEnd':670, 'fence':1230}
+        self.assertAlmostEqual(_masked_breath_end(target,trace),700,delta=30)
+        continuous = spectral.extract(vowel, backing, 16000, 0)
+        self.assertIsNone(_masked_breath_end(target,{**trace,'features':{**trace['features'],'vocal':continuous}}))
+        interrupted = [[0,100,'SP'],[100,310,'ao'],[310,430,'SP'],[430,700,'ao'],[700,1500,'SP']]
+        self.assertIsNone(_masked_breath_end(target,{**trace,'frames':{**trace['frames'],'lead':interrupted}}))
+        self.assertIsNone(_masked_breath_end({**target,'fence':800},trace))
+
+    def test_masked_terminal_breath_search_stops_in_local_quiet_before_a_long_break(self):
+        from pathlib import Path
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from stemwise_engine.sustained_release import _targets
+
+        text = '\u0627\u0644\u0644\u0647'
+        word = {'wordId':'final', 'text':text, 'startMs':1200, 'endMs':2200,
+                'vocalContrast':[True,False], 'vocalCropRangeMs':[[1190,1200],[2220,2240]],
+                'massWithin100ms':{'mix':[.8,.2],'lead':[.9,.3],'backing':[.02,.5]}}
+        guide = [{'text':text,'words':[word]}]
+        track = {'lines':[{'words':[{'timing':{'status':'estimated','startMs':1220,'endMs':1300}}]}]}
+        admission = SimpleNamespace(source_physical_indices=(0,),spoken_targets=None)
+        audio = {'durationMs':24000,'sha256':'a'*64}
+        folder = Path('scope/lyrics-alignment/jobs/song')
+        with patch('stemwise_engine.spoken_targets.load',return_value=None):
+            base = (track,guide,admission,{'text':text,'language':'ar'},folder,audio)
+            self.assertEqual(_targets(*base,{},None,allow_masked=False),[])
+            target, = _targets(*base,{},None)
+            self.assertEqual(target['interval'],[1220,1300])
+            self.assertEqual(target['guideEnd'],2200)
+            self.assertEqual(target['fence'],2850)
+            self.assertTrue(target['maskedBreath'])
+            self.assertEqual(_targets(*base,{(0,0)},None),[])
 
     def test_vowel_only_word_can_release_into_different_voiced_articulation(self):
         from stemwise_engine.sustained_release import measured_end
@@ -120,11 +274,58 @@ class SungSpanTest(unittest.TestCase):
             {'timing':{'startMs':750,'endMs':900,'status':'supported'}}]}]}
         locked=copy.deepcopy(track['lines'][0]['words'][1])
         proofs={}
-        spans._apply(track,[{'index':0,'targets':[target]}],{'0':obs},proofs,'audio-packet')
+        request=[{'index':0,'targets':[target]}]
+        before=copy.deepcopy(track)
+        spans._apply(track,request,{'0':obs},proofs,'audio-packet',require_anchored_decode=True)
+        self.assertEqual((track,proofs),(before,{}))
+        obs['words']['a']['fenced']=[315,490]
+        spans._apply(track,request,{'0':obs},proofs,'audio-packet',require_anchored_decode=True)
         self.assertEqual(proofs,{(0,0):(320,690,'audio-packet')})
         self.assertEqual(track['lines'][0]['words'][0]['timing']['status'],'estimated')
         self.assertEqual(track['lines'][0]['words'][1],locked)
         self.assertEqual(track['lines'][0]['timing']['endMs'],900)
+
+    def test_admitted_arabic_without_a_spoken_plan_reaches_span_measurement(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from stemwise_engine.common import atomic_write_json
+        from stemwise_engine.lyrics_alignment import AlignmentWorkspace, build_lexical_occurrence_mapping
+        from stemwise_engine.lyrics_tokenization import display_words
+        from stemwise_engine import recording_repeat_words
+
+        original = {'id':'original','kind':'original','format':'plain','language':'ar','text':'فِي نور'}
+        admission = SimpleNamespace(source_physical_indices=[0], spoken_targets=None, evidence_sha256='e'*64)
+        audio = {'sha256':'a'*64,'durationMs':1000}
+        video = 'abcdefghijk'
+        owner = build_lexical_occurrence_mapping(video,original,[0])['performedOccurrences'][0]
+        state = {'videoId':video,'mappingSha256':'b'*64,'pinnedRuntime':{}}
+        guide, words, choices = [], [], {}
+        for j,((left,right,text),token) in enumerate(zip(display_words(original['text']),owner['words'],strict=True)):
+            a,b = ((320,400),(750,900))[j]
+            x,y = ((300,680),(750,900))[j]
+            guide.append(dict(text=text,startUtf16=left,endUtf16=right,startMs=x,endMs=y))
+            timing = {'startMs':a,'endMs':b,'status':'estimated' if not j else 'supported'}
+            words.append(dict(startUtf16=left,endUtf16=right,timing=timing))
+            choices[1,j+1] = {'nemo-nfa':{'wordId':token['occurrenceWordId'],'word':timing}}
+        track = {'lines':[{'text':original['text'],'words':words}]}
+        preview = [{'text':original['text'],'words':guide}]
+        paths = {'vocal':['vocals.wav','1'*64], 'backing':['no_vocals.wav','2'*64]}
+        work = Path(__file__).resolve().parents[3]/'Test suite/work'
+        with TemporaryDirectory(dir=work) as temporary:
+            ws = AlignmentWorkspace(Path(temporary))
+            atomic_write_json(ws.job_dir(video)/'vocal-overlap/review.private.json',{'status':'single'})
+            with patch.object(recording_repeat_words,'_inputs',return_value=('c'*64,preview,paths)) as inputs, \
+                    patch.object(spans,'_requests',wraps=spans._requests) as requests:
+                with self.assertRaisesRegex(ValueError,'Sung span recording observations unavailable'):
+                    spans.recover(ws,state,original,admission,audio,track,choices,{})
+                self.assertEqual(requests.call_args.args[3:5],([['فِي','نور']],[['ar','ar']]))
+                inputs.reset_mock()
+                for text in ('فِي ٢', 'فِي نور'):
+                    excluded = {**original,'text':text,'language':'ar' if '٢' in text else 'mul'}
+                    self.assertIsNone(spans.recover(ws,state,excluded,admission,audio,track,choices,{}))
+                inputs.assert_not_called()
 
     def test_backing_only_and_different_local_owner_abstain(self):
         target,obs=self.case()

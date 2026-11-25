@@ -367,7 +367,8 @@ def _vowel_reference(workflow, folder, state, original, admission, audio, *, pre
     return ref
 
 
-def reviewed_placement(workflow, job, workspace, original, admission, audio, *, prepare=False):
+def reviewed_placement(workflow, job, workspace, original, admission, audio, *, prepare=False,
+                       refresh_retained_releases=False):
     from stemwise_engine.lyric_content import is_source_recording_admission
     from stemwise_engine.lyrics_alignment import _plain_original
     from stemwise_engine.workflow_records import FutureSongError
@@ -408,8 +409,10 @@ def reviewed_placement(workflow, job, workspace, original, admission, audio, *, 
         'contentEvidenceSha256': admission.evidence_sha256, 'stateSha256': sha256_file(path)}
     if ref:
         authority['vowelReleaseEvidence'] = ref
+    prior_authority=job.get('validation',{}).get('capabilities',{}).get('timingAuthority') or {}
     from stemwise_engine.recording_release_repair import resolve
     repair = resolve(workspace,state,original,admission,audio,track,confirmed,
+                     ref=None if prepare else prior_authority.get('releaseRepairEvidence'),
                      prepare=prepare,config=workflow.config)
     if repair:
         authority['releaseRepairEvidence'] = repair
@@ -418,7 +421,6 @@ def reviewed_placement(workflow, job, workspace, original, admission, audio, *, 
         authority['listeningReleaseEvidence'] = listening_ref
     protected=listened_release_choice.protected(folder,track,confirmed,listening_ref)
     from stemwise_engine.recording_repeat_words import recover
-    prior_authority=job.get('validation',{}).get('capabilities',{}).get('timingAuthority') or {}
     repeat_prior=prior_authority.get('repeatedWordEvidence')
     repeat=None
     if prepare or repeat_prior:
@@ -462,7 +464,7 @@ def reviewed_placement(workflow, job, workspace, original, admission, audio, *, 
         if prior_authority.get('boundaryRecoveryRecipe'):
             authority['boundaryRecoveryRecipe'] = prior_authority['boundaryRecoveryRecipe']
     release_upgrade = False
-    if job.get('capabilityRefresh'):
+    if refresh_retained_releases and job.get('capabilityRefresh'):
         from stemwise_engine.word_timing_review import boundary_recovery_recipe
         current_recipe = boundary_recovery_recipe()
         release_upgrade = prior_authority.get('boundaryRecoveryRecipe') != current_recipe
@@ -476,6 +478,13 @@ def reviewed_placement(workflow, job, workspace, original, admission, audio, *, 
             config=workflow.config if prepare or release_upgrade else None)
         if sustained:
             authority['sustainedReleaseEvidence'] = sustained
+    phrase_release_ref = prior_authority.get('repeatedPhraseReleaseEvidence')
+    if prepare or release_upgrade or phrase_release_ref:
+        from stemwise_engine import repeated_phrase_release
+        measured = repeated_phrase_release.recover(workspace,state,original,admission,audio,track,protected,
+                                                  ref=None if prepare or release_upgrade else phrase_release_ref)
+        if measured:
+            authority['repeatedPhraseReleaseEvidence'] = measured
     gap_ref = prior_authority.get('instrumentalBreakEvidence')
     if prepare or release_upgrade or gap_ref:
         from stemwise_engine import instrumental_break
