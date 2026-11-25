@@ -4,6 +4,15 @@ StemWise is an independently maintained, research-oriented Android music player 
 
 > **Status:** Active experimental development. This is a source-only publication snapshot, not a finished product, a qualified standalone build, or a claim of general-purpose alignment accuracy.
 
+## Review the November 25 engine update
+
+The Windows engine now has focused paths for held vowels that lead directly into another voiced word, clipped words next to displaced entrances, and overlapping lead/choir parts. A delivery guard rejects words that cross a verified instrumental break, and the preview can report timed copies of known lead lines without authorizing publication.
+
+- [Reproduce the engine regressions and see their limits](public-bench/ENGINE-REGRESSIONS.md)
+- [Public changelog](CHANGELOG.md) | [GitHub Actions](https://github.com/IncludeClassified/StemWise-Source/actions)
+
+The regressions exercise the actual engine using synthetic signals, constructed phoneme traces and controlled fixtures. They do not establish real-song accuracy or qualify the full Android/Windows build.
+
 ## Why this work matters
 
 Most automatic speech recognition and forced-alignment workflows are designed primarily for speech. Singing presents distinct challenges: elongated vowels, melisma (multiple notes sung on a syllable), repeated choruses and words, overlapping/background vocals, and disagreements between supplied lyric text and what was actually performed. Multilingual normalization adds further challenges, including Arabic orthographic variations and diacritics.
@@ -24,7 +33,7 @@ The division of responsibilities is deliberate: Windows-side tooling researches 
 - [`PC side/`](PC%20side/): Windows-side processing and orchestration, including [lyric-alignment](PC%20side/stemwise-playlist-builder/lyrics-align.ps1), [lyric handling](PC%20side/stemwise-playlist-builder/lyrics.ps1), [recording analysis](PC%20side/stemwise-playlist-builder/recording-analysis.ps1), and supporting tooling.
 - [`Test suite/`](Test%20suite/): source tests and fixtures, including [PC alignment tests](Test%20suite/pc/alignment/), host checks, native tests, and Android test sources.
 
-The Android player and Windows processor form a larger end-to-end engineering effort. The repository includes **1,760 retained source, configuration, and notice files**, plus this README. The code is provided so the architecture, experimental approach, and test organization can be inspected; the number of files is not a performance or quality metric.
+The Android player and Windows processor form a larger end-to-end engineering effort. The code is provided so the architecture, experimental approach, and test organization can be inspected; the number of files is not a performance or quality metric.
 
 ## Reproducible public checks and audio demonstration
 
@@ -61,11 +70,11 @@ The next research milestone is to make those failures easier to find and verify:
 
 The public PC engine includes narrowly scoped, fixture-tested recovery paths for a misplaced first word and for estimating a sustained final vowel on eligible English tracks. The vowel path requires a compatible local phoneme model and separated vocals; model assets are not bundled. This does not establish real-song accuracy.
 
-The broader timing sanity checker and repeated-passage improvements above are research targets. The [public scoring fixtures](public-bench/README.md) are synthetic and do not measure real-song alignment.
+Broader repeat coverage and accuracy on real recordings remain research targets. The [public scoring fixtures](public-bench/README.md) are synthetic and do not measure real-song alignment.
 
 ## Scope, provenance, and build status
 
-The source snapshot is based on development commit `a76feaeda265a42129dd025a5c3f46ae8fcd89d8`. The retained files were checked against their original Git blob hashes. Publication does **not** imply that the snapshot builds or tests successfully on a fresh machine.
+The initial source snapshot is based on development commit `a76feaeda265a42129dd025a5c3f46ae8fcd89d8`. The initial retained files were checked against their original Git blob hashes. Later selective updates are recorded in the [changelog](CHANGELOG.md). Publication does **not** imply that the snapshot builds or tests successfully on a fresh machine.
 
 Personal configuration, owner-specific device identifiers, research logs, downloaded music metadata, imported song lyrics, external datasets, generated media, and bundled binaries were intentionally excluded. In particular, the Gradle wrapper JAR, a prebuilt bridge AAR, a bundled yt-dlp executable, raster/media assets, some dataset fixtures, and device-specific configuration are absent. A standalone build may require public dependency restoration, generated assets, valid test inputs, and additional environment setup.
 

@@ -18,7 +18,7 @@ from stemwise_engine.common import (atomic_write_bytes, canonical_lyrics_languag
     extract_youtube_video_id, parse_strict_json_bytes, read_bounded_regular_bytes,
     resolve_path, validate_video_id)
 from stemwise_engine.contract import MAX_JSON_BYTES
-from stemwise_engine.lyrics_normalize import physical_lines
+from stemwise_engine.lyrics_normalize import performance_lines, physical_lines
 from stemwise_engine.provenance import semantic_source_identity
 
 KIND = 'selected-published-reference-and-recording'
@@ -85,7 +85,7 @@ def _covers_published_lines(original, published_text):
     language = original['language']
     published = _written_reference_units(units(published_text, language))
     lines = [_written_reference_units(units(line, language), whole_line=True)
-        for line in physical_lines(original['text']) if line.strip()]
+        for line in performance_lines(original['text']) if line]
     return bool(lines) and all(line and any(published[offset:offset+len(line)] == line
         for offset in range(len(published)-len(line)+1)) for line in lines)
 
@@ -115,9 +115,15 @@ def _source_text(raw, record):
         return '\n'.join(''.join(segment['utf8'] for segment in event.get('segs', []))
             for event in document['events'] if isinstance(event, dict) and 'segs' in event)
     elif extension in {'ttml', 'srv3'}:
-        document = ET.fromstring(text)
+        try:
+            document = ET.fromstring(text)
+        except ET.ParseError as error:
+            raise ValueError('Selected published caption has malformed XML') from error
         expected = 'tt' if extension == 'ttml' else 'timedtext'
         if document.tag.rsplit('}', 1)[-1] == expected:
+            for element in document.iter():
+                if element.tag.rsplit('}', 1)[-1] == 'br':
+                    element.text = '\n'
             return '\n'.join(''.join(element.itertext()) for element in document.iter()
                 if element.tag.rsplit('}', 1)[-1] == 'p')
     raise ValueError('Selected published caption has no supported body')
@@ -320,8 +326,8 @@ def _decision(*, job_dir, evidence_root, video_id, original, indices, audio_sha,
             or type(duration_ms) is not int or duration_ms <= 0):
         raise ValueError('Selected source recording identity is invalid')
     draft, draft_sha, metadata, metadata_sha = read_recording_draft(job_dir)
-    physical = physical_lines(original['text'])
-    complete = tuple(index for index, line in enumerate(physical) if line.strip())
+    physical = performance_lines(original['text'])
+    complete = tuple(index for index, line in enumerate(physical) if line)
     if (not complete or tuple(indices) != complete or draft != original['text']
             or original['language'] != metadata['originalLanguage']
             or original.get('script') != metadata.get('originalScript')

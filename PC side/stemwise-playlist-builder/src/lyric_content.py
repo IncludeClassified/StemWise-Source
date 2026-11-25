@@ -18,7 +18,7 @@ from stemwise_engine.common import parse_strict_json_bytes, read_bounded_regular
 from stemwise_engine.contract import MAX_JSON_BYTES
 from stemwise_engine.provenance import semantic_source_identity
 from stemwise_engine.lyrics_tokenization import lexical_line_tokens, display_words
-from stemwise_engine.lyrics_normalize import physical_lines
+from stemwise_engine.lyrics_normalize import performed_line_indices, physical_lines
 from stemwise_engine.workflow_records import LyricsContentBlocker, ContentEvidenceUnavailable
 
 _SHA = re.compile(r"[0-9a-f]{64}")
@@ -165,7 +165,7 @@ def owner_verification(job_dir, video_id, original, indices, audio_sha):
         raise LyricsContentBlocker('content-evidence-invalid') from error
     try:
         draft, draft_sha, metadata, metadata_sha = read_recording_draft(job_dir)
-        expected_indices = tuple(i for i, line in enumerate(physical_lines(original['text'])) if line.strip())
+        expected_indices = performed_line_indices(original['text'])
         mapping = build_lexical_occurrence_mapping(video_id, original, expected_indices)
         if (not expected_indices or tuple(indices) != expected_indices or draft != original['text']
                 or canonical_lyrics_language(original.get('language', 'und'))
@@ -227,7 +227,7 @@ def _line_units(original, source):
     return project(physical_lines(original['text'])[source], forms=plan.words[source]).units
 
 
-def exact_line_anchors(original, indices, recognized):
+def exact_line_anchors(original, indices, recognized, *, untimed_indices=frozenset()):
     """Return coarse raw-word owners, never content or word-timing authority.
 
     One full-sequence edit graph preserves contrary and ambiguous observations.
@@ -281,6 +281,9 @@ def exact_line_anchors(original, indices, recognized):
             exact[matches[0]] = target
     anchors = {}
     for raw_index, (start, stop) in enumerate(raw_ranges):
+        # All words participate in repeat disambiguation, even without a usable clock.
+        if raw_index in untimed_indices:
+            continue
         targets = [exact.get(unit) for unit in range(start, stop)]
         if not targets or any(target is None for target in targets):
             continue

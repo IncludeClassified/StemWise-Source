@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import uuid
+from contextlib import ExitStack
 from pathlib import Path
 
 from stemwise_engine.common import (ProcessLockBusyError, WorkerRetirementError, WorkerTemporaryDirectory, atomic_write_json, exclusive_process_lock,
@@ -243,8 +244,10 @@ def _owner(pid):
 
 
 def _live(directory, request):
-    if _owner(request['pid']) != request['start']:
-        return False
+    return _owner(request['pid']) == request['start'] and _owner_lock_held(directory)
+
+
+def _owner_lock_held(directory):
     try:
         owner = validate_generated_path(directory, directory / 'owner.lock').open('r+')
     except FileNotFoundError:
@@ -257,6 +260,21 @@ def _live(directory, request):
     return False
 
 
+def _discard_unpublished(directory):
+    # mkdir and acquisition of owner.lock are one transition for the scanner.
+    try:
+        with exclusive_process_lock(directory.parent / 'initialize.lock', wait_seconds=0):
+            if _owner_lock_held(directory):
+                return
+            for entry in directory.iterdir():
+                if (entry.name != 'owner.lock' and not re.fullmatch(r'\.request\.json\.[a-z0-9_]{8}', entry.name)
+                        or entry.is_symlink() or not entry.is_file()):
+                    return
+            dispose_scratch(directory, directory=True)
+    except ProcessLockBusyError:
+        pass  # A live initializer owns the transition; a later admission can retry.
+
+
 def _pending(root, producer, timeout):
     pending = []
     for directory in sorted(root.iterdir()):
@@ -266,6 +284,9 @@ def _pending(root, producer, timeout):
             uuid.UUID(hex=directory.name)
             validate_generated_path(root, directory)
             retired = (directory / 'retired.json').is_file()
+            if not retired and not (directory / 'request.json').exists():
+                _discard_unpublished(directory)
+                continue
             request = read_bounded_json(directory / ('retired.json' if retired else 'request.json'),
                                         max_bytes=16384, root=root)
             fields = {'token', 'pid', 'start', 'created', 'producer', 'audio', 'audioSha256', 'durationMs', 'timeout'}
@@ -463,8 +484,7 @@ def analyze(audio, duration, project, timeout, backend, *, preparation=None, dea
     root.mkdir(parents=True, exist_ok=True)
     token = uuid.uuid4().hex
     directory = root / token
-    directory.mkdir()
-    try:
+    with ExitStack() as owner:
         source = Path(__file__).parent
         producer = hashlib.sha256(json_bytes({
             'sources': {name: sha256_file(source / name) for name in
@@ -491,7 +511,18 @@ def analyze(audio, duration, project, timeout, backend, *, preparation=None, dea
         if deadline is not None:
             request['deadline'] = deadline
         request_hash = hashlib.sha256(json_bytes(request)).hexdigest()
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener, exclusive_process_lock(directory / 'owner.lock'):
+        with ExitStack() as initializer:
+            while True:
+                check_caller()
+                try:
+                    initializer.enter_context(exclusive_process_lock(root / 'initialize.lock', wait_seconds=.1))
+                    break
+                except ProcessLockBusyError:
+                    continue
+            directory.mkdir()
+            owner.callback(dispose_scratch, directory, directory=True)
+            owner.enter_context(exclusive_process_lock(directory / 'owner.lock'))
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
             listener.bind(_address(token))
             listener.listen(8)
             listener.setblocking(False)
@@ -528,5 +559,3 @@ def analyze(audio, duration, project, timeout, backend, *, preparation=None, dea
                             response = _dispatch(root, directory, project, producer, timeout, backend, local_request=request)
                 except ProcessLockBusyError:
                     time.sleep(.1)
-    finally:
-        dispose_scratch(directory, directory=True)

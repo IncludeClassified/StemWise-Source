@@ -16,8 +16,10 @@ class JobState(str, Enum):
     ALIGNING_LYRICS = 'ALIGNING_LYRICS'
     VALIDATED = 'VALIDATED'
     AUTHORITY_UNRESOLVED = 'AUTHORITY_UNRESOLVED'
+    LYRICS_ABSENT = 'LYRICS_ABSENT'
     LINE_UNRESOLVED = 'LINE_UNRESOLVED'
     RETRYABLE_TECHNICAL = 'RETRYABLE_TECHNICAL'
+    DELIVERY_PUBLICATION_PENDING = 'DELIVERY_PUBLICATION_PENDING'
     DELIVERED = 'DELIVERED'
 
 
@@ -36,6 +38,7 @@ class StageOutcome(str, Enum):
     ACTIVE = 'active'
     FAILED = 'failed'
     BLOCKED = 'blocked'
+    ABSENT = 'absent'
     COMPLETE = 'complete'
 
 
@@ -57,14 +60,16 @@ STAGE_RULES = {
     (JobStage.EDITORIAL, StageOutcome.FAILED): StageRule(_RETRY_ACTIONS, 'New'),
     (JobStage.EDITORIAL, StageOutcome.PENDING): StageRule(_EDIT_ACTIONS | {'Artwork', 'RecordingEvidence'}, None),
     (JobStage.EDITORIAL, StageOutcome.BLOCKED): StageRule(_RETRY_ACTIONS | {'Artwork', 'RecordingEvidence'}, 'Validate'),
+    (JobStage.EDITORIAL, StageOutcome.ABSENT): StageRule(_EDIT_ACTIONS, None),
     (JobStage.RECORDING_EVIDENCE, StageOutcome.ACTIVE): StageRule(frozenset(), None, JobState.RETRYABLE_TECHNICAL),
     (JobStage.RECORDING_EVIDENCE, StageOutcome.FAILED): StageRule(_RETRY_ACTIONS | {'RecordingEvidence'}, 'RecordingEvidence'),
     (JobStage.RECORDING_EVIDENCE, StageOutcome.BLOCKED): StageRule(_EDIT_ACTIONS | {'RecordingEvidence'}, None),
     (JobStage.ALIGNMENT, StageOutcome.ACTIVE): StageRule(_EDIT_ACTIONS, None, JobState.VALIDATION_FAILED),
     (JobStage.ALIGNMENT, StageOutcome.BLOCKED): StageRule(_RETRY_ACTIONS | {'RecordingEvidence'}, 'Validate'),
-    (JobStage.VALIDATION, StageOutcome.FAILED): StageRule(_RETRY_ACTIONS | {'RecordingEvidence'}, 'Validate'),
+    (JobStage.VALIDATION, StageOutcome.FAILED): StageRule(_RETRY_ACTIONS | {'Artwork', 'RecordingEvidence'}, 'Validate'),
     (JobStage.VALIDATION, StageOutcome.PENDING): StageRule(_EDIT_ACTIONS, None),
     (JobStage.VALIDATION, StageOutcome.COMPLETE): StageRule(_EDIT_ACTIONS | {'Finalize'}, None),
+    (JobStage.DELIVERY, StageOutcome.PENDING): StageRule(frozenset({'Finalize'}), None),
     (JobStage.DELIVERY, StageOutcome.COMPLETE): StageRule(frozenset({'Source', 'Artwork', 'Validate', 'Finalize', 'ReplaceAnalysis'}), None),
 }
 
@@ -81,8 +86,10 @@ _STATE_STAGES = {
     JobState.ALIGNING_LYRICS: (JobStage.ALIGNMENT, StageOutcome.ACTIVE),
     JobState.VALIDATED: (JobStage.VALIDATION, StageOutcome.COMPLETE),
     JobState.AUTHORITY_UNRESOLVED: (JobStage.EDITORIAL, StageOutcome.BLOCKED),
+    JobState.LYRICS_ABSENT: (JobStage.EDITORIAL, StageOutcome.ABSENT),
     JobState.LINE_UNRESOLVED: (JobStage.ALIGNMENT, StageOutcome.BLOCKED),
     JobState.RETRYABLE_TECHNICAL: (JobStage.VALIDATION, StageOutcome.FAILED),
+    JobState.DELIVERY_PUBLICATION_PENDING: (JobStage.DELIVERY, StageOutcome.PENDING),
     JobState.DELIVERED: (JobStage.DELIVERY, StageOutcome.COMPLETE),
 }
 
@@ -120,7 +127,9 @@ class JobProgress:
 
     @property
     def next_action(self):
-        if self.rule.interrupted_state is not None or self.stage == JobStage.DELIVERY:
+        if self.stage == JobStage.DELIVERY and self.outcome == StageOutcome.PENDING:
+            return 'Finalize'
+        if self.rule.interrupted_state is not None or self.stage == JobStage.DELIVERY or self.outcome == StageOutcome.ABSENT:
             return 'Status'
         if self.rule.retry_action == 'Validate':
             return 'Validate'
@@ -142,6 +151,14 @@ def save_job(path, job):
             ('runSha256', 'displayReviewDeclarationSha256', 'displayOriginalSha256'))
         and job.get('capabilityRefresh', {}).get('previousValidation') == validation)
     JobTransition.require(previous.get('state'), job.get('state'),
+        publication_pending=(job.get('recordingInput') is not None
+            and isinstance(previous.get('delivery'), dict) and isinstance(job.get('delivery'), dict)
+            and previous['delivery'].get('sha256') == job['delivery'].get('sha256')
+            and previous['delivery'].get('deliveredAt') == job['delivery'].get('preparedAt')
+            and job['delivery'].get('readyToImport') is False),
+        publication_withheld=isinstance(previous.get('delivery'), dict) and 'delivery' not in job
+            and job.get('withheldPublication', {}).get('previousDelivery') == previous['delivery']
+            and job.get('outcome', {}).get('code') == 'line-unresolved',
         artwork_repair=isinstance(previous.get('artworkRepairPending'), dict)
             and isinstance(job.get('artworkRepair'), dict) and 'delivery' not in job,
         capability_refresh=capability_owner
@@ -155,6 +172,7 @@ def save_job(path, job):
             and job['analysisReplacement'].get('deliverySha256') == previous.get('delivery', {}).get('sha256')
             and job['analysisReplacement'].get('analysisSha256') == previous.get('validation', {}).get('audioSha256')
             and previous.get('delivery') == job.get('delivery'))
+    job['deliveryAllowed'] = job['state'] == 'DELIVERED' and job.get('delivery', {}).get('readyToImport') is True
     job['progress'] = JobProgress.current(job).to_record()
     job['updatedAt'] = utc_now()
     atomic_write_json(path, job)
@@ -162,7 +180,7 @@ def save_job(path, job):
 
 _EDITORIAL = frozenset({JobState.NEEDS_LYRICS, JobState.WAITING_FOR_EDITORIAL,
     JobState.WAITING_FOR_DISPLAY_REVIEW, JobState.VALIDATION_FAILED,
-    JobState.AUTHORITY_UNRESOLVED, JobState.LINE_UNRESOLVED, JobState.RETRYABLE_TECHNICAL})
+    JobState.AUTHORITY_UNRESOLVED, JobState.LYRICS_ABSENT, JobState.LINE_UNRESOLVED, JobState.RETRYABLE_TECHNICAL})
 _ANALYSIS = frozenset({JobState.NEW, JobState.ANALYZING, JobState.ANALYSIS_FAILED,
                       JobState.EDITORIAL_SETUP_FAILED, JobState.ANALYSIS_REPLACEMENT_PENDING})
 
@@ -173,15 +191,19 @@ class JobTransition:
     after: JobState
 
     @classmethod
-    def require(cls, before, after, *, artwork_repair=False, capability_refresh=False, analysis_replacement=False):
+    def require(cls, before, after, *, artwork_repair=False, capability_refresh=False, analysis_replacement=False,
+                publication_withheld=False, publication_pending=False):
         old, new = JobState(before) if before is not None else None, JobState(after)
         allowed = (old is None and new == JobState.NEW or old == new
             or old in _ANALYSIS and new in _ANALYSIS | _EDITORIAL
             or old in _EDITORIAL and new in _EDITORIAL | {JobState.ANALYZING, JobState.ALIGNING_LYRICS, JobState.VALIDATED}
             or old == JobState.ALIGNING_LYRICS and new in _EDITORIAL | {JobState.VALIDATED}
-            or old == JobState.VALIDATED and new in {JobState.DELIVERED, JobState.VALIDATION_FAILED,
+            or old == JobState.DELIVERY_PUBLICATION_PENDING and new == JobState.DELIVERED
+            or old == JobState.VALIDATED and new in {JobState.DELIVERY_PUBLICATION_PENDING, JobState.DELIVERED, JobState.VALIDATION_FAILED,
                 JobState.WAITING_FOR_DISPLAY_REVIEW, JobState.ALIGNING_LYRICS,
                 JobState.WAITING_FOR_EDITORIAL, JobState.AUTHORITY_UNRESOLVED}
+            or publication_pending and old == JobState.DELIVERED and new == JobState.DELIVERY_PUBLICATION_PENDING
+            or publication_withheld and old == JobState.DELIVERED and new == JobState.LINE_UNRESOLVED
             or artwork_repair and old == JobState.DELIVERED and new == JobState.VALIDATED
             or capability_refresh and old == JobState.DELIVERED
                 and new in {JobState.VALIDATED, JobState.WAITING_FOR_DISPLAY_REVIEW}

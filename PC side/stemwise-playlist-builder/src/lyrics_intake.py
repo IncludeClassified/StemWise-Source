@@ -29,7 +29,7 @@ from stemwise_engine.common import (
 )
 from stemwise_engine.contract import MAX_JSON_BYTES, ContractError
 from stemwise_engine.packages import PackageValidationError, read_child
-from stemwise_engine.song_enrichment_v2 import validate_lyrics, require_publication_lyrics
+from stemwise_engine.song_enrichment_v2 import validate_lyrics, require_staged_lyrics
 
 
 class LyricsInputError(ValueError):
@@ -82,7 +82,7 @@ def _fraction_ms(value: str | None) -> int:
 
 
 def parse_lrc(path: Path) -> list[dict[str, Any]]:
-    """Parse conservative line-level LRC into strictly ordered milliseconds."""
+    """Preserve stable occurrence order, including simultaneously sung distinct lines."""
 
     text = _read_text(path)
     offset: int | None = None
@@ -133,11 +133,11 @@ def parse_lrc(path: Path) -> list[dict[str, Any]]:
             raise LyricsInputError(f"{path.name}:{line_number}: offset makes startMs negative")
         adjusted.append((result, lyric, line_number))
     adjusted.sort(key=lambda item: item[0])
-    for index in range(1, len(adjusted)):
-        if adjusted[index][0] == adjusted[index - 1][0]:
-            raise LyricsInputError(
-                f"{path.name}:{adjusted[index][2]}: duplicate resulting startMs"
-            )
+    seen = set()
+    for start_ms, lyric, line_number in adjusted:
+        if (start_ms, lyric) in seen:
+            raise LyricsInputError(f"{path.name}:{line_number}: duplicated timed lyric")
+        seen.add((start_ms, lyric))
     return [{"startMs": start_ms, "text": lyric} for start_ms, lyric, _ in adjusted]
 
 
@@ -439,7 +439,7 @@ def compile_draft(
                 )
     try:
         validate_lyrics(lyrics, duration_ms=duration_ms)
-        require_publication_lyrics(lyrics)
+        require_staged_lyrics(lyrics)
     except ContractError as error:
         duration_context = (
             f" against analysis.durationMs={duration_ms}"
@@ -689,6 +689,9 @@ def read_recording_draft(job_dir):
         original_metadata['sources'] = {'original': _source(sources['original'], 'sources.original')}
     identity = json.dumps(original_metadata, ensure_ascii=False, sort_keys=True,
                           separators=(',', ':')).encode('utf-8')
+    if 'componentLanguages' in metadata:
+        # Keep the input fingerprint while exposing the same word owners as compile_draft.
+        metadata['componentLanguages'] = _component_languages(metadata['componentLanguages'], job_dir.name)
     return draft, draft_sha, metadata, hashlib.sha256(identity).hexdigest()
 
 

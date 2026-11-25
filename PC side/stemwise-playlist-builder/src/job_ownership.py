@@ -91,7 +91,7 @@ def inspect_analysis_replacement(workflow, job):
         public = validate_generated_path(workflow.ready, workflow.ready/f'{video_id}.stemwise.zip',
                                          workspace_root=workflow.workspace_root)
         delivery = job.get('delivery', {})
-        if job['state'] == 'DELIVERED' and delivery.get('sha256') != request['deliverySha256']:
+        if job['state'] in {'DELIVERY_PUBLICATION_PENDING', 'DELIVERED'} and delivery.get('sha256') != request['deliverySha256']:
             # Completed delivery cleanup may already have retired the rollback tree and PCM.
             if sha256_file(public) != delivery.get('sha256'):
                 raise FutureSongError('Replacement delivery bytes changed')
@@ -130,7 +130,7 @@ def admit_analysis_replacement(workflow, video_id, delivery_sha, analysis_sha):
         return workflow.summary(job)
     if (job.get('state') != 'DELIVERED' or job.get('delivery', {}).get('sha256') != delivery_sha
             or job.get('validation', {}).get('audioSha256') != analysis_sha
-            or any(job.get(key) for key in ('capabilityRefresh', 'artworkRepairPending', 'nativePublication'))):
+            or any(job.get(key) for key in ('capabilityRefresh', 'artworkRepairPending'))):
         raise FutureSongError('Replacement requires the exact completed recording and delivery')
     pipeline = workflow._pipeline()
     checkpoint_path, child = pipeline.checkpoint_path(video_id), pipeline.child_path(video_id)

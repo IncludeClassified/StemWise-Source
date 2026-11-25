@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import hashlib
 import os
 import stat
@@ -89,13 +88,13 @@ def _require_regular_path(path: Path, context: str) -> os.stat_result:
 
 def _run_contract(document: dict[str, Any]) -> None:
     try:
-        from stemwise_engine.song_enrichment_v2 import validate_song, require_publication_lyrics
+        from stemwise_engine.song_enrichment_v2 import validate_song, require_staged_lyrics
     except ImportError as error:
         raise PackageValidationError("version-2 enrichment validator is unavailable") from error
     try:
         validate_song(document)
         if "lyrics" in document:
-            require_publication_lyrics(document["lyrics"])
+            require_staged_lyrics(document["lyrics"])
     except Exception as error:
         raise PackageValidationError(str(error)) from error
 

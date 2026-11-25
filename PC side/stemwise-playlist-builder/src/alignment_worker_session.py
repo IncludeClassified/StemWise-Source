@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import ctypes
 from contextvars import ContextVar
+from functools import lru_cache
 import hashlib
 import importlib
 import importlib.util
@@ -38,11 +39,24 @@ def _digest(value):
                                     separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
+@lru_cache(maxsize=64)
+def _content_digest(path, fingerprint):
+    from stemwise_engine.common import sha256_file
+    digest = sha256_file(path)
+    if _stat_identity(path) != fingerprint:
+        raise RuntimeError('Alignment worker input changed while hashing')
+    return digest
+
+
+def _stat_identity(path):
+    stat = path.stat()
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
 def _file_identity(path):
     path = path.resolve(strict=True)
-    stat = path.stat()
-    return [str(path), stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns,
-            stat.st_ctime_ns, hashlib.sha256(path.read_bytes()).hexdigest()]
+    identity = _stat_identity(path)
+    return [str(path), *identity, _content_digest(path, identity)]
 
 
 def _leases():

@@ -1,15 +1,10 @@
-"""Bound outstanding engine operations with inherited kernel-owned slots."""
+"""Track active engine operations with inherited kernel-owned leases."""
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
+from itertools import count
 
 from stemwise_engine.common import (ProcessLockBusyError, exclusive_process_lock,
                     process_lock_descriptor, validate_generated_path)
-
-MAX_MODEL_OPERATIONS = 3
-
-
-class ModelOperationBusyError(RuntimeError):
-    pass
 
 
 @contextmanager
@@ -19,17 +14,18 @@ def model_operation_slot(config):
         raise ValueError('Model operation requires an absolute projectDir')
     root = validate_generated_path(project, project / 'runtime/model-operations',
                                    workspace_root=project.parent.parent)
-    paths = [root / f'{index}.lock' for index in range(MAX_MODEL_OPERATIONS)]
-    for path in paths:
+    for path in root.glob('[0-9]*.lock'):
         if process_lock_descriptor(path) is not None:
             yield
             return
+    # Reset owns the allocation gate across its scan. Numerical workers separately
+    # arbitrate CPU/GPU capacity; a cached request needs only its live-work lease.
     with ExitStack() as lease:
-        for path in paths:
-            try:
-                lease.enter_context(exclusive_process_lock(path, wait_seconds=0))
-            except ProcessLockBusyError:
-                continue
-            yield
-            return
-        raise ModelOperationBusyError('model-operation-capacity-full')
+        with exclusive_process_lock(root / 'allocation.lock', wait_seconds=2):
+            for index in count():
+                try:
+                    lease.enter_context(exclusive_process_lock(root / f'{index}.lock', wait_seconds=0))
+                except ProcessLockBusyError:
+                    continue
+                break
+        yield

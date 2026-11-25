@@ -5,16 +5,12 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import math
-import os
 import re
-import tempfile
 import time
 import uuid
-import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, Literal, Mapping, Sequence
+from typing import Any, Literal, Mapping, Sequence
 
 from stemwise_engine.common import (
     atomic_write_bytes,
@@ -30,7 +26,7 @@ from stemwise_engine.ctc_worker import execution_deadline
 from stemwise_engine.provider_operations import optional_provider_stage, current_budget
 from stemwise_engine.alignment_phases import ordered_endpoint_candidate_path as _ordered_endpoint_candidate_path
 from stemwise_engine.contract import ContractError, MAX_JSON_BYTES
-from stemwise_engine.lyrics_normalize import physical_lines
+from stemwise_engine.lyrics_normalize import performance_lines as _physical_lines
 from stemwise_engine.lyrics_tokenization import (
     TOKENIZATION_VERSION,
     display_words,
@@ -451,10 +447,6 @@ def lexical_mapping_identity(mapping: Mapping[str, Any]) -> dict[str, Any]:
         "lexicalAuthoritySha256": core["lexicalAuthoritySha256"],
         "mappingSha256": _sha256_bytes(raw),
     }
-
-
-def _physical_lines(text: str) -> list[str]:
-    return [line if line.strip() else '' for line in physical_lines(text)]
 
 
 

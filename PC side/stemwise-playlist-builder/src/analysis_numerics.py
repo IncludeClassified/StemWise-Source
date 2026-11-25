@@ -78,6 +78,10 @@ def repair_components(previous, duration_ms):
             'analysis-full-window-budget-exceeded', 'analysis-streaming-memory-unavailable'}
         and (plan['streamingAdmitted'] if row['name'] in {'essentia', 'stemwise-waveform'}
              else plan['fullWindowAdmitted'])}
+    if (previous['structure']['status'] == 'unavailable' and plan['fullWindowAdmitted']
+            and previous['structure'].get('reason') in {'all-in-one-no-usable-sections',
+                                                        'All-In-One returned no usable sections.'}):
+        targets.add('all-in-one')
     if plan['streamingAdmitted'] and any(previous[name]['status'] == 'unavailable'
             and previous[name].get('reason') != 'tuning-insufficient-pitched-frames' for name in ('tuning', 'loudness')):
         essentia = next(row for row in previous['toolRuns'] if row['name'] == 'essentia')
@@ -119,6 +123,8 @@ def _repair_analysis_worker(audio_path, duration_ms, project_dir, timeout_second
         structure, diagnostic, tool = analyze_allin1(audio_path, duration_ms, project_dir=project_dir,
             timeout_seconds=max(1, int(deadline-time.monotonic())))
         if tool['status'] == 'complete':
+            if structure.get('reason') == 'all-in-one-no-usable-sections':
+                structure = {**structure, 'reason': 'all-in-one-no-sections-after-repair'}
             result['structure'], tools['all-in-one'], recovered = structure, tool, True
             if diagnostic:
                 result.setdefault('diagnostics', {})['allInOneRhythm'] = diagnostic
@@ -211,7 +217,9 @@ def _analysis_worker_many(inputs, project_dir, timeout_seconds, on_completed=Non
         return results
     components = [[None, None, None] for _ in inputs]
     results = [None] * len(inputs)
+    finalizing = set()
     publication = threading.Lock()
+    callbacks = threading.Lock()
     stopped = threading.Event()
     fatal = []
 
@@ -226,17 +234,23 @@ def _analysis_worker_many(inputs, project_dir, timeout_seconds, on_completed=Non
             if stopped.is_set():
                 return
             components[index][component] = result
-            if results[index] is not None or any(item is None for item in components[index]):
+            if index in finalizing or any(item is None for item in components[index]):
                 return
+            finalizing.add(index)
             gpu, cpu, structure = components[index]
-            if isinstance(gpu, Exception) or isinstance(cpu, Exception):
-                result = {'error': 'acoustic-stage-failed'}
-            else:
-                audio, duration = inputs[index]
-                result = _analysis_document(audio, duration, gpu, cpu, structure)
+        if isinstance(gpu, Exception) or isinstance(cpu, Exception):
+            result = {'error': 'acoustic-stage-failed'}
+        else:
+            audio, duration = inputs[index]
+            result = _analysis_document(audio, duration, gpu, cpu, structure)
+        with publication:
+            if stopped.is_set():
+                return
             results[index] = result
-            if on_completed is not None:
-                on_completed(index, result)
+        if on_completed is not None:
+            with callbacks:
+                if not stopped.is_set():
+                    on_completed(index, result)
 
     def stages(function, component):
         for index, (audio, duration) in enumerate(inputs):

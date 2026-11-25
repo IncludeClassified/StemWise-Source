@@ -26,7 +26,6 @@ from stemwise_engine.common import (
     atomic_write_json,
     durable_replace,
     compact_error,
-    diagnostic_code,
     read_bounded_json,
     raise_with_cleanup_failure,
     run_process_tree,
@@ -977,7 +976,7 @@ class YouTubeSource:
     def plan_delivery(self, workflow, video_id):
         from stemwise_engine.delivery_selection import catalogue
         from stemwise_engine.workflow_context import SourceDeliveryPlan
-        return SourceDeliveryPlan(f'youtube:{video_id}', catalogue(workflow), False)
+        return SourceDeliveryPlan(f'youtube:{video_id}', catalogue(workflow, public_ids=[video_id]), False)
 
     def result_binding(self, job):
         return None

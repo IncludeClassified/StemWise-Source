@@ -17,7 +17,7 @@ from stemwise_engine.common import WorkerRetirementError
 from stemwise_engine.acoustic_inputs import AcousticBudgetExceeded
 from stemwise_engine.provider_operations import ProviderCancelled, ProviderDeadline, ProviderStageDeadline
 from stemwise_engine.lyrics_alignment import canonical_language
-from stemwise_engine.lyrics_normalize import physical_lines
+from stemwise_engine.lyrics_normalize import performed_line_indices
 from stemwise_engine.lyric_content import require_workspace_content, require_timing_only
 from stemwise_engine.workflow_records import LyricsContentBlocker
 from stemwise_engine.alignment_phases import (EndpointAlignmentRequest, EndpointSelectionResult, EndpointServices,
@@ -111,7 +111,7 @@ def _component_phonemizer_languages(
     from stemwise_engine.spoken_targets import attached
     plan = attached(original)
     if plan is not None:
-        sources = [index for index, line in enumerate(physical_lines(original['text'])) if line.strip()]
+        sources = list(performed_line_indices(original['text']))
         languages = plan.language_lines(sources)
         if len(languages) != len(display_word_lines) or any(len(a) != len(b) for a, b in zip(languages, display_word_lines)):
             raise LyricsContentBlocker('pronunciation-support-unavailable')
@@ -352,6 +352,7 @@ def _build_bootstrap_segments(
     duration_ms: int,
     *family_lines: tuple[dict[str, Any] | None, ...],
     qualified_occurrences: list[dict[str, Any]] | None = None,
+    recording_entrances: tuple[tuple[int, int], ...] = (),
 ) -> list[dict[str, int]] | None:
     """Freeze every fence whose gap is safe in every endpoint family."""
 
@@ -384,6 +385,14 @@ def _build_bootstrap_segments(
                 (left["familyCandidates"][f], right["familyCandidates"][f]) for f in sorted(supporting)))
             if 1 in gap:
                 available.setdefault(boundary, gap[1])
+    # A vocal match can rule out a cut that excludes its own rendition. It
+    # cannot create a fence, provide a word boundary, or enter endpoint consensus.
+    if recording_entrances:
+        available = {
+            boundary: cut for boundary, cut in available.items()
+            if all((cut - onset if owner < boundary else onset - cut) >= WORKER_SEGMENT_BOUNDARY_GUARD_MS
+                   for owner, onset in recording_entrances)
+        }
     if not available:
         return None
 
@@ -1598,25 +1607,20 @@ def _require_recoverable_endpoint_failure(error: Exception) -> None:
         raise error
 
 
-def private_vowel_estimates(request, summary, get_pair):
-    """Search the selected English sequence after ordinary endpoint adjudication."""
+def vowel_observation_plan(mapping, display_lines, summary, duration):
     from stemwise_engine import endpoint_vowel_release as release
-    if (summary['resultClass']=='committed-words' or not release.english_track(request.text.original)
-            or request.text.lexical_mapping.get('_spokenTargets') is not None or not request.audio.expected_mix_sha256):
-        return {}
     rows = summary['occurrenceCandidates']
     guides = release.vocal_word_ends(rows)
     if not guides:
-        return {}
+        return []
     words = []
-    for owner, row, display in zip(request.text.lexical_mapping['performedOccurrences'], rows,
-                                   request.text.display_word_lines, strict=True):
+    for owner, row, display in zip(mapping['performedOccurrences'], rows, display_lines, strict=True):
         if (owner['occurrenceId']!=row['occurrenceId'] or owner['sourcePhysicalIndex']!=row['sourcePhysicalIndex']):
             raise ValueError('Different performed occurrence for vowel estimate')
         locked = row['publishDecision']['result']=='words'
         family = row.get('selectedPublisherFamily') if locked else WAV2VEC2_FAMILY
         values = row['familyCandidates'].get(family) or {}
-        if not values.get('words') or (not locked and values.get('route')!=WAV2VEC2_ROUTE):
+        if not values.get('words') or (not locked and values.get('route') not in WAV2VEC2_ROUTES_BY_AUDIO_VIEW.values()):
             words.extend([None]*len(display))
             continue
         for token,w,(_,_,text) in zip(owner['words'],values['words'],display,strict=True):
@@ -1624,8 +1628,17 @@ def private_vowel_estimates(request, summary, get_pair):
                 raise ValueError('Different word in vowel estimate')
             words.append({'wordId':w['occurrenceWordId'],'text':text,'startMs':w['startMs'],'endMs':w['endMs'],
                           'timing':'retained' if locked else 'estimated'})
+    return release.plan(words,guides,duration)
+
+
+def private_vowel_estimates(request, summary, get_pair):
+    """Search the selected English sequence after ordinary endpoint adjudication."""
+    from stemwise_engine import endpoint_vowel_release as release
+    if (summary['resultClass']=='committed-words' or not release.english_track(request.text.original)
+            or request.text.lexical_mapping.get('_spokenTargets') is not None or not request.audio.expected_mix_sha256):
+        return {}
     ctx = request.context
-    candidates = release.plan(words,guides,ctx.duration_ms)
+    candidates = vowel_observation_plan(request.text.lexical_mapping, request.text.display_word_lines, summary, ctx.duration_ms)
     project = Path(ctx.config['projectDir'])
     if not candidates or not (project.parent/'model-cache'/release.MODEL_DIR/'model.onnx').is_file():
         return {}
@@ -2318,6 +2331,7 @@ class EndpointAlignmentStage:
                     tuple(forced_endpoints["lines"]),
                     verifier_for_route,
                     qualified_occurrences=route_summary["occurrenceCandidates"],
+                    recording_entrances=self.request.evidence.recording_entrances,
                 )
                 if bootstrap_needed
                 else None

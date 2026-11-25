@@ -119,6 +119,7 @@ def _retire_idle_workers() -> None:
 ARABIC_LANGUAGE_SUBTAGS = frozenset(
     {
         "ar",
+        "ara",
         "aao",
         "abh",
         "abv",
@@ -1231,10 +1232,27 @@ def extract_youtube_video_id(value: str) -> str:
 
 
 def canonical_lyrics_language(value: str) -> str:
-    """Collapse every supported Arabic variety tag to the app's ``ar`` tag."""
+    """Use the app's Arabic tag and the standard English primary subtag."""
 
-    primary = value.split("-", 1)[0].lower()
+    primary, separator, suffix = value.partition("-")
+    primary = primary.lower()
+    if primary == "eng":
+        return "en" + separator + suffix
     return "ar" if primary in ARABIC_LANGUAGE_SUBTAGS else value
+
+
+def companion_language_roles(language, components=()):
+    """Return (translation, IPA). None means the material languages still need review."""
+    primary = canonical_lyrics_language(str(language or '').lower()).split('-', 1)[0]
+    unknown = {'', 'und', 'mis', 'zxx'}
+    if primary in unknown:
+        return None, None
+    if primary != 'mul':
+        return primary != 'en', primary not in {'ar','en'}
+    owners = {canonical_lyrics_language(str(tag).lower()).split('-', 1)[0] for tag in components or ()}
+    if len(owners) < 2 or owners & (unknown | {'mul'}):
+        return True, None
+    return True, bool(owners - {'ar','en'})
 
 
 def compact_error(error: BaseException, limit: int = 500) -> str:

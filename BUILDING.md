@@ -15,6 +15,8 @@ python -m pip install --no-deps --editable 'PC side'
 python 'Test suite/pc/run_tests.py' --directory 'Test suite/pc/unit' test_ipa_validation
 ```
 
+4. [Focused lyric-engine regressions](public-bench/ENGINE-REGRESSIONS.md): run actual engine paths using synthetic inputs without downloading songs or model weights.
+
 The third check exercises an existing IPA validation module; passing it does **not** imply multilingual alignment works end to end.
 
 The [public smoke workflow](.github/workflows/public-source-checks.yml) attempts these checks in GitHub Actions. Check the **actual workflow run status** before citing a result.

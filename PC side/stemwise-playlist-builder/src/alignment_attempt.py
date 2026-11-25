@@ -44,6 +44,7 @@ class SongAttemptLedger:
         from stemwise_engine.common import atomic_write_bytes, json_bytes
         history = self.record.setdefault('generations', [])
         del history[:-8]
+        self.record['lastObservedAt'] = self.clock()
         raw = json_bytes(self.record)
         while len(raw) > self.MAX_BYTES and history:
             del history[0]
@@ -56,11 +57,12 @@ class SongAttemptLedger:
         from stemwise_engine.common import read_bounded_json
         self.record = read_bounded_json(self.path, max_bytes=self.MAX_BYTES, root=self.path.parent)
 
-    def elapsed(self, kind='active'):
+    def elapsed(self, kind='active', *, at=None):
+        now = self.clock() if at is None else at
         started = self.record.get(kind+'Since')
         waiting = self.record.get('waitSince')
-        excluded = max(0., self.clock()-waiting) if waiting is not None else 0.
-        return self.record[kind+'Seconds'] + (max(0., self.clock()-started-excluded) if started is not None else 0.)
+        excluded = max(0., now-waiting) if waiting is not None else 0.
+        return self.record[kind+'Seconds'] + (max(0., now-started-excluded) if started is not None else 0.)
 
     @property
     def blocking_disposition(self):
@@ -87,8 +89,16 @@ class SongAttemptLedger:
         previous['retiredAt'] = self.clock()
         previous['status'] = 'abandoned' if interrupted else 'complete'
         self.record.setdefault('generations', []).append(previous)
+        since = self.record.get('activeSince')
+        last = self.record.get('lastObservedAt', since)
+        if since is not None:
+            last = min(previous['retiredAt'], max(since, last))
+            self.record['unobservedSeconds'] = (self.record.get('unobservedSeconds', 0.)
+                                                + max(0., previous['retiredAt'] - last))
+            if self.record.get('waitSince') is not None:
+                self.record['waitSeconds'] += max(0., last - self.record['waitSince'])
         self.record.update(generation=previous['generation']+1, materialSha256=identity,
-            activeSeconds=self.elapsed(), recoverySeconds=self.elapsed('recovery'),
+            activeSeconds=self.elapsed(at=last), recoverySeconds=self.elapsed('recovery', at=last),
             activeSince=None, recoverySince=None, waitSince=None, primaryActions={}, actions={})
         self.record.pop('disposition', None)
         self.save()
@@ -348,6 +358,66 @@ class RecognitionAdmissionRequest:
     spoken_plan: Any = None
 
 
+def _reviewed_timing_cache(path, root, audio_sha):
+    from stemwise_engine.common import read_bounded_json
+    from stemwise_engine.contract import MAX_JSON_BYTES
+    from stemwise_engine.lyric_content import _recognized
+    from stemwise_engine.workflow_records import ContentEvidenceUnavailable
+    try:
+        cache = read_bounded_json(path, max_bytes=MAX_JSON_BYTES, root=root)
+        return _recognized(cache, audio_sha, candidate_only=True)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        raise ContentEvidenceUnavailable('content-evidence-invalid') from error
+
+
+def _has_word_times(words):
+    import math
+    if not words or isinstance(words, str):
+        return False
+    previous_end = 0
+    for word in words:
+        start, end = (word.get('start'), word.get('end')) if isinstance(word, dict) else (word.start, word.end)
+        if (type(start) not in (int, float) or type(end) not in (int, float)
+                or not previous_end <= start < end or not math.isfinite(end)):
+            return False
+        previous_end = end
+    return True
+
+
+def timing_witness_eligible(admission, original, sources, transcript, path, root, *, check_candidate=False):
+    """The caller has replayed the content admission. Test each timing witness separately."""
+    from stemwise_engine import lyric_content
+    if check_candidate and admission.adjudication is None and path is not None:
+        admission = lyric_content.confirm_content(original, sources, admission.canonical_plain_sha256,
+            admission.audio_sha256, evidence_path=path, evidence_root=root)
+    if admission.adjudication is None:
+        return lyric_content.timing_observation_eligible(admission, original, sources, transcript,
+            evidence_path=path, evidence_root=root)
+    if not _has_word_times(transcript):
+        return False
+    if admission.spoken_targets is not None:
+        from stemwise_engine import spoken_targets
+        plan = spoken_targets.load(root.parents[2]/'jobs'/root.name, root.name, original, sources, admission.audio_sha256)
+        if plan is None or plan.reference != admission.spoken_targets:
+            raise lyric_content.LyricsContentBlocker('pronunciation-support-unavailable')
+        original = {**original, '_spokenTargets': plan}
+    observations = [transcript]
+    if path is not None:
+        words = _reviewed_timing_cache(path, root, admission.audio_sha256)
+        if not _has_word_times(words):
+            return False
+        observations.append(words)
+    for observation in observations:
+        try:
+            lyric_content.require_exact_sequence(original, sources, observation, admission.canonical_plain_sha256,
+                admission.audio_sha256)
+        except lyric_content.LyricsContentBlocker as error:
+            if error.reasons != ('content-sequence-uncertain',):
+                raise
+            return False
+    return True
+
+
 @dataclass
 class RecognitionAdmission:
     request: RecognitionAdmissionRequest
@@ -368,14 +438,28 @@ class RecognitionAdmission:
         import json
         from stemwise_engine.common import read_bounded_regular_bytes
         from stemwise_engine.contract import MAX_JSON_BYTES
-        from stemwise_engine.lyric_content import confirm_content
-        from stemwise_engine.workflow_records import LyricsContentBlocker
+        from stemwise_engine import lyric_content
+        from stemwise_engine.workflow_records import ContentEvidenceUnavailable, LyricsContentBlocker
         request, workspace = self.request, self.workspace
         try:
-            admission = confirm_content(json.loads(request.original_json), request.sources,
-                request.canonical_sha256, request.audio_sha256, evidence_path=path,
-                evidence_root=workspace.job_dir(request.video_id),
-                adjudication_job_dir=workspace.root.parent/'jobs'/request.video_id)
+            original = json.loads(request.original_json)
+            folder = workspace.job_dir(request.video_id)
+            job_dir = workspace.root.parent/'jobs'/request.video_id
+            admission = None
+            review_path = job_dir/lyric_content.ADJUDICATION_FILE
+            if review_path.exists() or review_path.is_symlink():
+                try:
+                    admission = lyric_content.reviewed_workspace_admission(workspace, request.video_id,
+                        original, request.sources, request.canonical_sha256, request.audio_sha256)
+                except ContentEvidenceUnavailable as error:
+                    # Regenerating a different recognizer cannot restore a missing reviewed primary.
+                    raise LyricsContentBlocker('recording-adjudication-stale') from error
+            if admission is not None and admission.adjudication is not None:
+                if path.resolve() != (folder/admission.evidence_path).resolve():
+                    _reviewed_timing_cache(path, folder, request.audio_sha256)
+            else:
+                admission = lyric_content.confirm_content(original, request.sources, request.canonical_sha256,
+                    request.audio_sha256, evidence_path=path, evidence_root=folder, adjudication_job_dir=job_dir)
         except LyricsContentBlocker as error:
             if error.reasons == ('content-sequence-uncertain',):
                 raw = read_bounded_regular_bytes(path, max_bytes=MAX_JSON_BYTES,
@@ -403,9 +487,8 @@ class RecognitionAdmission:
             original['_spokenTargets'] = request.spoken_plan
         admission = lyric_content.require_workspace_content(workspace, request.video_id, request.sources,
             original=original, audio_sha=request.audio_sha256)
-        if not lyric_content.timing_observation_eligible(admission, original, request.sources, transcript,
-                evidence_path=evidence_path, evidence_root=workspace.job_dir(request.video_id),
-                adjudication_job_dir=workspace.root.parent/'jobs'/request.video_id):
+        if not timing_witness_eligible(admission, original, request.sources, transcript,
+                evidence_path, workspace.job_dir(request.video_id)):
             return self._excluded_observation(original, transcript)
         result = align_known_structure(request.spoken_plan.matching_text() if request.spoken_plan else original['text'],
                                        request.sources, transcript, duration_ms)
@@ -427,14 +510,8 @@ class RecognitionAdmission:
             original=original, audio_sha=request.audio_sha256)
         eligible = []
         for transcript, path in zip(transcripts, evidence_paths):
-            if path is None:
-                admission = current
-            else:
-                admission = lyric_content.confirm_content(original, request.sources,
-                    request.canonical_sha256, request.audio_sha256, evidence_path=path,
-                    evidence_root=workspace.job_dir(request.video_id))
-            if not lyric_content.timing_observation_eligible(admission, original, request.sources, transcript,
-                    evidence_path=path, evidence_root=workspace.job_dir(request.video_id)):
+            if not timing_witness_eligible(current, original, request.sources, transcript, path,
+                    workspace.job_dir(request.video_id), check_candidate=True):
                 continue
             eligible.append(transcript)
         admission = lyric_content.require_workspace_content(workspace, request.video_id, request.sources,
@@ -466,13 +543,16 @@ class RecognitionAdmission:
         admission = lyric_content.require_workspace_content(workspace, request.video_id, request.sources,
             original=original, audio_sha=request.audio_sha256)
         root = workspace.job_dir(request.video_id)
-        if not lyric_content.is_source_recording_admission(admission, root):
+        if not (admission.adjudication or lyric_content.is_source_recording_admission(admission, root)):
             return None
         raw = read_bounded_regular_bytes(path, max_bytes=MAX_JSON_BYTES, root=root)
-        words = lyric_content._recognized(parse_strict_json_bytes(raw), request.audio_sha256)
-        if isinstance(words, str):
+        words = lyric_content._recognized(parse_strict_json_bytes(raw), request.audio_sha256, candidate_only=True)
+        if not isinstance(words, list):
             return None
-        anchors = lyric_content.exact_line_anchors(original, request.sources, words)
+        untimed = {index for index, word in enumerate(words) if word['start'] == word['end']}
+        if not _has_word_times([word for index, word in enumerate(words) if index not in untimed]):
+            return None
+        anchors = lyric_content.exact_line_anchors(original, request.sources, words, untimed_indices=untimed)
         if anchors is None:
             return None
         starts = []

@@ -2,27 +2,22 @@
 from __future__ import annotations
 from stemwise_engine.workflow_context import report_control_path
 import stemwise_engine.editorial_review as editorial
-from stemwise_engine.common import canonical_lyrics_language
+from stemwise_engine.common import companion_language_roles
 import stemwise_engine.workflow_records as review_contract
-import uuid
 import stemwise_engine.workflow_diagnostics as workflow_diagnostics
 import copy
 import hashlib
 import json
 import re
-import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
-from typing import Any, Callable, Protocol, TYPE_CHECKING
-if TYPE_CHECKING:
-    from stemwise_engine.pipeline import StemwisePipeline
+from typing import Any, Callable
 from stemwise_engine.common import (GENERATED_MANIFEST_NAME, create_manifested_directory, atomic_write_bytes, atomic_write_json,
     json_bytes, parse_strict_json_bytes, read_bounded_json, read_bounded_regular_bytes,
     sha256_file, utc_now, validate_generated_path, validate_video_id)
 from stemwise_engine.contract import MAX_JSON_BYTES
-from stemwise_engine.youtube import canonical_url
 from stemwise_engine.workflow_records import FutureSongError, EndpointReviewSelectionError, EndpointRefusalCode, LyricsContentBlocker
 
 
@@ -258,8 +253,8 @@ class EndpointReviewService:
         canonical = workspace.current_backup_path(video_id)
         if sha256_file(canonical) != declaration['canonicalPlainSha256']:
             raise FutureSongError('endpoint-review canonical lyrics are stale')
-        from stemwise_engine.endpoint_ctc_evidence import require_endpoint_content, needs_timing_recovery
-        admission = require_endpoint_content(declaration, mapping, endpoint_evidence,
+        from stemwise_engine.endpoint_ctc_evidence import require_endpoint_content
+        require_endpoint_content(declaration, mapping, endpoint_evidence,
             read_bounded_json(canonical, max_bytes=MAX_JSON_BYTES, root=canonical.parent),
             workflow.alignment_state_path(video_id).parent)
         expected_occurrences = workflow.endpoint_review_occurrences(
@@ -890,8 +885,8 @@ def finalized_delivery_matches(workflow, job, child, current_child_sha, schema_s
     if (not physical.is_file() or sha256_file(physical) != package_sha
             or delivery.get('path') != workflow.windows_path(destination)
             or delivery.get('bytes') != physical.stat().st_size
-            or not isinstance(delivery.get('deliveredAt'), str)
-            or delivery.get('readyToImport') is not True):
+            or not isinstance(delivery.get('preparedAt' if job['state'] == 'DELIVERY_PUBLICATION_PENDING' else 'deliveredAt'), str)
+            or delivery.get('readyToImport') is not (job['state'] != 'DELIVERY_PUBLICATION_PENDING')):
         return False
     return workflow.report_store.immutable_run_matches(job['videoId'], run_id=delivery.get('runId'),
         run_sha256=delivery.get('runSha256'), operation='package-finalization',
@@ -920,7 +915,7 @@ class ValidatedSnapshotService:
         allow_finalization_pointer = request.allow_finalization_pointer
         allow_pending_delivery_cleanup = request.allow_pending_delivery_cleanup
         delivery_source = request.delivery_source
-        if 'artworkRepairPending' in job or job.get("state") not in {"VALIDATED", *self.policy.terminal_states}:
+        if 'artworkRepairPending' in job or job.get("state") not in {"VALIDATED", "DELIVERY_PUBLICATION_PENDING", *self.policy.terminal_states}:
             return False
         if job.get("policyVersion") != self.policy.workflow_version:
             return False
@@ -1238,7 +1233,7 @@ class ValidatedSnapshotService:
                     return False
 
             if require_delivery:
-                if job.get("state") not in self.policy.terminal_states:
+                if job.get("state") not in {"DELIVERY_PUBLICATION_PENDING", *self.policy.terminal_states}:
                     return False
                 if not finalized_delivery_matches(workflow, job, child, current_child_sha,
                         schema_sha256, delivery_source=delivery_source):
@@ -1256,23 +1251,11 @@ class ValidatedSnapshotService:
             return False
 
 
-def companion_requirements(manifest: dict[str, Any]) -> tuple[bool, bool]:
-    language = canonical_lyrics_language(str(manifest.get("originalLanguage") or ""))
-    primary = language.split("-", 1)[0].lower()
-    components = {
-        canonical_lyrics_language(str(value)).split("-", 1)[0].lower()
-        for value in manifest.get("componentLanguages", [])
-        if isinstance(value, str)
-    }
-    needs_translation = primary != "en"
-    if primary == "mul":
-        needs_ipa = bool(components - {"ar", "en"})
-    else:
-        needs_ipa = primary not in {"ar", "en", "mul"}
-    return needs_translation, needs_ipa
+def companion_requirements(manifest: dict[str, Any]) -> tuple[bool | None, bool | None]:
+    return companion_language_roles(manifest.get('originalLanguage'), manifest.get('componentLanguages'))
 
 
-def requirements_from_draft(draft: Path) -> tuple[bool, bool] | None:
+def requirements_from_draft(draft: Path) -> tuple[bool | None, bool | None] | None:
     manifest_path = draft / "lyrics.meta.json"
     if not manifest_path.exists() and not manifest_path.is_symlink():
         return None

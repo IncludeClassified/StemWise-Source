@@ -30,9 +30,7 @@ def _stable_private_id(value: Any) -> Any:
     return value
 
 
-def _safe_report_value(value: Any, *, depth: int = 0) -> Any:
-    """Copy bounded text-free numeric/identity data into a private report."""
-
+def _project_report_value(value, *, depth=0, numeric_only=False):
     if depth > 8:
         return None
     if type(value) in {bool, int}:
@@ -40,52 +38,32 @@ def _safe_report_value(value: Any, *, depth: int = 0) -> Any:
     if type(value) is float:
         return value if math.isfinite(value) else None
     if isinstance(value, str):
-        return value if re.fullmatch(r"[A-Za-z0-9_.:+-]{1,160}", value) else None
+        return value if not numeric_only and re.fullmatch(r"[A-Za-z0-9_.:+-]{1,160}", value) else None
+    if not isinstance(value, (list, dict)):
+        return None
     if isinstance(value, list):
-        result = [
-            _safe_report_value(item, depth=depth + 1)
-            for item in value[:1000]
-        ]
-        return [item for item in result if item is not None]
-    if isinstance(value, dict):
-        result = {}
-        for key, item in list(value.items())[:1000]:
-            if not isinstance(key, str) or not re.fullmatch(
-                r"[A-Za-z0-9_.:+-]{1,120}", key
-            ):
-                continue
-            safe = _safe_report_value(item, depth=depth + 1)
-            if safe is not None and safe not in ({}, []):
-                result[key] = safe
-        return result
-    return None
+        items = [_project_report_value(v, depth=depth + 1, numeric_only=numeric_only) for v in value[:1000]]
+        shown = [item for item in items if item is not None]
+    else:
+        from itertools import islice
+        shown = {}
+        for key, item in islice(value.items(), 1000):
+            if isinstance(key, str) and re.fullmatch(r"[A-Za-z0-9_.:+-]{1,120}", key):
+                safe = _project_report_value(item, depth=depth + 1, numeric_only=numeric_only)
+                if safe is not None and safe not in ({}, []):
+                    shown[key] = safe
+    if len(value) > 1000:
+        return {'items': shown, 'totalCount': len(value), 'shownCount': len(shown),
+                'omittedCount': len(value) - len(shown)}
+    return shown
+
+
+def _safe_report_value(value: Any, *, depth: int = 0) -> Any:
+    return _project_report_value(value, depth=depth)
 
 
 def _numeric_report_value(value: Any, *, depth: int = 0) -> Any:
-    if depth > 8:
-        return None
-    if type(value) in {bool, int}:
-        return value
-    if type(value) is float:
-        return value if math.isfinite(value) else None
-    if isinstance(value, list):
-        result = [
-            _numeric_report_value(item, depth=depth + 1)
-            for item in value[:1000]
-        ]
-        return [item for item in result if item is not None]
-    if isinstance(value, dict):
-        result = {}
-        for key, item in list(value.items())[:1000]:
-            if not isinstance(key, str) or not re.fullmatch(
-                r"[A-Za-z0-9_.:+-]{1,120}", key
-            ):
-                continue
-            safe = _numeric_report_value(item, depth=depth + 1)
-            if safe is not None and safe not in ({}, []):
-                result[key] = safe
-        return result
-    return None
+    return _project_report_value(value, depth=depth, numeric_only=True)
 
 
 def _public_runtime_identity(value: Any) -> dict[str, Any]:

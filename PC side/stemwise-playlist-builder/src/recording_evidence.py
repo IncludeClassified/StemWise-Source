@@ -13,10 +13,11 @@ from stemwise_engine.common import (load_config, read_bounded_json, read_bounded
     parse_strict_json_bytes, validate_video_id, validate_generated_path)
 from stemwise_engine.lyrics_align_pc import _load_or_run_qwen3_structure_transcript, QWEN3_ASR_SOURCE_ROUTES
 from stemwise_engine.alignment_audio import file_identity, identity_transform
+from stemwise_engine.alignment_publication import qwen_mix_cache_name
 from stemwise_engine.lyrics_alignment import (AlignmentWorkspace, score_structure_witness,
-                              canonical_language)
+                              canonical_language, transcription_languages)
 from stemwise_engine.lyrics_intake import read_recording_draft
-from stemwise_engine.lyrics_normalize import physical_lines
+from stemwise_engine.lyrics_normalize import performed_line_indices
 from stemwise_engine.lyric_content import (require_exact_sequence, require_recording_adjudication,
                            validate_recording_adjudication_record, recording_review_input_reference,
                            ADJUDICATION_FILE, _recognized, _recognized_text)
@@ -140,7 +141,7 @@ def adjudicate_retained_recording(config, root, video_id, audio_identity):
         'language': metadata.get('originalLanguage') or 'und', 'script': metadata.get('originalScript'),
         'componentLanguages': metadata.get('componentLanguages', [])}
     from stemwise_engine.spoken_targets import load
-    indices = [i for i, line in enumerate(physical_lines(draft)) if line.strip()]
+    indices = list(performed_line_indices(draft))
     spoken = load(job_dir, video_id, original, indices, audio_identity['sha256'])
     if spoken is not None:
         original = {**original, '_spokenTargets': spoken}
@@ -599,6 +600,9 @@ def recover_content(config, root, video_id, audio, expected_sha):
     primary = workspace.job_dir(video_id)/inputs['recognition']['path']
     scope = job.get('lyricContentLimitation', {}).get('scope',
         job.get('recordingRecoveryCandidates', {}).get('scope', {}))
+    _recover_local_discrepancies(config, workspace, video_id, audio, identity, original,
+        list(performed_line_indices(draft)),
+        draft_sha, metadata_sha, primary, scope)
     packet = collect_disagreement_candidate(config, workspace, video_id, audio, identity, original,
         draft_sha, metadata_sha, primary, scope, diagnostic=True)
     if packet is None or not packet['candidates']:
@@ -607,6 +611,36 @@ def recover_content(config, root, video_id, audio, expected_sha):
             or validate_recording_review_inputs(job_dir, workspace.job_dir(video_id), inputs) != inputs):
         raise LyricsContentBlocker('recording-adjudication-input-changed')
     return {'status': 'content-recovery-complete', 'recordingInputs': inputs, 'recoveryCandidates': packet}
+
+
+def _recover_local_discrepancies(config, workspace, video_id, audio, identity, original,
+                                 indices, draft_sha, metadata_sha, contrary, scope):
+    from stemwise_engine import local_recovery_evidence
+    from stemwise_engine.alignment_attempt import SongAttemptBlocked
+    from stemwise_engine.common import WorkerRetirementError
+    from stemwise_engine.provider_operations import raise_if_operation_stopped
+    from stemwise_engine.private_diagnostics import retain_error
+
+    evidence = workspace.job_dir(video_id)
+    request = evidence/local_recovery_evidence.INPUT
+    if not request.exists() and not request.is_symlink():
+        return
+    try:
+        local_recovery_evidence.run(config, workspace, video_id, audio, identity, original,
+                                    indices, draft_sha, metadata_sha, contrary, scope)
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+        raise_if_operation_stopped(error)
+        if isinstance(error, (WorkerRetirementError, SongAttemptBlocked, LyricsContentBlocker)):
+            raise
+        try:
+            retain_error(evidence/'local-lyric-recovery.failure.private.txt', error,
+                context={'stage': 'local-lyric-recovery', 'audioSha256': identity['sha256'],
+                         'draftSha256': draft_sha, 'metadataSha256': metadata_sha})
+        except (OSError, ValueError, RuntimeError) as retention_error:
+            raise_if_operation_stopped(retention_error)
+            if isinstance(retention_error, (WorkerRetirementError, SongAttemptBlocked)):
+                raise
+            print('optional-local-lyric-recovery-diagnostics-unavailable', file=sys.stderr)
 
 
 def compare(config: dict, root: Path, video_id: str, audio: Path, expected_sha: str) -> dict:
@@ -624,7 +658,7 @@ def compare(config: dict, root: Path, video_id: str, audio: Path, expected_sha: 
         raise ValueError("recording evidence audio changed")
     identity["canonicalTimeTransform"] = identity_transform(identity["stream"])
     from stemwise_engine.spoken_targets import load as load_spoken_targets
-    indices = [i for i, line in enumerate(physical_lines(draft)) if line.strip()]
+    indices = list(performed_line_indices(draft))
     spoken = load_spoken_targets(job_dir, video_id, original, indices, expected_sha)
     if spoken is not None:
         original = {**original, '_spokenTargets': spoken}
@@ -663,16 +697,21 @@ def compare(config: dict, root: Path, video_id: str, audio: Path, expected_sha: 
     adjudication = _adjudication(root, video_id)
     if adjudication is not None:
         request['cache_only'] = True  # A review of retained ASR cannot start replacement inference.
+        if language is None:
+            reviewed_path = adjudication[0]['recognition']['path']
+            request['language'] = next((hint for hint in transcription_languages(original)
+                if qwen_mix_cache_name(hint) == reviewed_path), None)
     try:
         transcript, provenance, reused = transcribe(**request)
     except (OSError, ValueError) as error:
         if adjudication is not None:
             raise ContentEvidenceUnavailable() from error
         raise
-    indices = [i for i, line in enumerate(physical_lines(draft)) if line.strip()]
+    indices = list(performed_line_indices(draft))
     # Pre-editorial drafts do not yet have an immutable canonical JSON binding.
     resolution = None
-    path = transcript_path('mix', provenance.get('language', language))
+    primary_path = transcript_path('mix', provenance.get('language', request['language']))
+    path = primary_path
     source_decision = (_selected_reference_decision(root, video_id, original, indices, identity)
         if adjudication is None else None)
     if adjudication is None:
@@ -693,6 +732,8 @@ def compare(config: dict, root: Path, video_id: str, audio: Path, expected_sha: 
                     require_exact_sequence(original, indices, words, None, None)
         except LyricsContentBlocker as error:
             if path.is_file():
+                _recover_local_discrepancies(config, workspace, video_id, audio, identity, original,
+                    indices, draft_sha, metadata_sha, path, getattr(error, 'discrepancy_scope', {}))
                 try:
                     recovery = collect_disagreement_candidate(config, workspace, video_id, audio, identity,
                         original, draft_sha, metadata_sha, path, getattr(error, 'discrepancy_scope', {}))
@@ -763,7 +804,7 @@ def compare(config: dict, root: Path, video_id: str, audio: Path, expected_sha: 
         resolution['reviewSha256'] = review_sha
     result = {
         "reusedTranscript": reused,
-        "privateTranscript": str(transcript_path('mix', provenance.get("language", language))),
+        "privateTranscript": str(primary_path),
         "additionalEvidence": [],
     }
     if source_decision is not None:

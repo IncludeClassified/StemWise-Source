@@ -25,6 +25,28 @@ from stemwise_engine.common import (heavy_worker_stage, atomic_write_bytes, json
 
 METHOD = "local-repeat-phonetic-v1"
 PREDICTION_VERSION = 4
+TEMPLATE_POLICY_VERSION = 1
+
+
+class NoRepeatMatch(ValueError):
+    """Valid inputs without an unambiguous phonetic correspondence."""
+
+
+def _extent(families):
+    if not families:
+        return None
+    return min(c["startMs"] for c in families.values()), max(c["endMs"] for c in families.values())
+
+
+def _relative_clock(reference, target):
+    """Use the range across the families, so disagreement cannot manufacture two sites."""
+    ref, dest = _extent(reference), _extent(target)
+    if ref and dest and ref[0] < ref[1] and dest[0] < dest[1]:
+        if ref[1] <= dest[0]:
+            return 1
+        if dest[1] <= ref[0]:
+            return -1
+    return 0
 
 
 def _reference_candidates(reference: dict) -> dict:
@@ -42,7 +64,7 @@ def _reference_candidates(reference: dict) -> dict:
     return families if reason is None else {}
 
 
-def reference_plan(occurrence: dict, mapping: dict, evidence: dict, lyrics: dict) -> dict | None:
+def reference_plan(occurrence: dict, mapping: dict, evidence: dict, lyrics: dict, *, spoken=None) -> dict | None:
     from stemwise_engine.lyrics_alignment import _physical_lines, _plain_original
     from stemwise_engine.lyrics_tokenization import display_words
     physical = _physical_lines(_plain_original(lyrics)["text"])
@@ -57,9 +79,12 @@ def reference_plan(occurrence: dict, mapping: dict, evidence: dict, lyrics: dict
     for i, item in enumerate(candidates):
         if i == index or item["publishDecision"]["result"] != "words" or words(i) != target_words:
             continue
+        if spoken and spoken.words[mapped[i]["sourcePhysicalIndex"]] != spoken.words[mapped[index]["sourcePhysicalIndex"]]:
+            continue
         families = _reference_candidates(item)
-        publisher = item["selectedPublisherFamily"]
-        if publisher not in families:
+        publisher = item.get("selectedPublisherFamily")
+        if (publisher not in families or
+                _relative_clock(families, candidates[index].get("familyCandidates")) != (1 if i < index else -1)):
             continue
         selected = families[publisher]
         if (len(families) >= 2 and len(selected.get("words", [])) == len(target_words)
@@ -93,11 +118,6 @@ def transfer(logp_a: np.ndarray, times_a: np.ndarray, logp_b: np.ndarray,
         feature = np.maximum(logp[:, np.arange(logp.shape[1]) != blank], -12)
         feature = feature - feature.mean(axis=1, keepdims=True)
         usable = np.linalg.norm(feature, axis=1) >= 1e-8
-        if np.count_nonzero(usable) < 2:
-            raise ValueError("repeat audio contains no discriminating phone evidence")
-        directions = feature[usable] / np.linalg.norm(feature[usable], axis=1, keepdims=True)
-        if np.allclose(directions, directions[0], rtol=0, atol=1e-12):
-            raise ValueError("repeat audio contains no discriminating temporal phone evidence")
         features.append(feature)
         informative.append(usable)
     low, high = reference_bounds if reference_bounds is not None else (times_a[0], times_a[-1])
@@ -105,6 +125,14 @@ def transfer(logp_a: np.ndarray, times_a: np.ndarray, logp_b: np.ndarray,
         raise ValueError('repeat physical bounds do not contain the acoustic frames')
     if features[0].shape[1] != features[1].shape[1] or any(t < low or t > high for t in stamps):
         raise ValueError("repeat timestamps or vocabulary differ")
+    for feature, usable in zip(features, informative):
+        if np.count_nonzero(usable) < 2:
+            raise NoRepeatMatch("repeat audio contains no discriminating phone evidence")
+        directions = feature[usable] / np.linalg.norm(feature[usable], axis=1, keepdims=True)
+        if np.allclose(directions, directions[0], rtol=0, atol=1e-12):
+            raise NoRepeatMatch("repeat audio contains no discriminating temporal phone evidence")
+    if len(times_a) > 2 * len(times_b) - 1:
+        raise NoRepeatMatch("repeat DTW has no complete correspondence")
     cost = cdist(*features, metric="cosine")
     # Blank-only frames have undefined cosine distance. Keep their time positions
     # at neutral cost; matching two silent frames must not count as phone support.
@@ -131,7 +159,7 @@ def transfer(logp_a: np.ndarray, times_a: np.ndarray, logp_b: np.ndarray,
     # Roundoff only; this is not an acoustic or near-optimal score tolerance.
     tie_error = 64*np.finfo(np.float64).eps*(len(times_a)+len(times_b))*max(1., abs(optimum))
     if not np.isfinite(optimum):
-        raise ValueError("repeat DTW has no complete correspondence")
+        raise NoRepeatMatch("repeat DTW has no complete correspondence")
     result = []
     for timestamp in stamps:
         index = int(np.argmin(abs(times_a-timestamp)))
@@ -144,7 +172,7 @@ def transfer(logp_a: np.ndarray, times_a: np.ndarray, logp_b: np.ndarray,
             columns = np.flatnonzero(abs(crossing-optimum) <= tie_error)
             possible.extend(((times_b[columns]+times_b[columns+1])/2).tolist())
         if not possible or min(possible) != max(possible):
-            raise ValueError("repeat DTW boundary correspondence is ambiguous")
+            raise NoRepeatMatch("repeat DTW boundary correspondence is ambiguous")
         distance = abs(path[:, 0]-index)
         selected = float(np.median(times_b[path[distance == distance.min(), 1]]))
         if selected != possible[0]:
@@ -167,12 +195,20 @@ def assess(records: list[dict], plan: dict, base: dict, *, prediction_version: i
     count = len(reference["familyCandidates"])
     word_count = len(reference["familyCandidates"][reference["selectedPublisherFamily"]]["words"])
     candidates = target["familyCandidates"]
+    direction = _relative_clock(reference_families, candidates)
+    source_index, target_index = reference.get('performedIndex'), target.get('performedIndex')
+    if (not direction or (source_index is not None and target_index is not None
+                          and (target_index-source_index)*direction <= 0)):
+        return result
+    source_start, source_end = _extent(reference_families)
     boundaries = ("startMs", "endMs")
     predictions = {b: [] for b in boundaries}
     prefix = count * len(boundaries)
     for record in records:
         mapped = record["mappedMs"]
         if len(mapped) != prefix+2*word_count or not np.isfinite(mapped).all():
+            return result
+        if (direction == 1 and min(mapped) < source_end) or (direction == -1 and max(mapped) > source_start):
             return result
         for i, boundary in enumerate(boundaries):
             predictions[boundary].extend(mapped[i*count:(i+1)*count])
@@ -310,6 +346,8 @@ def infer(audio: Path, model_path: str, plan: dict, *, prediction_version: int =
                     logp = _bounded_emissions(wave, extractor, model, torch.device("cuda"), torch.float32, stride).numpy()
                 times = crop['originMs']+begin/16+frame_origin+np.arange(len(logp))*20
                 selected = (times >= crop['lowMs']) & (times <= crop['highMs'])
+                if np.count_nonzero(selected) < 2:
+                    return []
                 emissions.append((logp[selected], times[selected]))
             bounds = (0 if data[0][1]['atStart'] else emissions[0][1][0],
                       physical_end if data[0][1]['atEnd'] else emissions[0][1][-1])
@@ -362,8 +400,11 @@ def infer_many(audio: Path, contexts: list[dict], timeout_seconds: int, *, predi
                     except (OSError, ValueError, KeyError, TypeError):
                         pass
                 signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
-                results[context['index']] = infer(audio, context['modelPath'], context['plan'],
-                    prediction_version=prediction_version, model_cache=cache, model_identity=context['model'])
+                try:
+                    results[context['index']] = infer(audio, context['modelPath'], context['plan'],
+                        prediction_version=prediction_version, model_cache=cache, model_identity=context['model'])
+                except NoRepeatMatch:
+                    results[context['index']] = []
                 signal.setitimer(signal.ITIMER_REAL, 0)
                 if checkpoint_identity is not None:
                     if sha256_file(audio) != checkpoint_identity['audioSha256']:
@@ -389,8 +430,7 @@ def _summary(binding: dict, manifest: dict) -> dict:
             "occurrences": entries}
 
 
-def verify_stored_packet(attempt: Path, binding: dict) -> dict:
-    from stemwise_engine.endpoint_ctc_evidence import verify_stored_packet as verify_ctc
+def _read_packet(attempt, binding):
     directory = _directory(attempt)
     path = directory / "manifest.json"
     if (not isinstance(binding, dict) or set(binding) != {"method", "manifestSha256"}
@@ -400,6 +440,12 @@ def verify_stored_packet(attempt: Path, binding: dict) -> dict:
     if (manifest.get("method") != METHOD or type(manifest.get('predictionVersion')) is not int
             or manifest['predictionVersion'] != PREDICTION_VERSION):
         raise ValueError("invalid repeat prediction method")
+    return manifest
+
+
+def verify_stored_packet(attempt: Path, binding: dict) -> dict:
+    from stemwise_engine.endpoint_ctc_evidence import verify_stored_packet as verify_ctc
+    manifest = _read_packet(attempt, binding)
     base = verify_ctc(attempt, manifest["ctcEvidence"])
     if len(manifest["occurrences"]) != len(base["occurrences"]):
         raise ValueError("incomplete repeat predictions")
@@ -407,7 +453,26 @@ def verify_stored_packet(attempt: Path, binding: dict) -> dict:
         expected = assess(entry["records"], entry["plan"], original["assessment"], prediction_version=manifest.get("predictionVersion")) if entry["plan"] else original["assessment"]
         if entry["occurrenceId"] != original["occurrenceId"] or entry["assessment"] != expected:
             raise ValueError("repeat prediction differs from acoustic results")
+        if expected != original["assessment"] and (type(manifest.get('templatePolicyVersion')) is not int
+                or manifest['templatePolicyVersion'] != TEMPLATE_POLICY_VERSION):
+            raise ValueError('repeat prediction requires current template qualification')
     return manifest
+
+
+def _reviewed_readings(declaration, mapping, evidence, lyrics, canonical):
+    from stemwise_engine.endpoint_ctc_evidence import require_endpoint_content
+    from stemwise_engine.lyrics_alignment import _plain_original
+    from stemwise_engine.spoken_targets import load
+
+    root = canonical.parent.parent / 'jobs' / declaration['videoId']
+    admission = require_endpoint_content(declaration, mapping, evidence, lyrics, root)
+    if admission.spoken_targets is None:
+        return None
+    plan = load(root.parents[2]/'jobs'/declaration['videoId'], declaration['videoId'], _plain_original(lyrics),
+                admission.source_physical_indices, admission.audio_sha256)
+    if plan is None or plan.reference != admission.spoken_targets:
+        raise LyricsContentBlocker('pronunciation-support-unavailable')
+    return plan
 
 
 def verify_packet(attempt: Path, declaration: dict, declaration_sha: str, audio: Path,
@@ -418,11 +483,9 @@ def verify_packet(attempt: Path, declaration: dict, declaration_sha: str, audio:
     if sha256_file(canonical) != declaration["canonicalPlainSha256"]:
         raise ValueError("repeat authority is stale")
     lyrics = parse_worker_json(read_bounded_regular_bytes(canonical, max_bytes=16*1024*1024, root=canonical.parent))
-    from stemwise_engine.endpoint_ctc_evidence import require_endpoint_content
-    require_endpoint_content(declaration, mapping, evidence, lyrics,
-        canonical.parent.parent / "jobs" / declaration["videoId"])
+    spoken = _reviewed_readings(declaration, mapping, evidence, lyrics, canonical)
     for entry, occurrence in zip(manifest["occurrences"], declaration["occurrences"]):
-        if entry["plan"] != reference_plan(occurrence, mapping, evidence, lyrics):
+        if entry["plan"] != reference_plan(occurrence, mapping, evidence, lyrics, spoken=spoken):
             raise ValueError("repeat reference differs from approved occurrences")
     return manifest
 
@@ -433,13 +496,12 @@ def write_packet(attempt: Path, declaration: dict, declaration_sha: str, audio: 
     if sha256_file(canonical) != declaration["canonicalPlainSha256"]:
         raise ValueError("repeat authority is stale")
     lyrics = parse_worker_json(read_bounded_regular_bytes(canonical, max_bytes=16*1024*1024, root=canonical.parent))
-    from stemwise_engine.endpoint_ctc_evidence import require_endpoint_content
-    require_endpoint_content(declaration, mapping, evidence, lyrics,
-        canonical.parent.parent / "jobs" / declaration["videoId"])
+    spoken = _reviewed_readings(declaration, mapping, evidence, lyrics, canonical)
     binding = {k: ctc[k] for k in ("method", "manifestSha256")}
     directory = _directory(attempt)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "manifest.json"
+    retained = {}
     if path.exists():
         saved = {"method": METHOD, "manifestSha256": sha256_file(path)}
         try:
@@ -449,24 +511,41 @@ def write_packet(attempt: Path, declaration: dict, declaration_sha: str, audio: 
         except LyricsContentBlocker:
             raise
         except (ValueError, KeyError, TypeError):
-            pass
+            # Requalify numerical records on the current declaration and template.
+            # Source selection and boundary assessment below never use the old decision.
+            try:
+                old = _read_packet(attempt, saved)
+                if old['ctcEvidence'] == binding and 'templatePolicyVersion' not in old:
+                    retained = {e['occurrenceId']: e for e in old['occurrences']}
+                    if len(retained) != len(old['occurrences']):
+                        retained = {}
+            except (ValueError, KeyError, TypeError):
+                retained = {}
     if sha256_file(canonical) != declaration["canonicalPlainSha256"]:
         raise ValueError("repeat authority is stale")
     lyrics = parse_worker_json(read_bounded_regular_bytes(canonical, max_bytes=16*1024*1024, root=canonical.parent))
     base_manifest = verify_ctc(attempt, binding)
+    if retained:
+        from stemwise_engine.endpoint_ctc_evidence import verify_packet as verify_current_ctc
+        verify_current_ctc(attempt, declaration, declaration_sha, audio, binding)
     if (len(declaration['occurrences']) != len(ctc['occurrences'])
             or len(base_manifest['occurrences']) != len(declaration['occurrences'])):
         raise ValueError('repeat context count differs from the declaration or bound CTC packet')
     entries, pending = [], []
     project = Path(config["projectDir"])
     for index, (occurrence, base) in enumerate(zip(declaration["occurrences"], ctc["occurrences"])):
-        plan = reference_plan(occurrence, mapping, evidence, lyrics)
+        plan = reference_plan(occurrence, mapping, evidence, lyrics, spoken=spoken)
+        records = []
         if (plan and "inference" in base_manifest["occurrences"][index]
                 and any(v["result"] != "supported" for v in base["assessment"].values())):
-            scratch = ctc_directory(attempt) / f"context-{index:03d}"
-            pending.append((index, scratch, plan))
-        entries.append({"occurrenceId": occurrence["occurrenceId"], "plan": plan, "records": [],
-                        "assessment": assess([], plan, base["assessment"], prediction_version=PREDICTION_VERSION) if plan else base["assessment"]})
+            cached = retained.get(occurrence['occurrenceId'])
+            if cached and cached['plan'] == plan and isinstance(cached.get('records'),list):
+                records = cached['records']
+            else:
+                scratch = ctc_directory(attempt) / f"context-{index:03d}"
+                pending.append((index, scratch, plan))
+        entries.append({"occurrenceId": occurrence["occurrenceId"], "plan": plan, "records": records,
+                        "assessment": assess(records, plan, base["assessment"]) if plan else base["assessment"]})
     if pending:
         timeout = int(config['analysisTimeoutMinutes']) * 60
         _invoke(project, 'prepare-many', [s for _, s, _ in pending], timeout, alignment=True)
@@ -500,7 +579,8 @@ def write_packet(attempt: Path, declaration: dict, declaration_sha: str, audio: 
             entry['assessment'] = assess(row['records'], entry['plan'], ctc['occurrences'][row['index']]['assessment'],
                                          prediction_version=PREDICTION_VERSION)
         error.unlink(missing_ok=True)
-    manifest = {"method": METHOD, "predictionVersion": PREDICTION_VERSION, "ctcEvidence": binding, "occurrences": entries}
+    manifest = {"method": METHOD, "predictionVersion": PREDICTION_VERSION, "templatePolicyVersion": TEMPLATE_POLICY_VERSION,
+                "ctcEvidence": binding, "occurrences": entries}
     atomic_write_bytes(path, json_bytes(manifest), root=directory)
     saved = {"method": METHOD, "manifestSha256": sha256_file(path)}
     verify_packet(attempt, declaration, declaration_sha, audio, saved, mapping, evidence, canonical)

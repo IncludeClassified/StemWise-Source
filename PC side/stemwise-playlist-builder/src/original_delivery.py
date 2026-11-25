@@ -1,6 +1,5 @@
 """Audio transport around an unchanged, privately validated enrichment ZIP."""
 import hashlib
-import io
 import math
 import shutil
 import tempfile
@@ -9,7 +8,7 @@ from pathlib import Path
 
 from stemwise_engine.common import (durable_replace, read_bounded_json, run_process_tree,
                     sha256_file, validate_generated_path, preflight_staging_space,
-                    manifested_temporary_directory, resolve_path)
+                    resolve_path)
 from stemwise_engine.contract import MAX_JSON_BYTES, MAX_DURATION_MS, MAX_COVER_BYTES, MAX_COVER_PIXELS_PER_SIDE
 from stemwise_engine.packages import (_canonical_zip_info, _configured_limit, _require_regular_member,
                       _require_regular_path, read_child, PackageValidationError)
@@ -43,7 +42,14 @@ def _metadata(archive, config):
     return document, cover, raw
 
 
-def read_bundle(path, config, *, metadata=None, original=None):
+def read_bundle(path, config, *, metadata=None, original=None, expected_review=None):
+    document, cover, identity, review = read_reviewed_bundle(path, config, metadata=metadata, original=original)
+    if expected_review is not None and review != expected_review:
+        raise PackageValidationError('Delivered timing clearance differs from the current review')
+    return document, cover, identity
+
+
+def read_reviewed_bundle(path, config, *, metadata=None, original=None):
     if _require_regular_path(path, 'Delivery ZIP').st_size > MAX_DELIVERY_BYTES:
         raise PackageValidationError('Delivery ZIP exceeds its limit')
     try:
@@ -60,6 +66,11 @@ def read_bundle(path, config, *, metadata=None, original=None):
                 if info.flag_bits & 1:
                     raise PackageValidationError('Encrypted delivery entry')
             document, cover, raw = _metadata(archive, config)
+            from stemwise_engine.song_enrichment_v2 import require_publication_lyrics
+            try:
+                require_publication_lyrics(document.get('lyrics'), duration_ms=document.get('analysis', {}).get('durationMs'))
+            except ValueError as error:
+                raise PackageValidationError(str(error)) from error
             if metadata is not None:
                 with zipfile.ZipFile(metadata) as expected:
                     if any(raw[name] != expected.read(name) for name in raw):
@@ -86,7 +97,10 @@ def read_bundle(path, config, *, metadata=None, original=None):
             native = document['source'].get('recording')
             if native and (name != 'original.flac' or any(identity[key] != native[key] for key in ('sha256', 'byteCount'))):
                 raise PackageValidationError('Original differs from native recording binding')
-            return document, cover, identity
+            from stemwise_engine.delivery_timing import require_transport_receipt
+            review = require_transport_receipt(archive.comment, hashlib.sha256(raw['song.json']).hexdigest(),
+                                              identity['sha256'])
+            return document, cover, identity, review
     except zipfile.BadZipFile as error:
         raise PackageValidationError('Invalid delivery ZIP') from error
 
@@ -173,8 +187,11 @@ def prepare_original(source, document, temporary):
     return audio, {'name': name, 'sha256': sha256_file(audio), 'byteCount': audio.stat().st_size}
 
 
-def create_bundle(destination, metadata, audio, identity, config, staging_root):
-    read_child(metadata, config)
+def create_bundle(destination, metadata, audio, identity, config, staging_root, *, clearance):
+    from stemwise_engine.delivery_timing import TimingClearance
+    document, _ = read_child(metadata, config)
+    if not isinstance(clearance, TimingClearance):
+        raise PackageValidationError('Audio delivery requires the reviewed recording timing clearance')
     if (identity.get('name') not in NAMES or _require_regular_path(audio, 'Original').st_size != identity['byteCount']
             or sha256_file(audio) != identity['sha256']):
         raise ValueError('Original input differs from its binding')
@@ -183,8 +200,14 @@ def create_bundle(destination, metadata, audio, identity, config, staging_root):
     with tempfile.TemporaryDirectory(prefix='.original-', dir=staging_root) as work:
         staged = Path(work) / 'delivery.zip'
         with zipfile.ZipFile(metadata) as source, zipfile.ZipFile(staged, 'w', allowZip64=False) as target:
-            for name in ('song.json', 'cover.png'):
-                target.writestr(_canonical_zip_info(name, zipfile.ZIP_DEFLATED), source.read(name), compresslevel=6)
+            raw = source.read('song.json')
+            from stemwise_engine.common import parse_strict_json_bytes
+            if parse_strict_json_bytes(raw) != document:
+                raise PackageValidationError('Reviewed delivery manifest changed during staging')
+            target.comment = clearance.transport_receipt(document, raw, identity['sha256'])
+            target.writestr(_canonical_zip_info('song.json', zipfile.ZIP_DEFLATED), raw, compresslevel=6)
+            target.writestr(_canonical_zip_info('cover.png', zipfile.ZIP_DEFLATED), source.read('cover.png'),
+                            compresslevel=6)
             with audio.open('rb') as reader, target.open(_canonical_zip_info(identity['name'], zipfile.ZIP_STORED), 'w') as writer:
                 shutil.copyfileobj(reader, writer, 1024 * 1024)
         read_bundle(staged, config, metadata=metadata, original=identity)
@@ -194,7 +217,7 @@ def create_bundle(destination, metadata, audio, identity, config, staging_root):
 def require_selected_original(workflow, document):
     from stemwise_engine.delivery_selection import catalogue
     video_id = document['source']['videoId']
-    selected = catalogue(workflow)
+    selected = catalogue(workflow, public_ids=[video_id])
     if video_id in selected and selected[video_id] != f'youtube:{video_id}':
         raise ValueError('Selected delivery recording differs')
 
@@ -353,7 +376,7 @@ def _require_reviewed_pcm(workflow, job, source, temporary):
     return digest
 
 
-def stage_original(workflow, child, temporary, destination, *, job):
+def stage_original(workflow, child, temporary, destination, *, job, clearance):
     document, _ = read_child(child, workflow._runtime_config())
     if job.get('artworkRepair'):
         audio, identity = _artwork_original(workflow, job, document, temporary, destination)
@@ -375,11 +398,11 @@ def stage_original(workflow, child, temporary, destination, *, job):
     preflight_staging_space(destination, staged,
         candidate_bytes=child.stat().st_size + audio.stat().st_size,
         rollback_bytes=destination.stat().st_size if destination.is_file() else 0)
-    create_bundle(staged, child, audio, identity, workflow._runtime_config(), temporary)
+    create_bundle(staged, child, audio, identity, workflow._runtime_config(), temporary, clearance=clearance)
     return staged, identity
 
 
-def verify_original_delivery(workflow, job):
+def verify_original_delivery(workflow, job, *, expected_review=None):
     if workflow.source_context is not None:
         return
     child = workflow.runtime/'children'/f"{job['videoId']}.stemwise.zip"
@@ -389,7 +412,8 @@ def verify_original_delivery(workflow, job):
         raise ValueError('Current delivery requires its selected Original identity')
     if sha256_file(destination) != job['delivery']['sha256']:
         raise ValueError('Delivered transport changed')
-    read_bundle(destination, workflow._runtime_config(), metadata=child, original=identity)
+    read_bundle(destination, workflow._runtime_config(), metadata=child, original=identity,
+                expected_review=expected_review)
 
 
 def delivered_capability_inputs(workflow, job):

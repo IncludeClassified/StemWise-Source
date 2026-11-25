@@ -169,7 +169,7 @@ def validate_agent_review(
         "originalReviewed",
     }
     optional = resolved | {"notes", "performedStructureReview", "recordingReview", "metadataReview",
-                           'qaResolutions', 'companionReviews'}
+                           'qaResolutions', 'companionReviews', 'recordingAbsenceReview'}
     if set(review) - common - optional or common - set(review):
         raise FutureSongError("agent-review.json has missing or unexpected properties")
     if review["formatVersion"] != 2 or review["policyVersion"] != policy.version:
@@ -183,8 +183,10 @@ def validate_agent_review(
         if not isinstance(review['qaResolutions'], list) or len(review['qaResolutions']) > 200:
             raise FutureSongError('qaResolutions must be a bounded list')
     outcome = review["authorityOutcome"]
-    if outcome not in {"pending", "resolved", "authority-unresolved"}:
+    if outcome not in {"pending", "resolved", "authority-unresolved", "lyrics-absent"}:
         raise FutureSongError("agent-review.json authorityOutcome is invalid")
+    if ('recordingAbsenceReview' in review) != (outcome == 'lyrics-absent'):
+        raise FutureSongError('Only a completed absence review may close lyric recovery')
     if "notes" in review and (
         not isinstance(review["notes"], str)
         or len(review["notes"]) > 1000
@@ -326,6 +328,18 @@ def validate_agent_review(
         time.strptime(completed_at, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError as error:
         raise FutureSongError("agent-review.json completedAt is not a valid UTC time") from error
+    if outcome == 'lyrics-absent':
+        proof = review['recordingAbsenceReview']
+        if (issues or not isinstance(proof, dict) or set(proof) != {'audioSha256', 'durationMs',
+                'startMs', 'endMs', 'finding', 'heard', 'sourcesSha256'}
+                or proof['finding'] != 'no-performed-words' or type(proof['startMs']) is not int
+                or proof['startMs'] != 0 or type(proof['durationMs']) is not int or proof['durationMs'] <= 0
+                or type(proof['endMs']) is not int or proof['endMs'] != proof['durationMs']
+                or any(not isinstance(proof[k], str) or not re.fullmatch('[0-9a-f]{64}', proof[k])
+                        for k in ('audioSha256','sourcesSha256'))
+                or not isinstance(proof['heard'], str) or not proof['heard'].strip()):
+            raise FutureSongError('Lyric absence requires a whole-recording listening finding and completed source research')
+        return outcome
     if outcome == "authority-unresolved":
         if not issues:
             raise FutureSongError("authority-unresolved requires material unresolved issues")

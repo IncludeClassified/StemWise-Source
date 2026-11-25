@@ -304,7 +304,7 @@ def project_job_summary(job: dict[str, Any], *, workspace_root: Path, root: Path
         "videoId": job["videoId"],
         "state": job["state"],
         "updatedAt": job.get("updatedAt"),
-        "deliveryAllowed": job["deliveryAllowed"],
+        "deliveryAllowed": False,
         "job": workspace_relative(job_dir),
         "agentTask": workspace_relative(
             job_dir / "AGENT_TASK.txt"
@@ -335,11 +335,25 @@ def project_job_summary(job: dict[str, Any], *, workspace_root: Path, root: Path
     progress = JobProgress.current(job)
     result['progress'] = progress.to_record()
     result['permittedActions'] = sorted(progress.rule.actions)
+    result['nextAction'] = progress.next_action
     if 'bridgeMaxFileBytes' in job:
         result['bridgeBudget'] = {'maxFileBytes': job['bridgeMaxFileBytes'],
             'manualImport': job.get('bridgeManualImport') is True,
             'preflight': job.get('bridgeBudgetPreflight', {'status': 'not-rechecked'})}
     evidence = job.get('recordingEvidence')
+    from stemwise_engine.lyric_preview.job import job_readback
+    preview = job_readback(job_dir, root/'lyrics-alignment/jobs'/job['videoId'], runtime,
+                           job['videoId'], workspace_relative)
+    if preview is not None:
+        if 'backingVocals' in preview:
+            from stemwise_engine.lyric_preview.reading_review import disputed_part_readings
+            backing = preview['backingVocals']
+            backing['readingReview'] = disputed_part_readings(workspace_root/backing['evidence'])
+        result['lyricPreview'] = preview
+        if preview['status']=='layered' or preview.get('overlapAttempted'):
+            result['vocalOverlap'] = preview
+        elif 'overlapReason' in preview:
+            result['vocalOverlap'] = {'status':'unresolved','reason':preview['overlapReason'],'publicationAuthority':False}
     review_inputs = recording_evidence_inputs
     if review_inputs is not None:
         result['recordingEvidenceInputs'] = review_inputs
@@ -568,6 +582,8 @@ def aggregate_status_summary(summary: dict[str, Any]) -> dict[str, Any]:
         for key in (
             "videoId", "state", "updatedAt", "sourceState", "deliveryAllowed",
             "job", "agentTask", "statusError", "failureDetails", "error", "deliveryVerification",
+            "recordingKey", "sourceAvailability", "nextAction", "permittedActions", "progress",
+            "exportReady", "timingCoverage", "blocker",
         )
         if key in summary
     }
@@ -590,3 +606,60 @@ def aggregate_status_summary(summary: dict[str, Any]) -> dict[str, Any]:
                 if key in value and (value[key] is None or type(value[key]) in {str, int, float, bool})
             }
     return result
+
+
+def public_inventory(workflow, youtube_jobs):
+    """Report existing source jobs once and every selected public song separately."""
+    from collections import Counter
+    from stemwise_engine.delivery_selection import catalogue
+    from stemwise_engine.recording_workflow import RecordingWorkflow
+    from stemwise_engine.common import diagnostic_code
+    registration_error = None
+    try:
+        selections = catalogue(workflow)
+    except (OSError, ValueError) as error:
+        # A broken standalone registration cannot erase independently pinned playlist rows.
+        # The same parser still rejects a broken playlist projection.
+        selections = catalogue(workflow, playlist_only=True)
+        registration_error = diagnostic_code(error)
+    records = {f"youtube:{item['videoId']}": {**item, 'recordingKey': f"youtube:{item['videoId']}"}
+               for item in youtube_jobs}
+    # Opening a native source can read its input identity. Skip sources with no job namespace.
+    active_keys = set()
+    for path in workflow.root.parent.glob('current-qobuz-*/jobs/*/job.json'):
+        match = re.fullmatch(r'current-qobuz-([1-9][0-9]*)-[a-f0-9]{64}', path.parents[2].name)
+        if match:
+            active_keys.add('qobuz:'+match[1])
+    verified_aliases = set()
+    for key in sorted(active_keys.intersection(selections.values())):
+        try:
+            native = RecordingWorkflow(workflow.config_path, key, verify_media=False)
+            if not native._job_path(native.video_id).is_file():
+                continue
+            status = native.status(native.video_id)
+            item = aggregate_status_summary(status)
+            if item.get('exportReady') is True:
+                verified_aliases.update((key, alias['videoId']) for alias in status['phoneDeliveries'])
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            item = {'state':'STATUS_ERROR', 'statusError':diagnostic_code(error),
+                    'deliveryAllowed':False, 'exportReady':False}
+        records[key] = {**item, 'recordingKey':key}
+    aliases = []
+    slots = dict(selections)
+    for key, row in records.items():
+        if key.startswith('youtube:'):
+            slots.setdefault(row['videoId'], key)
+    for video_id, key in slots.items():
+        job = records.get(key, {})
+        ready = (job.get('exportReady') is True and job.get('state') == 'DELIVERED'
+                 and (key.startswith('youtube:') or (key, video_id) in verified_aliases))
+        aliases.append({'videoId':video_id, 'recordingKey':key, 'exportReady':ready,
+                        'state':('STATUS_ERROR' if job.get('state') == 'DELIVERED' and not ready
+                                 else job.get('state', 'NOT_STARTED' if key else 'SOURCE_UNAVAILABLE'))})
+    jobs = list(records.values())
+    return {'scope':'selected-public-songs-and-existing-youtube-jobs', 'jobCount':len(jobs),
+            'stateCounts':dict(sorted(Counter(row['state'] for row in jobs).items())),
+            'jobs':jobs, 'publicSongCount':len(aliases),
+            'inventoryComplete':registration_error is None,
+            **({'standaloneRegistrationError':registration_error} if registration_error else {}),
+            'readyToImportCount':sum(row['exportReady'] for row in aliases), 'publicSongs':aliases}

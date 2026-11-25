@@ -70,12 +70,13 @@ def require_completed_lyrics(lyrics, *, duration_ms, endpoint_review=None):
 def project_timed_companion(original, companion, source_physical_indices):
     """Place an already admitted role at its Original occurrences without upgrading timing."""
     import copy
+    from stemwise_engine.ipa_validation import companion_lines
     if original.get('format') not in {'synced', 'regional'} or companion.get('format') != 'plain':
         raise ValueError('companion projection requires timed Original and plain admitted role')
-    physical = companion['text'].split('\n')
+    physical = companion_lines(companion['text'], ipa=companion.get('kind') == 'transliteration')
     sources = tuple(source_physical_indices)
-    if (len(sources) != len(original['lines']) or not sources
-            or any(type(i) is not int or i < 0 or i >= len(physical) or not physical[i].strip() for i in sources)):
+    if (not sources or len(sources) != len(original['lines']) or any(type(i) is not int for i in sources)
+            or sources != tuple(i for i, line in enumerate(physical) if line)):
         raise ValueError('companion occurrence text differs from its complete Original')
     result = copy.deepcopy(companion)
     result.pop('text')
@@ -88,7 +89,7 @@ def project_timed_companion(original, companion, source_physical_indices):
             raise ValueError('companion timing requires admitted Original occurrences')
         timing = copy.deepcopy(line['timing'])
         if timing['status'] == 'estimated':
-            timing['basis'] = 'Estimated occurrence placement inherited from the owner-authorized Original acoustic word prediction.'
+            timing['basis'] = 'Estimated occurrence placement inherited from the Original acoustic word prediction.'
         result['lines'].append({'text': physical[source], 'contentStatus': 'admitted',
             'occurrenceStatus': 'supported', 'timing': timing})
     return result
@@ -108,9 +109,9 @@ def companion_admissions(workflow, job, original, audio_identity, content_admiss
         raise FutureSongError('original-input-changed-during-admission')
     required = companion_requirements(metadata)
     review = {}
-    authority_error = None
+    authority_error = 'original-recording-review-unresolved' if content_admission is None else None
     try:
-        if content_admission.owner_verification is not None:
+        if content_admission is not None and content_admission.owner_verification is not None:
             review, sources = workflow._owner_prediction_reviews(job, audio_identity)
         else:
             outcome, review, sources = workflow._validate_authority_outcome(job)
@@ -154,9 +155,9 @@ def companion_admissions(workflow, job, original, audio_identity, content_admiss
             _raise_input_io_failure(error)
             issues, raw_sha = [{'code': 'companion-input-invalid'}], None
             try:
-                from stemwise_engine.ipa_validation import validate_companion_text
+                from stemwise_engine.ipa_validation import selective_ipa, validate_companion_text
                 text, raw_sha = read_role_snapshot(draft, role)
-                located = validate_companion_text(original['text'], text, role=role)
+                located = validate_companion_text(original['text'], text, role=role, allow_skips=selective_ipa(original))
                 if located:
                     issues = [{'code': item.code, 'line': item.line, 'position': item.position} for item in located]
             except (LyricsInputError, ValueError, OSError) as diagnostic_error:
@@ -167,11 +168,11 @@ def companion_admissions(workflow, job, original, audio_identity, content_admiss
     return results
 
 
-def available_lyrics(workflow, job, audio_identity, *, on_blocker=None):
+def available_lyrics(workflow, job, audio_identity, *, on_blocker=None, prepare_acoustic=False):
     """Project only claims whose current retained authority can be revalidated."""
     import copy
     import hashlib
-    from stemwise_engine.common import read_bounded_json, json_bytes, sha256_file
+    from stemwise_engine.common import json_bytes
     from stemwise_engine.contract import MAX_JSON_BYTES
     from stemwise_engine.lyrics_alignment import AlignmentWorkspace, _plain_original, _physical_lines
     from stemwise_engine.lyric_content import require_workspace_content, confirm_content, owner_workspace_admission
@@ -199,6 +200,10 @@ def available_lyrics(workflow, job, audio_identity, *, on_blocker=None):
         else:
             admission = owner_workspace_admission(workspace, video_id, original, sources, canonical_sha,
                 audio_identity['sha256'], retain=False)
+            if admission is None and job.get('recordingContentEvidence'):
+                from stemwise_engine.lyric_content import source_recording_workspace_admission
+                admission = source_recording_workspace_admission(workspace, video_id, original, sources,
+                    canonical_sha, audio_identity['sha256'])
             if admission is None:
                 admission = require_workspace_content(workspace, video_id, sources, original=original,
                                                       audio_sha=audio_identity['sha256'])
@@ -252,6 +257,11 @@ def available_lyrics(workflow, job, audio_identity, *, on_blocker=None):
                     else 'content-evidence-invalid'))
     tracks = [copy.deepcopy(original)]
     retained_timing = workflow._available_original_timing(job, original, audio_identity)
+    if (retained_timing is None and not job.get('ownerWordPrediction') and not job.get('displayReview')
+            and not job.get('endpointReview') and admission.owner_verification is None):
+        from stemwise_engine.recording_word_placement import reviewed_placement
+        retained_timing = reviewed_placement(workflow, job, workspace, original, admission, audio_identity,
+            prepare=prepare_acoustic)
     if retained_timing is not None:
         tracks[0] = retained_timing[0]
     approved = []

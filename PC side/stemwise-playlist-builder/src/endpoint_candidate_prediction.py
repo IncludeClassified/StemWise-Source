@@ -1,12 +1,11 @@
 """Bounded nearest-candidate prediction, never an exact physical onset claim."""
 from __future__ import annotations
 
-import json
 import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from stemwise_engine.model_registry import model_assets, runtime_profile
+from stemwise_engine.model_registry import model_assets
 from stemwise_engine.runtime_environment import environment_python, environment_lease
 import sys
 

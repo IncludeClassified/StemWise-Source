@@ -11,7 +11,11 @@ import stemwise_engine.worker_protocol as worker_protocol
 from stemwise_engine.lyrics_alignment import save_alignment_artifacts, commit_candidate
 
 
-def _require_completed_structure_witness(alignment, witness) -> None:
+def qwen_mix_cache_name(language):
+    return f'qwen-structure-{language}.private.json' if language and language != 'auto' else 'qwen-structure.private.json'
+
+
+def _require_completed_structure_witness(alignment, witness, *, admission=None) -> None:
     """A required failed or uncertain witness never authorizes forced timing."""
     if witness is None:
         return
@@ -20,6 +24,13 @@ def _require_completed_structure_witness(alignment, witness) -> None:
     if witness.get("status") == "failure":
         raise worker_protocol.WorkerProcessError("required content witness failed",
                                  witness.get("failureCode") or "structure-witness-failure")
+    if (witness.get("status") == "success" and witness.get('cacheReused') is True
+            and witness.get('route') == 'qwen3-asr-unprompted-mix' and witness.get('family') == 'qwen3-asr'
+            and admission is not None and admission.adjudication is not None
+            and admission.evidence_path == qwen_mix_cache_name(witness.get('languageHint'))
+            and tuple(alignment.source_physical_indices) == admission.source_physical_indices
+            and witness.get('contentAdmission') == admission.to_record()):
+        return  # The current exact recording review resolves the retained model's differences.
     if (witness.get("status") != "success"
             or witness.get("selectedSequenceSupported") is not True
             or witness.get("selectedSequenceEveryLineDirect") is not True):
@@ -35,10 +46,10 @@ class AlignmentPublisher:
             raise LyricsContentBlocker("content-canonical-invalid") from None
         if len(originals) != 1 or state.get("canonicalPlainSha256") != canonical_sha:
             raise LyricsContentBlocker("content-canonical-differs")
-        require_content(state.get("contentAdmission"), originals[0],
+        admission = require_content(state.get("contentAdmission"), originals[0],
             request.alignment.source_physical_indices, canonical_sha,
             state.get("contentBinding", {}).get("audioSha256"), request.workspace.job_dir(request.video_id))
-        _require_completed_structure_witness(request.alignment, state.get("structureWitness"))
+        _require_completed_structure_witness(request.alignment, state.get("structureWitness"), admission=admission)
         endpoint = request.endpoint_selection
         endpoint_summary = endpoint.summary if endpoint is not None else None
         word_candidate_incomplete = (endpoint_summary is not None

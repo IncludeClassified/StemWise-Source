@@ -166,6 +166,10 @@ def validate_plan(name, builder=BUILDER):
     if relative.is_absolute() or '..' in relative.parts:
         raise ValueError('Environment lock escaped builder')
     records = locked_requirements(builder/relative, entry['sha256'])
+    build_only = entry.get('buildOnly', [])
+    if (not isinstance(build_only, list) or any(not isinstance(pkg, str) or pkg not in records for pkg in build_only)
+            or len(set(build_only)) != len(build_only)):
+        raise ValueError('Build-only dependencies must identify distinct locked packages')
     if name in ('main', 'lyrics'):
         for package, version in profile['packages'].items():
             key = package.lower().replace('_', '-').replace('.', '-')

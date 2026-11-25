@@ -168,6 +168,7 @@ def discover_counterpart_candidates(
             "searchStatus": "not-applicable",
             "surfaceOutcomes": {surface: {'status': 'not-attempted'} for surface in ('songs', 'videos')},
             "candidateCount": 0,
+            "displayedCandidateCount": 0,
             "candidates": [],
         }
     target_artists = _identity_artists([uploader])
@@ -177,6 +178,7 @@ def discover_counterpart_candidates(
             "searchStatus": "not-applicable",
             "surfaceOutcomes": {surface: {'status': 'not-attempted'} for surface in ('songs', 'videos')},
             "candidateCount": 0,
+            "displayedCandidateCount": 0,
             "candidates": [],
         }
     target_title = _candidate_title_base(title, target_artists)
@@ -191,6 +193,7 @@ def discover_counterpart_candidates(
             "searchStatus": "incomplete",
             "surfaceOutcomes": {surface: {'status': 'not-attempted'} for surface in ('songs', 'videos')},
             "candidateCount": 0,
+            "displayedCandidateCount": 0,
             "candidates": [],
             "surfaceErrors": [f"client:{diagnostic_code(error)}"],
         }
@@ -282,7 +285,8 @@ def discover_counterpart_candidates(
         "decision": "candidates-found" if candidates else ("search-incomplete" if errors else "not-found"),
         "searchStatus": "incomplete" if errors else "complete",
         "surfaceOutcomes": outcomes,
-        "candidateCount": len(candidates),
+        "candidateCount": len(candidates_by_id),
+        "displayedCandidateCount": len(candidates),
         "candidates": candidates,
         "surfaceErrors": errors,
     }
@@ -547,20 +551,19 @@ def _write_worklists(
 
 
 def _previous_records(path: Path) -> dict[str, dict[str, Any]]:
-    if not path.is_file():
-        return {}
     try:
         report = read_json(path)
-    except (OSError, UnicodeError, ValueError):
+    except FileNotFoundError:
         return {}
     records = report.get("records") if isinstance(report, dict) else None
     if not isinstance(records, list):
-        return {}
+        raise ValueError(f'Cannot update acquisition report without its retained records: {path}')
     result: dict[str, dict[str, Any]] = {}
     for record in records:
         video_id = record.get("videoId") if isinstance(record, dict) else None
-        if isinstance(video_id, str) and VIDEO_ID_RE.fullmatch(video_id):
-            result[video_id] = record
+        if not isinstance(video_id, str) or not VIDEO_ID_RE.fullmatch(video_id) or video_id in result:
+            raise ValueError(f'Invalid or duplicated recording in existing acquisition report: {path}')
+        result[video_id] = record
     return result
 
 

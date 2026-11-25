@@ -6,7 +6,7 @@ from stemwise_engine.runtime_environment import environment_python, environment_
 import hashlib
 import json
 from pathlib import Path
-from stemwise_engine.worker_protocol import parse_worker_json, require_worker_success
+from stemwise_engine.worker_protocol import require_worker_success
 import sys
 
 import numpy as np
@@ -307,7 +307,6 @@ def _separation_candidates(job, key):
 def _reuse_separation(clip: Path, scratch: Path):
     """Reuse same-job stems for identical PCM, independent of WAV timestamps."""
     import shutil
-    import soundfile as sf
     from stemwise_engine.lyrics_alignment import AlignmentWorkspace
     from stemwise_engine.alignment_models import PINNED_DEMUCS_SHA256
     from stemwise_engine.alignment_audio import read_audio_provenance

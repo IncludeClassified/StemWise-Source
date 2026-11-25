@@ -64,7 +64,7 @@ def describe(config_path, video_id, max_file_bytes):
     if type(max_file_bytes) is not int or max_file_bytes <= 0:
         raise FutureSongError('BridgeDelivery requires the current positive maxFileBytes')
     workflow = FutureSongWorkflow(config_path)
-    selected = catalogue(workflow)
+    selected = catalogue(workflow, public_ids=[video_id])
     key = selected.get(video_id, f'youtube:{video_id}')
     if key is None:
         raise FutureSongError('recording-not-selected')
@@ -101,7 +101,7 @@ def _describe(workflow, owner_id, video_id, key, max_file_bytes):
     size = path.stat().st_size
     if size > max_file_bytes:
         raise BridgePackageTooLarge('bridge-package-too-large', completed=True)
-    if catalogue(workflow).get(video_id, f'youtube:{video_id}') != key or _file_revision(path) != revision:
+    if catalogue(workflow, public_ids=[video_id]).get(video_id, f'youtube:{video_id}') != key or _file_revision(path) != revision:
         raise FutureSongError('BridgeDelivery selection or package changed during verification')
     descriptor = VerifiedDelivery(path.relative_to(workflow.workspace_root).as_posix(),
         path.name, size, digest)

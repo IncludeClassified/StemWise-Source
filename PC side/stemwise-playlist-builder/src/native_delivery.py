@@ -8,28 +8,31 @@ from stemwise_engine.common import (json_bytes, manifested_temporary_directory, 
 from stemwise_engine.contract import MAX_JSON_BYTES
 from stemwise_engine.packages import create_child_zip, read_child
 from stemwise_engine.recording_source import selected_recording
-from stemwise_engine.original_delivery import read_bundle, prepare_original, create_bundle, selected_original, publish_bundle
+from stemwise_engine.original_delivery import (read_bundle, read_reviewed_bundle, prepare_original, create_bundle,
+                                                selected_original, publish_bundle)
 from stemwise_engine.delivery_selection import catalogue
 from stemwise_engine.workflow_records import FutureSongError
 
 
-def _selected_ids(workflow):
-    _, pc, _, identity = selected_recording(workflow.config, workflow.key)
+def _selected_ids(workflow, *, verify_media=True):
+    _, _, _, identity = selected_recording(workflow.config, workflow.key, verify_media=verify_media)
     if identity != workflow.recording[3]:
         raise ValueError('Selected native recording changed before delivery')
-    selected = catalogue(workflow)
+    selected = catalogue(workflow, recording_key=workflow.key)
     ids = [video_id for video_id,key in selected.items() if key == workflow.key]
     return ids
 
 
 def _source(workflow, job):
-    if job.get('state') != 'DELIVERED':
+    if job.get('state') not in {'DELIVERY_PUBLICATION_PENDING', 'DELIVERED'}:
         raise ValueError('Native phone delivery requires a finalized result')
     path = validate_generated_path(workflow.ready,
         workflow.ready / f'{workflow.video_id}.stemwise.zip', workspace_root=workflow.workspace_root)
     if sha256_file(path) != job['delivery']['sha256']:
         raise ValueError('Finalized native enrichment changed')
-    return read_child(path, workflow._runtime_config())
+    document, cover = read_child(path, workflow._runtime_config())
+    from stemwise_engine.delivery_timing import require_delivery_clearance
+    return document, cover, require_delivery_clearance(workflow, job, document)
 
 
 def _root(workflow):
@@ -40,12 +43,13 @@ def _root(workflow):
 
 
 def publish(workflow, job):
-    if not workflow._validated_snapshot_is_current(job, require_delivery=True):
+    if not workflow._validated_snapshot_is_current(job, require_delivery=True,
+            allow_pending_delivery_cleanup=job['state'] == 'DELIVERY_PUBLICATION_PENDING'):
         raise ValueError('Native phone delivery requires the current validated finalization')
-    document, cover = _source(workflow, job)
+    document, cover, clearance = _source(workflow, job)
     staging_root = workflow._scavenge_finalization_staging(workflow.video_id)
-    selected_before = catalogue(workflow)
     ids = _selected_ids(workflow)
+    selected_before = dict.fromkeys(ids, workflow.key)
     if not ids:
         raise FutureSongError('recording-not-selected')
     repairing_artwork = bool(job.get('artworkRepair')) and job.get('artworkPublicationSha256') != job['delivery']['sha256']
@@ -70,7 +74,7 @@ def publish(workflow, job):
         cover_path = temporary / 'cover.png'
         cover_path.write_bytes(cover)
         _write_children(workflow, document, cover_path, ids, root, previous,
-            job=job, reuse_original=repairing_artwork, selected_before=selected_before)
+            job=job, reuse_original=repairing_artwork, selected_before=selected_before,clearance=clearance)
     return current(workflow, job)
 
 
@@ -140,7 +144,7 @@ def _previous_artwork_delivery(workflow, job, document, cover, ids, root):
     return document, cover
 
 
-def _write_children(workflow, document, cover_path, ids, root, previous=None, *, job, reuse_original=False, selected_before):
+def _write_children(workflow, document, cover_path, ids, root, previous=None, *, job, reuse_original=False, selected_before,clearance):
     artwork = cover_path.read_bytes()
     replacements = []
     retained = next((root / f'{video_id}.stemwise.zip' for video_id in ids
@@ -157,11 +161,11 @@ def _write_children(workflow, document, cover_path, ids, root, previous=None, *,
         alias['source']['videoId'] = video_id
         path = validate_generated_path(root, root / f'{video_id}.stemwise.zip', workspace_root=workflow.workspace_root)
         if path.is_file():
-            actual, cover, original = read_bundle(path, {**workflow._runtime_config(), 'recordingInput': None})
+            actual, cover, original, review = read_reviewed_bundle(path, {**workflow._runtime_config(), 'recordingInput': None})
             if actual == alias and cover == artwork:
-                if original == identity:
+                if original == identity and review == clearance.review_sha256:
                     continue
-                if original is not None:
+                if original != identity:
                     raise ValueError('Existing native Original differs from selected recording')
             else:
                 prior_key = actual['source'].get('recording', {}).get('recordingKey', f'youtube:{video_id}')
@@ -186,18 +190,18 @@ def _write_children(workflow, document, cover_path, ids, root, previous=None, *,
         metadata = cover_path.parent / 'alias.zip'
         create_child_zip(metadata, alias, cover_path, workflow._runtime_config())
         staged = cover_path.parent/'alias-delivery.zip'
-        create_bundle(staged, metadata, audio, identity, workflow._runtime_config(), cover_path.parent)
+        create_bundle(staged, metadata, audio, identity, workflow._runtime_config(), cover_path.parent,clearance=clearance)
         publish_bundle(workflow, staged, path, metadata=metadata, original=identity,
             previous_sha256=digest, selected_before=selected_before)
 
 
 def current(workflow, job, *, allow_replacement=False):
     """No self-reported flag substitutes for the actual matching ZIP bytes."""
-    if job.get('state') != 'DELIVERED':
+    if job.get('state') not in {'DELIVERY_PUBLICATION_PENDING', 'DELIVERED'}:
         return []
-    document, cover = _source(workflow, job)
+    document, cover, clearance = _source(workflow, job)
     result = []
-    for video_id in _selected_ids(workflow):
+    for video_id in _selected_ids(workflow, verify_media=False):
         path = _root(workflow) / f'{video_id}.stemwise.zip'
         if any(candidate != path for candidate in _root(workflow).rglob(path.name)):
             raise ValueError('Multiple public ZIPs exist for the same song')
@@ -206,12 +210,14 @@ def current(workflow, job, *, allow_replacement=False):
         config = workflow._runtime_config()
         if allow_replacement:
             config = {**config, 'recordingInput': None}
-        actual, artwork, original = read_bundle(path, config)
+        actual, artwork, original, review = read_reviewed_bundle(path, config)
         expected = copy.deepcopy(document)
         expected['source']['videoId'] = video_id
         if actual != expected or artwork != cover:
             if allow_replacement:
                 return []
             raise ValueError('Native phone delivery differs from finalized enrichment')
+        if review != clearance.review_sha256:
+            return []
         result.append({'videoId': video_id, 'path': workflow._windows_path(path)})
     return result

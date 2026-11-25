@@ -2,6 +2,14 @@
 
 This file records **public repository history only**. It does not imply that the Android application, FLAC decoder, or full model pipeline was independently built, tested, or released.
 
+## November 25, 2026: Windows lyric-engine source update
+
+- Added occurrence-specific recovery for sustained vowel releases, clipped words and displaced adjacent entrances.
+- Added role-specific evidence for some repeated and overlapping lead/choir passages, and preview reporting for timed copies of known lead lines.
+- Added a verified instrumental-break delivery guard and stale-analysis refresh for eligible pending native editorial jobs.
+- Added model-free regression cases and a public CI job. See the [reproduction guide](public-bench/ENGINE-REGRESSIONS.md) for the coverage and limits.
+- No private song inputs, model weights, delivery packages or campaign records are included.
+
 ## Unreleased — public-source preparation (November 20, 2026)
 
 - Published a privacy-filtered source-only snapshot of the Android and Windows development project.

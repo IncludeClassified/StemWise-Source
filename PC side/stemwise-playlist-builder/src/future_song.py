@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 from stemwise_engine.workflow_context import report_control_path
 from stemwise_engine.runtime_environment import environment_path, environment_python
 import stemwise_engine.editorial_review as editorial
@@ -17,47 +16,41 @@ import math
 import os
 import re
 import shutil
-import stat
 import subprocess
 import sys
 import time
 import traceback
-import unicodedata
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 from contextlib import contextmanager, nullcontext
 from functools import cached_property, partial
 from stemwise_engine.workflow_records import (
-    ROUTE_STAGES, ROUTE_STATUSES,WorkflowOutcome, OUTCOME_CODES, PRIVATE_REPORT_VERSION,
-    WORKFLOW_OPERATION_ACTIONS, WORKFLOW_OPERATION_ACTION_ORDER, WORKFLOW_OPERATION_STATES,
-    ENDPOINT_REVIEW_ERROR_CODE_PATTERN, FutureSongError, SupersededRecordingError,
+    WorkflowOutcome, OUTCOME_CODES, PRIVATE_REPORT_VERSION,
+    WORKFLOW_OPERATION_ACTION_ORDER, FutureSongError, SupersededRecordingError,
     EndpointReviewSelectionError, ReportSizeLimitExceeded, FutureSongOutcomeError, LyricsContentBlocker,
     ContentEvidenceUnavailable,
-    endpoint_review_error_code, operation_record_is_safe, engine_source_sha256)
+    endpoint_review_error_code, operation_record_is_safe)
 from stemwise_engine.workflow_review import (ReviewPolicy, ReviewOperations, ReviewCompleted,
     EndpointReviewService, EndpointReviewRequest, DisplayReviewService, DisplayReviewInputs, DisplayReviewAuthorityError,
     ValidatedSnapshotService, ValidatedSnapshotRequest)
 
+from stemwise_engine.lyrics_normalize import performed_line_indices
 from stemwise_engine.common import (
     WorkerRetirementError,
     GENERATED_MANIFEST_NAME,
     atomic_write_bytes,
     atomic_write_json,
-    canonical_lyrics_language,
     create_manifested_directory,
     durable_replace,
     diagnostic_code,
     exclusive_process_lock,
     process_lock_descriptor,
-    heavy_worker_stage,
     json_bytes,
     load_config,
     manifested_temporary_directory,
     parse_strict_json_bytes,
-    preflight_staging_space,
     ProcessLockBusyError,
     read_bounded_json,
     read_bounded_regular_bytes,
@@ -74,7 +67,7 @@ from stemwise_engine.common import (
 )
 from stemwise_engine.lyrics_intake import ENDPOINT_REFINEMENT_REASON, compile_draft, parse_lrc, read_role_text
 from stemwise_engine.lyrics_qa import audit_text
-from stemwise_engine.metadata_research import apply_reviewed_metadata, metadata_sha256, validate_public_source_url
+from stemwise_engine.metadata_research import apply_reviewed_metadata, metadata_sha256
 from stemwise_engine.contract import MAX_JSON_BYTES, MAX_SINGLE_ZIP_BYTES
 from stemwise_engine.packages import create_child_zip, read_child, validate_child_zip
 from stemwise_engine.pipeline import StemwisePipeline, _strictly_later_generated_at, require_cleanup_root_disjoint
@@ -477,6 +470,9 @@ class FutureSongWorkflow:
             'delivery': {'reviewEvidenceRetained': True},
             'privateReports': {'workflowOperationLedger': {
                 'actions': list(WORKFLOW_OPERATION_ACTION_ORDER), 'outcomeCodes': sorted(OUTCOME_CODES)}}}
+        for key in ('policyVersion', 'lyrics', 'delivery'):
+            if key in metadata and json_bytes(metadata[key]) != json_bytes(policy[key]):
+                raise FutureSongError(f'{key} differs from the executable engine policy')
         return policy
 
     @staticmethod
@@ -498,24 +494,7 @@ class FutureSongWorkflow:
             'installedSchemaSha256': self.contract_identity['installed-enrichment-v2.schema.json']}
 
     def _song_policy_matches(self, job: dict[str, Any]) -> bool:
-        binding = self._policy_binding()
-        policy = job.get('policy')
-        if policy == binding:
-            return True
-        # Earlier jobs hashed action availability into unchanged processing authority.
-        previous = self._effective_policy({})
-        ledger = previous['privateReports']['workflowOperationLedger']
-        ledger['outcomeCodes'] = sorted(('success', 'keyboard-interrupt', 'future-song-error',
-            'recording-evidence-draft-unavailable', 'unexpected-error', 'authority-unresolved',
-            'lyrics-content-unresolved', 'line-unresolved', 'retryable-technical', 'superseded-recording',
-            'recording-not-selected', 'platform-content-restriction', 'artwork-unavailable',
-            'review-stale', 'model-identity-mismatch', 'publication-conflict', 'bridge-package-too-large'))
-        for actions in (('New', 'Source', 'Artwork', 'RecordingEvidence', 'Validate', 'Finalize', 'Retry'),
-                        ('New', 'Source', 'Artwork', 'RecordingEvidence', 'Validate', 'Finalize', 'Retry', 'ReplaceAnalysis')):
-            ledger['actions'] = list(actions)
-            if policy == {**binding, 'lyricsPolicySha256': hashlib.sha256(json_bytes(previous)).hexdigest()}:
-                return True
-        return False
+        return job.get('policy') == self._policy_binding()
 
     def _job_dir(self, video_id: str) -> Path:
         return validate_generated_path(
@@ -1170,7 +1149,8 @@ class FutureSongWorkflow:
         if (job.get('state') == 'RETRYABLE_TECHNICAL'
                 and (job.get('outcome') or {}).get('sourceStage') == 'recording-evidence'):
             job.pop('outcome')
-            job['state'] = 'NEEDS_LYRICS'
+            has_original = any((directory/'drafts'/name).is_file() for name in ('original.txt', 'original.lrc'))
+            job['state'] = 'WAITING_FOR_EDITORIAL' if has_original else 'NEEDS_LYRICS'
         self._save_job(job)
         self._write_task(job)
         return {**self.summary(job), 'reviewRequired': True}
@@ -1179,31 +1159,17 @@ class FutureSongWorkflow:
         """Unprompted recording comparison before authority approval; never publish."""
         self._require_selected_audio(validate_video_id(video_id))
         job = self._load_job(validate_video_id(video_id))
-        recovery_only = False
+        blocked = None
         try:
             self._require_changed_lyrics_content(job, for_recording_evidence=True)
-        except LyricsContentBlocker:
-            recovery_only = True
+        except LyricsContentBlocker as error:
+            blocked = error
+        recovery_only = blocked is not None
         from stemwise_engine.workflow_states import JobProgress
         if 'RecordingEvidence' not in JobProgress.current(job).rule.actions:
             raise FutureSongError("recording evidence requires pending editorial review")
-        if job.get("state") == "VALIDATION_FAILED":
-            markers = (
-                "activeAlignmentAttemptId",
-                "lastAlignmentAttemptId",
-                "displayReview",
-                "endpointReview",
-                "validation",
-                "delivery",
-                "outcome",
-            )
-            state_path = self._alignment_state_path(video_id)
-            if (
-                any(marker in job for marker in markers)
-                or state_path.exists()
-                or state_path.is_symlink()
-            ):
-                raise FutureSongError("recording evidence requires pending editorial review")
+        if job.get("state") == "VALIDATION_FAILED" and not self._failed_before_alignment(job):
+            raise FutureSongError("recording evidence requires pending editorial review")
         job_dir = self._job_dir(video_id)
         if not any((job_dir/'drafts'/name).exists() or (job_dir/'drafts'/name).is_symlink()
                    for name in ('original.txt', 'original.lrc')):
@@ -1212,10 +1178,21 @@ class FutureSongWorkflow:
             draft = read_role_text(job_dir / 'drafts', 'original')
         except (OSError, ValueError, UnicodeError) as error:
             raise FutureSongError("recording-evidence-draft-unavailable") from error
-        indices = [i for i, line in enumerate(draft.splitlines()) if line.strip()]
+        indices = list(performed_line_indices(draft))
         if not indices:
             raise FutureSongError("recording-evidence-draft-unavailable")
-        self._preflight_drafts(job, roles=frozenset({'original'}))
+        compiled, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
+        from stemwise_engine import spoken_targets
+        plan_path = job_dir/spoken_targets.PLAN_FILE
+        original = next(track for track in compiled['tracks'] if track['kind'] == 'original')
+        if (spoken_targets.needed(original) and not plan_path.exists() and not plan_path.is_symlink()
+                and (blocked is None or blocked.reasons == ('pronunciation-support-unavailable',))):
+            # The raw recognizer consumes only the recording. Its candidate can
+            # inform the review without choosing a pronunciation or changing the sheet.
+            return {**self._propose_audio_lyrics(job, on_start=on_start), 'pronunciationReviewRequired': True}
+        if blocked is not None and not job.get('recordingEvidenceInputs'):
+            # Diagnostic recovery needs a retained primary observation for this dispute.
+            raise blocked
         inputs = self._review_inputs(job, original_only=True)
         environment = self._alignment_worker_environment()
         diagnostic = job_dir / 'recording-evidence-worker.failure.private.txt'
@@ -1349,6 +1326,7 @@ class FutureSongWorkflow:
             raise
         if inputs != self._review_inputs(job, original_only=True):
             raise FutureSongError("recording review inputs changed during recognition")
+        self._prepare_lyric_preview(video_id, Path(audio['path']), audio['sha256'], after_refusal=content_limited)
         if recovery_only:
             return {"videoId": video_id, "state": job["state"], "reviewRequired": True,
                     "reviewInputs": inputs, **comparison}
@@ -1385,7 +1363,7 @@ class FutureSongWorkflow:
                 original = next(track for track in lyrics['tracks'] if track['kind'] == 'original')
                 current_admission(comparison['sourceRecordingDecision'], job_dir=job_dir,
                     evidence_root=evidence_root, video_id=video_id, original=original,
-                    indices=tuple(i for i, line in enumerate(original['text'].splitlines()) if line.strip()),
+                    indices=performed_line_indices(original['text']),
                     audio_sha=audio['sha256'], duration_ms=audio['durationMs'])
                 if comparison['sourceRecordingDecision'] != {
                         'path': evidence_path.relative_to(evidence_root).as_posix(),
@@ -1412,6 +1390,20 @@ class FutureSongWorkflow:
             "videoId": video_id, "state": job["state"], "reviewRequired": True,
             "reviewInputs": self._review_inputs(job, original_only=True), **comparison,
         }
+
+    def _prepare_lyric_preview(self, video_id, audio, audio_sha, *, after_refusal=False):
+        from stemwise_engine.lyric_preview.job import prepare
+        try:
+            return prepare(self._job_dir(video_id), self._alignment_state_path(video_id).parent,
+                           audio, audio_sha, self.config, after_refusal=after_refusal)
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, subprocess.TimeoutExpired) as error:
+            if isinstance(error, InterruptedError):
+                raise
+            self._raise_if_prediction_stopped(error)
+            from stemwise_engine.private_diagnostics import retain_operational
+            retain_operational(self._job_dir(video_id) / 'vocal-overlap.failure.private.txt',
+                               str(error).encode('utf-8', errors='replace'))
+            return True  # This operation already attempted the optional preview.
 
     @staticmethod
     def _has_pending_endpoint_review(job):
@@ -1622,7 +1614,18 @@ class FutureSongWorkflow:
 
 
 
-    def _task_payload(self, job: dict[str, Any], payload: bytes) -> bytes:
+    def _task_payload(self, job: dict[str, Any], payload: bytes, *, timing=None) -> bytes:
+        from stemwise_engine.word_timing_review import needs_release_measurement, readback
+        if timing is None:
+            timing = readback(self, job)
+        if timing is not None:
+            if job.get('state') == 'VALIDATED' and timing.get('unresolvedPublicationFlagCount', 0) > 0:
+                direction = ('Run Validate to check disputed ends on the recording.' if needs_release_measurement(job, timing)
+                             else 'Review the remaining flagged words on the recording before Finalize.')
+                from stemwise_engine.workflow_tasks import timing_review_steps
+                details = timing_review_steps(timing)
+                payload = ('Delivery blocked. ' + direction + '\n' + details + '\n\n').encode('utf-8') + payload
+            payload += ('\nWord timing review\n' + json.dumps(timing, ensure_ascii=False) + '\n').encode('utf-8')
         owner_inputs = self._owner_verification_inputs(job)
         if owner_inputs is not None:
             payload += ('\nOwner verification inputs (pending; only explicit owner confirmation approves):\n' +
@@ -1632,6 +1635,11 @@ class FutureSongWorkflow:
             payload += ('\nRecording evidence inputs (identities only; no content approval):\n' +
                         json.dumps(inputs, ensure_ascii=False, sort_keys=True) + '\n').encode('utf-8')
         from stemwise_engine.workflow_status import recovery_candidates_readback, recovery_failure_readback
+        from stemwise_engine.lyric_preview.job import job_readback
+        preview = job_readback(self._job_dir(job['videoId']), self._alignment_state_path(job['videoId']).parent,
+                               self.runtime, job['videoId'], self._windows_path)
+        if preview is not None:
+            payload += ('\nPrivate lyric preview\n' + json.dumps(preview, ensure_ascii=False) + '\n').encode('utf-8')
         candidates = recovery_candidates_readback(job, self._job_dir(job['videoId']),
             self._alignment_state_path(job['videoId']).parent, self.runtime, self._windows_path)
         if candidates is not None:
@@ -1672,6 +1680,11 @@ class FutureSongWorkflow:
         requirements = workflow_review.requirements_from_draft(directory/'drafts') or (None, None)
         self._write_companion_packet(job)
         endpoint, display = job.get('endpointReview'), job.get('displayReview')
+        from stemwise_engine.word_timing_review import needs_release_measurement, readback
+        timing = readback(self, job)
+        timing_action = None
+        if job['state'] == 'VALIDATED' and (timing or {}).get('unresolvedPublicationFlagCount', 0) > 0:
+            timing_action = 'Validate' if needs_release_measurement(job, timing) else 'Task'
         plan = TaskPlan(video_id, JobState(job['state']), editorial.POLICY_VERSION,
             self._windows_path(self.workspace_root/'SEND_TO_AGENTS.md'), self._windows_path(directory),
             self._windows_path(self.runtime/'children'/f'{video_id}.stemwise.zip'),
@@ -1684,7 +1697,7 @@ class FutureSongWorkflow:
             audio_candidate=(self._windows_path(validate_generated_path(directory,
                 directory/job['audioFirstCandidate']['candidate']['path'], workspace_root=self.workspace_root))
                 if isinstance(job.get('audioFirstCandidate'), dict) else None),
-            progress=JobProgress.current(job), next_action=('Validate'
+            progress=JobProgress.current(job), next_action=timing_action or ('Validate'
                 if (directory/'song-attempt.private.json').is_file()
                 and self._song_ledger(video_id).blocking_disposition
                 and job['state'] not in {'VALIDATED', 'DELIVERED', 'ANALYSIS_REPLACEMENT_PENDING'} else None))
@@ -1693,7 +1706,7 @@ class FutureSongWorkflow:
             payload += (f'\nBridge budget cannot fit this complete song. For owner-authorized manual import only, '
                         f'use Retry {plan.selector} -ManualImport. Keep the complete ZIP in Ready to Import; '
                         'the bridge limit remains enforced.\n').encode('utf-8')
-        payload = self._task_payload(job, payload)
+        payload = self._task_payload(job, payload, timing=timing)
         path = directory/'AGENT_TASK.txt'
         if path.is_file() and read_bounded_regular_bytes(path, max_bytes=MAX_JSON_BYTES, root=directory) == payload:
             return
@@ -1708,7 +1721,7 @@ class FutureSongWorkflow:
             "url": canonical_url(video_id),
             "submittedUrl": canonical_url(video_id),
             "state": "NEW",
-            "deliveryAllowed": True,
+            "deliveryAllowed": False,
             "qualificationClaimsAllowed": False,
             "createdAt": utc_now(),
             "updatedAt": utc_now(),
@@ -1855,7 +1868,11 @@ class FutureSongWorkflow:
             None,
         )
         repair_primary_music = False
+        refresh_manual_subtitles = False
         existing_usable = False
+        reuse_exact_repair = False
+        surface_names = ("youtubeMusic", "normalYouTube")
+        primary_relationship = "lyric-reference-for-native-recording" if job.get("recordingInput") else "exact-package-id"
         if existing_record is not None:
             draft = self._job_dir(video_id) / "drafts"
             draft_present = (
@@ -1873,20 +1890,38 @@ class FutureSongWorkflow:
                 package_video_id=video_id,
             )
             music_result = (existing_record.get("youtubeMusic") or {}).get("result") or {}
+            normal = existing_record.get("normalYouTube") or {}
+            # Older acquisitions stopped after the provider's first twelve languages.
+            refresh_manual_subtitles = (
+                job["state"] not in TERMINAL_STATES and "manualSubtitleLanguages" not in normal
+                and any(isinstance(row, dict) and row.get("type") == "manual-subtitle"
+                        for row in normal.get("records") or ())
+            )
             repair_primary_music = (
                 source_video_id == video_id and job["state"] not in TERMINAL_STATES
                 and music_result.get("decision") == "skipped-existing"
                 and not music_result.get("candidatePath")
             )
-            if (existing_usable and not repair_primary_music
+            if (existing_usable and not repair_primary_music and not refresh_manual_subtitles
                     and source_acquisition.source_record_complete(existing_record, self._job_dir(video_id).resolve())):
-                result = self.summary(job)
-                result["sourceAction"] = {
-                    "result": "already-staged",
-                    "videoId": source_video_id,
-                    "associationStatus": existing_record.get("associationStatus"),
-                }
-                return result
+                # A completed exact-ID retry may have left the original failed check in the summary.
+                reuse_exact_repair = (
+                    source_video_id == video_id and job["state"] not in TERMINAL_STATES
+                    and existing_record.get("relationshipToPackage") in {"exact-package-id", primary_relationship}
+                    and existing_record["normalYouTube"].get("exactVideoIdConfirmed") is True
+                    and existing_record["normalYouTube"].get("exactUrl") == canonical_url(video_id)
+                    and existing_record["youtubeMusic"].get("exactUrl") == f"https://music.youtube.com/watch?v={video_id}"
+                    and (existing_record.get("relationshipToPackage") != primary_relationship
+                         or sources.get("exactSurfaceChecks") != {key: existing_record[key] for key in surface_names})
+                )
+                if not reuse_exact_repair:
+                    result = self.summary(job)
+                    result["sourceAction"] = {
+                        "result": "already-staged",
+                        "videoId": source_video_id,
+                        "associationStatus": existing_record.get("associationStatus"),
+                    }
+                    return result
         if job["state"] in TERMINAL_STATES:
             raise FutureSongError(
                 "A completed job cannot repair or accept lyric-source evidence; "
@@ -1898,14 +1933,17 @@ class FutureSongWorkflow:
         if not review_path.is_file():
             raise FutureSongError("agent-review.json is missing; the job cannot stage a source")
         review = read_json(review_path)
-        if source_video_id == video_id:
+        if reuse_exact_repair:
+            collected = {**existing_record, "relationshipToPackage": primary_relationship}
+        elif source_video_id == video_id:
             candidate_dir = self._job_dir(video_id) / "candidates" / source_video_id
             candidate_dir_existed = candidate_dir.exists() or candidate_dir.is_symlink()
             collected = source_acquisition.collect_source_evidence(self.candidate_context(video_id),
-                video_id, source_video_id, relationship="exact-package-id",
-                retained_normal=existing_record["normalYouTube"] if repair_primary_music and existing_usable else None,
+                video_id, source_video_id, relationship=primary_relationship,
+                retained_normal=existing_record["normalYouTube"] if repair_primary_music and existing_usable
+                    and not refresh_manual_subtitles else None,
             )
-            if repair_primary_music and existing_usable and not source_acquisition.source_record_has_usable_evidence(
+            if repair_primary_music and existing_usable and not refresh_manual_subtitles and not source_acquisition.source_record_has_usable_evidence(
                 {**collected, "normalYouTube": None}, draft_present=False,
                 job_root=self._job_dir(video_id).resolve(), package_video_id=video_id,
             ):
@@ -2003,6 +2041,8 @@ class FutureSongWorkflow:
         else:
             evidence[evidence.index(existing_record)] = collected
             source_result = "restaged"
+        if source_video_id == video_id:
+            sources["exactSurfaceChecks"] = {key: collected[key] for key in surface_names}
         sources["generatedAt"] = utc_now()
         source_acquisition.refresh_sources_availability(sources, self._job_dir(video_id) / "drafts")
         atomic_write_json(sources_path, sources)
@@ -2025,10 +2065,19 @@ class FutureSongWorkflow:
             lambda: self._select_artwork_action(video_id, url),
         )
 
+    def _failed_before_alignment(self, job):
+        if job.get('state') != 'VALIDATION_FAILED':
+            return False
+        markers = ('activeAlignmentAttemptId', 'lastAlignmentAttemptId', 'displayReview',
+                   'endpointReview', 'validation', 'delivery', 'outcome')
+        state_path = self._alignment_state_path(job['videoId'])
+        return not (any(key in job for key in markers) or state_path.exists() or state_path.is_symlink())
+
     def _select_artwork_action(self, video_id: str, url: str) -> dict[str, Any]:
         video_id = validate_video_id(video_id)
         job = self._recover_artwork_repair(self._load_job(video_id))
-        if job.get("state") not in {"WAITING_FOR_EDITORIAL", "NEEDS_LYRICS", "DELIVERED"}:
+        if (job.get("state") not in {"WAITING_FOR_EDITORIAL", "NEEDS_LYRICS", "DELIVERED"}
+                and not self._failed_before_alignment(job)):
             raise FutureSongError(
                 "Artwork is allowed only before the first alignment or for an intact delivery"
             )
@@ -2273,11 +2322,19 @@ class FutureSongWorkflow:
         return self.source.create_selected_artwork(info, source_id, destination)
 
     @staticmethod
-    def _automatic_source_research_complete(sources: dict[str, Any]) -> bool:
-        from stemwise_engine.source_acquisition import source_surface_checks_complete, counterpart_search_complete
+    def _automatic_source_research_complete(sources: dict[str, Any], *, reviewed_job_dir=None) -> bool:
+        from stemwise_engine.source_acquisition import (source_surface_checks_complete,
+            counterpart_search_complete, source_record_ready_for_review)
         def researched(record):
-            return (source_surface_checks_complete(record, allow_unavailable_automatic_captions=True)
-                and record['youtubeMusic']['result']['decision'] in {'acquired', 'not-found'})
+            if not isinstance(record, dict):
+                return False
+            if source_surface_checks_complete(record, allow_unavailable_automatic_captions=True):
+                return record['youtubeMusic']['result']['decision'] in {'acquired', 'not-found'}
+            music = record.get('youtubeMusic')
+            result = music.get('result') if isinstance(music, dict) else None
+            return (reviewed_job_dir is not None and isinstance(result, dict)
+                and result.get('decision') == 'not-found'
+                and source_record_ready_for_review(record, reviewed_job_dir))
         exact = sources.get("exactSurfaceChecks")
         if not researched(exact):
             return False
@@ -2437,17 +2494,16 @@ class FutureSongWorkflow:
     def _write_companion_packet(self, job):
         from stemwise_engine.companion_review import companion_review_packet
         from stemwise_engine.editorial_admission import available_lyrics
-        from stemwise_engine.lyrics_intake import LyricsInputError
         directory = self._job_dir(job['videoId'])
         checkpoint = self.runtime/'work/checkpoints'/f"{job['videoId']}.json"
-        if not checkpoint.is_file() or not (directory/'drafts/lyrics.meta.json').is_file():
-            return
-        audio = read_bounded_json(checkpoint, max_bytes=MAX_JSON_BYTES, root=self.runtime).get('originalAudio')
-        if not isinstance(audio, dict):
-            return
         packet = {'formatVersion': 1, 'state': 'original-authority-unavailable',
             'nextAction': 'Establish the current original content and recording before companion review.'}
         try:
+            if not (directory/'drafts/lyrics.meta.json').is_file():
+                raise FileNotFoundError('Original metadata is unavailable')
+            audio = read_bounded_json(checkpoint, max_bytes=MAX_JSON_BYTES, root=self.runtime).get('originalAudio')
+            if not isinstance(audio, dict):
+                raise FutureSongError('Original audio identity is unavailable')
             _, capabilities = available_lyrics(self, job, audio)
             if capabilities['content'] == 'admitted':
                 original = self._preflight_drafts(job, roles=frozenset({'original'}))[0]['tracks'][0]
@@ -2461,16 +2517,17 @@ class FutureSongWorkflow:
                     if hashlib.sha256(json_bytes(candidate)).hexdigest() != binding['candidateSha256']:
                         raise FutureSongError('companion-input-changed-during-packet')
                     candidates[kind], bindings[kind] = candidate, binding
-                packet = companion_review_packet(original, candidates, bindings, video_id=job['videoId'])
-                packet['recordingIdentity'] = {key: audio[key] for key in ('sha256', 'byteCount', 'durationMs')}
-                packet['contentEvidence'] = {key: capabilities['contentAdmission'][key]
+                candidate_packet = companion_review_packet(original, candidates, bindings, video_id=job['videoId'])
+                candidate_packet['recordingIdentity'] = {key: audio[key] for key in ('sha256', 'byteCount', 'durationMs')}
+                candidate_packet['contentEvidence'] = {key: capabilities['contentAdmission'][key]
                     for key in ('evidence', 'adjudication', 'spokenTargets', 'ownerVerification')
                     if key in capabilities['contentAdmission']}
-                packet['sourcesSha256'] = sha256_file(directory/'sources.json')
+                candidate_packet['sourcesSha256'] = sha256_file(directory/'sources.json')
                 document, _ = read_child(self.runtime/'children'/f"{job['videoId']}.stemwise.zip", self._runtime_config())
-                packet['context'] = {'packageMetadata': document['metadata'],
+                candidate_packet['context'] = {'packageMetadata': document['metadata'],
                     'authority': 'Package metadata is context, not independent meaning or pronunciation evidence.'}
-        except (FutureSongError, LyricsInputError, FileNotFoundError):
+                packet = candidate_packet
+        except (ValueError, FileNotFoundError, KeyError):
             pass  # Original authority is pending; never manufacture a reviewable original.
         path = directory/'companion-review-inputs.json'
         payload = json_bytes(packet, pretty=True)
@@ -2553,9 +2610,10 @@ class FutureSongWorkflow:
         review = read_bounded_json(
             job_dir / "agent-review.json", max_bytes=MAX_JSON_BYTES, root=job_dir
         )
-        sources = read_bounded_json(
+        sources_bytes = read_bounded_regular_bytes(
             job_dir / "sources.json", max_bytes=MAX_JSON_BYTES, root=job_dir
         )
+        sources = parse_strict_json_bytes(sources_bytes)
         if not isinstance(review, dict) or not isinstance(sources, dict):
             raise FutureSongError("authority inputs are invalid")
         available_ids = {
@@ -2570,8 +2628,20 @@ class FutureSongWorkflow:
             video_id=video_id,
             available_lyric_source_ids=available_ids,
         )
-        if outcome != "pending" and not self._automatic_source_research_complete(sources):
+        reviewed_job_dir = job_dir if outcome == 'resolved' and review.get('originalReviewed') is True else None
+        if outcome != "pending" and not self._automatic_source_research_complete(sources, reviewed_job_dir=reviewed_job_dir):
             raise FutureSongError("automatic source research is not complete")
+        if outcome == 'lyrics-absent':
+            from stemwise_engine.source_acquisition import counterpart_search_complete
+            finding = review['recordingAbsenceReview']
+            checkpoint = self._pipeline().load_checkpoint(video_id)
+            audio = (checkpoint or {}).get('originalAudio', {})
+            if (not counterpart_search_complete(sources.get('counterpartDiscovery') or {})
+                    or finding['sourcesSha256'] != hashlib.sha256(sources_bytes).hexdigest()
+                    or finding['durationMs'] != audio.get('durationMs')
+                    or finding['audioSha256'] != audio.get('sha256')
+                    or any((job_dir/'drafts'/name).is_file() for name in ('original.txt','original.lrc'))):
+                raise FutureSongError('Absence review does not match completed research, retained wording or current recording')
         return outcome, review, sources
 
     def _preflight_drafts(self, job: dict[str, Any], *, roles: frozenset[str] | None = None) -> tuple[dict[str, Any], bool, bool]:
@@ -2766,6 +2836,29 @@ class FutureSongWorkflow:
                 return
             if (not outcome.get("draftSha256")
                     or outcome["draftSha256"] == self._recording_draft_sha(job)):
+                if reasons == ['recording-adjudication-stale'] and not for_recording_evidence:
+                    from stemwise_engine.lyrics_alignment import AlignmentWorkspace, _plain_original
+                    from stemwise_engine.lyrics_align_pc import _require_no_unchanged_content_block
+                    video_id = job['videoId']
+                    workspace = AlignmentWorkspace(self.root, workspace_root=self.workspace_root)
+                    path = workspace.state_path(video_id)
+                    prior = read_bounded_json(path, max_bytes=MAX_JSON_BYTES, root=workspace.job_dir(video_id)) if path.is_file() else {}
+                    binding = outcome.get('contentBinding')
+                    if (isinstance(binding, dict) and prior.get('contentBinding') == binding
+                            and prior.get('status') == 'lyrics-content-unresolved' and prior.get('reasons') == reasons
+                            and isinstance(job.get('lastAlignmentAttemptId'), str)
+                            and prior.get('attemptId') == job['lastAlignmentAttemptId']):
+                        audio = self._completed_analysis_audio(self._pipeline(), video_id)
+                        backup = read_bounded_regular_bytes(workspace.current_backup_path(video_id),
+                            max_bytes=MAX_JSON_BYTES, root=workspace.canonical_plain)
+                        canonical = hashlib.sha256(backup).hexdigest()
+                        draft, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
+                        original = _plain_original(draft)
+                        if (audio['sha256'] == binding.get('audioSha256') and canonical == binding.get('canonicalPlainSha256')
+                                and _plain_original(parse_strict_json_bytes(backup)) == original):
+                            _require_no_unchanged_content_block(prior, canonical, audio['sha256'],
+                                workspace=workspace, video_id=video_id, original=original)
+                            return
                 if set(reasons) == {'content-sequence-uncertain'} and not for_recording_evidence:
                     from stemwise_engine.lyric_content import source_recording_admission
                     lyrics, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
@@ -2773,18 +2866,17 @@ class FutureSongWorkflow:
                     audio = self._completed_analysis_audio(self._pipeline(), job['videoId'])
                     admission = source_recording_admission(self._job_dir(job['videoId']),
                         self._alignment_state_path(job['videoId']).parent, job['videoId'], original,
-                        tuple(i for i, line in enumerate(original['text'].splitlines()) if line.strip()),
+                        performed_line_indices(original['text']),
                         self._recording_draft_sha(job), audio['sha256'])
                     if admission is not None:
                         return
                 if outcome.get('reasons') == ['pronunciation-support-unavailable']:
                     from stemwise_engine.spoken_targets import load
-                    from stemwise_engine.lyrics_normalize import physical_lines
                     lyrics, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
                     original = next(track for track in lyrics['tracks'] if track['kind'] == 'original')
                     binding = outcome.get('contentBinding')
                     indices = (binding['sourcePhysicalIndices'] if isinstance(binding, dict)
-                               else [i for i, line in enumerate(physical_lines(original['text'])) if line.strip()])
+                               else list(performed_line_indices(original['text'])))
                     audio = self._completed_analysis_audio(self._pipeline(), job['videoId'])
                     if load(self._job_dir(job['videoId']), job['videoId'], original, indices, audio['sha256']) is not None:
                         return  # Independent current recognition still owns content admission.
@@ -3203,6 +3295,7 @@ class FutureSongWorkflow:
 
         attempt_id = self._validate_alignment_attempt_id(attempt_id)
         state_path = self._alignment_state_path(video_id)
+        preview_attempted = self._prepare_lyric_preview(video_id, analysis_audio, expected_mix_sha256)
         failure_path = state_path.with_name(f'attempt-{attempt_id}.failure.private.txt')
         failure_path.unlink(missing_ok=True)
         from stemwise_engine.private_diagnostics import preserve_failure
@@ -3269,6 +3362,8 @@ class FutureSongWorkflow:
                     )
                     atomic_write_json(state_path, state)
                     status = "retryable-technical"
+            if not preview_attempted and status in {"lyrics-content-unresolved", "line-unresolved"}:
+                self._prepare_lyric_preview(video_id, analysis_audio, expected_mix_sha256, after_refusal=True)
             if status == "lyrics-content-unresolved":
                 reasons = workflow_diagnostics._diagnostic_codes(state.get("reasons"))
                 raise LyricsContentBlocker(*(reasons or ["content-evidence-unavailable"]),
@@ -3301,6 +3396,8 @@ class FutureSongWorkflow:
         ) != performed_structure_review:
             raise FutureSongError("lyrics timing ignored the performed structure review")
         if state.get('status') in {'committed-mixed', 'committed-lines', 'line-unresolved'}:
+            if not preview_attempted:
+                self._prepare_lyric_preview(video_id, analysis_audio, expected_mix_sha256, after_refusal=True)
             raise FutureSongOutcomeError('LINE_UNRESOLVED', 'line-unresolved')
         if state.get('status') != 'committed-words':
             raise FutureSongError('lyrics timing state is not committed')
@@ -3856,6 +3953,21 @@ class FutureSongWorkflow:
 
     def _validate_action_normal(self, video_id: str) -> dict[str, Any]:
         job = self._load_job(video_id)
+        review_path = self._job_dir(video_id)/'agent-review.json'
+        if review_path.is_file() and job.get('state') in {'WAITING_FOR_EDITORIAL','NEEDS_LYRICS',
+                'AUTHORITY_UNRESOLVED','LYRICS_ABSENT','LINE_UNRESOLVED','VALIDATION_FAILED','RETRYABLE_TECHNICAL'}:
+            review_bytes = read_bounded_regular_bytes(review_path, max_bytes=MAX_JSON_BYTES, root=review_path.parent)
+            reviewed = parse_strict_json_bytes(review_bytes)
+            if reviewed.get('authorityOutcome') == 'lyrics-absent':
+                outcome, current, _ = self._validate_authority_outcome(job)
+                if outcome != 'lyrics-absent' or current != reviewed:
+                    raise FutureSongError('The absence decision changed during validation')
+                job['state'] = 'LYRICS_ABSENT'
+                job['outcome'] = {'code': 'lyrics-absent', 'reviewSha256': hashlib.sha256(review_bytes).hexdigest()}
+                job.pop('validation', None)
+                self._save_job(job)
+                self._write_task(job)
+                return self.summary(job)
         endpoint = job.get('endpointReview')
         if (job.get('state') in {'VALIDATED', 'DELIVERED'}
                 and isinstance(endpoint, dict) and endpoint.get('result') != 'accepted'):
@@ -3872,6 +3984,14 @@ class FutureSongWorkflow:
                 and isinstance(endpoint, dict) and endpoint.get('result') == 'accepted'
                 and job['capabilityRefresh'].get('previousValidation', {}).get('kind') == 'capability-completion'):
             return self._validate_available_capabilities(job)
+        if job.get('state') == 'DELIVERED' and self.source_context is not None:
+            authority = job.get('validation',{}).get('capabilities',{}).get('timingAuthority') or {}
+            if authority.get('kind') == 'reviewed-recording-acoustic-words':
+                from stemwise_engine.word_timing_review import boundary_recovery_recipe
+                if authority.get('boundaryRecoveryRecipe') != boundary_recovery_recipe():
+                    from stemwise_engine.original_delivery import delivered_capability_inputs
+                    job['capabilityRefresh'] = delivered_capability_inputs(self,job)[1]
+                    return self._validate_available_capabilities(job)
         if (job.get('state') == 'DELIVERED'
                 and self._validated_snapshot_is_current(job, require_delivery=True)):
             self._write_task(job)
@@ -3897,7 +4017,30 @@ class FutureSongWorkflow:
             return self._validate_available_capabilities(job)
         if self._validated_snapshot_is_current(job) or job.get('state') in TERMINAL_STATES:
             return self._validate_enhancements_action(video_id)
-        audio = self._completed_analysis_audio(self._pipeline(), video_id)
+        pipeline = self._pipeline()
+        withheld = job['state'] == 'LINE_UNRESOLVED' and job.get('withheldPublication')
+        pending_editorial = job['state'] == 'WAITING_FOR_EDITORIAL' and not job.get('validation') and not job.get('delivery')
+        if self.source_context is not None and (withheld or pending_editorial):
+            previous = pipeline.load_checkpoint(video_id)
+            if (not isinstance(previous, dict) or previous.get('status') != 'complete'
+                    or previous.get('videoId') != video_id
+                    or previous.get('recordingInput') != self.recording.identity):
+                raise FutureSongError('Saved analysis does not match the selected native recording')
+            if withheld:
+                reviewed_pcm = (job.get('validation') or {}).get('audioSha256')
+                if not reviewed_pcm or (previous.get('originalAudio') or {}).get('sha256') != reviewed_pcm:
+                    raise FutureSongError('Withdrawn song analysis does not match the reviewed PCM')
+            if not self.source.checkpoint_matches(pipeline, previous):
+                item = {'videoId': video_id, 'title': job.get('title') or video_id,
+                        'position': previous.get('position')}
+                if self._process_song(pipeline, item) not in {'complete', 'skipped'}:
+                    raise FutureSongError('Updating native song analysis failed. Inspect the analysis attempt.')
+        audio = self._completed_analysis_audio(pipeline, video_id)
+        if job.get('state') == 'LINE_UNRESOLVED' and not job.get('endpointReview'):
+            from stemwise_engine.editorial_admission import available_lyrics, complete_original_word_placement
+            projection, _ = available_lyrics(self, job, audio)
+            if complete_original_word_placement(projection):
+                return self._validate_available_capabilities(job)
         if isinstance(job.get('displayReview'), dict):
             from stemwise_engine.editorial_admission import available_lyrics, complete_original_word_timing
             projection, _ = available_lyrics(self, job, audio)
@@ -3957,11 +4100,11 @@ class FutureSongWorkflow:
             identity['ownerWordPrediction'] = prediction
             try:
                 from stemwise_engine.lyrics_align_pc import load_owner_word_prediction
-                from stemwise_engine.lyrics_alignment import AlignmentWorkspace, _physical_lines
+                from stemwise_engine.lyrics_alignment import AlignmentWorkspace
                 audio = self._pipeline().load_checkpoint(video_id)['originalAudio']
                 compiled, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
                 original = next(track for track in compiled['tracks'] if track['kind'] == 'original')
-                indices = tuple(i for i, line in enumerate(_physical_lines(original['text'])) if line.strip())
+                indices = performed_line_indices(original['text'])
                 load_owner_word_prediction(Path(self.config['projectDir']),
                     AlignmentWorkspace(self.root, workspace_root=self.workspace_root), video_id, prediction,
                     original=original, indices=indices, canonical_sha=hashlib.sha256(json_bytes(compiled)).hexdigest(),
@@ -3984,12 +4127,12 @@ class FutureSongWorkflow:
     def _owner_verification_inputs(self, job):
         """Expose current input hashes without writing or implying an owner decision."""
         from stemwise_engine.lyrics_intake import read_recording_draft
-        from stemwise_engine.lyrics_alignment import build_lexical_occurrence_mapping, lexical_mapping_identity, _physical_lines
+        from stemwise_engine.lyrics_alignment import build_lexical_occurrence_mapping, lexical_mapping_identity
         from stemwise_engine.spoken_targets import load
         try:
             compiled, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
             original = next(track for track in compiled['tracks'] if track['kind'] == 'original')
-            indices = tuple(i for i, line in enumerate(_physical_lines(original['text'])) if line.strip())
+            indices = performed_line_indices(original['text'])
             audio = self._pipeline().load_checkpoint(job['videoId'])['originalAudio']
             _, draft_sha, _, metadata_sha = read_recording_draft(self._job_dir(job['videoId']))
             mapping = build_lexical_occurrence_mapping(job['videoId'], original, indices)
@@ -4012,11 +4155,11 @@ class FutureSongWorkflow:
         return self._completed_analysis_audio(self._pipeline(), job['videoId'])
 
     def _owner_prediction_inputs(self, job, audio):
-        from stemwise_engine.lyrics_alignment import AlignmentWorkspace, _physical_lines
+        from stemwise_engine.lyrics_alignment import AlignmentWorkspace
         from stemwise_engine.lyric_content import owner_workspace_admission
         compiled, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
         original = next(track for track in compiled['tracks'] if track['kind'] == 'original')
-        indices = tuple(i for i, line in enumerate(_physical_lines(original['text'])) if line.strip())
+        indices = performed_line_indices(original['text'])
         canonical_sha = hashlib.sha256(json_bytes(compiled)).hexdigest()
         workspace = AlignmentWorkspace(self.root, workspace_root=self.workspace_root)
         admission = owner_workspace_admission(workspace, job['videoId'], original, indices,
@@ -4133,11 +4276,11 @@ class FutureSongWorkflow:
             raise ContentEvidenceUnavailable('content-evidence-changed') from error
 
     def _available_owner_prediction(self, job, original, audio, *, validate_reviews=True):
-        from stemwise_engine.lyrics_alignment import AlignmentWorkspace, _physical_lines
+        from stemwise_engine.lyrics_alignment import AlignmentWorkspace
         from stemwise_engine.lyrics_align_pc import load_owner_word_prediction
         compiled, _, _ = self._preflight_drafts(job, roles=frozenset({'original'}))
         canonical_sha = hashlib.sha256(json_bytes(compiled)).hexdigest()
-        indices = tuple(i for i, line in enumerate(_physical_lines(original['text'])) if line.strip())
+        indices = performed_line_indices(original['text'])
         workspace = AlignmentWorkspace(self.root, workspace_root=self.workspace_root)
         candidate, _, _, _ = load_owner_word_prediction(Path(self.config['projectDir']), workspace,
             job['videoId'], job['ownerWordPrediction'], original=original, indices=indices,
@@ -4338,11 +4481,12 @@ class FutureSongWorkflow:
             raise ArtworkUnavailableError('mandatory-artwork-invalid')
         require_usable_analysis(document['analysis'], audio['durationMs'])
         blockers = []
-        projection, capabilities = available_lyrics(self, job, audio, on_blocker=blockers.append)
+        projection, capabilities = available_lyrics(self, job, audio, on_blocker=blockers.append,
+            prepare_acoustic=bool(audio.get('path')))
         from stemwise_engine.editorial_admission import require_completed_lyrics
         try:
             require_completed_lyrics(projection, duration_ms=audio['durationMs'], endpoint_review=job.get('endpointReview'))
-        except WorkflowInputError as error:
+        except WorkflowInputError:
             if blockers:
                 raise blockers[0]
             raise
@@ -4442,7 +4586,7 @@ class FutureSongWorkflow:
             schema_sha = job['policy']['schemaSha256']
             if require_delivery:
                 temporary = self.analysis_temp/video_id
-                if (job['state'] != 'DELIVERED' or (temporary.exists() or temporary.is_symlink())
+                if (job['state'] not in {'DELIVERY_PUBLICATION_PENDING', 'DELIVERED'} or (temporary.exists() or temporary.is_symlink())
                         and not allow_pending_delivery_cleanup
                         and not self._has_pending_endpoint_review(job)
                         and not (isinstance(job.get('recordingEvidenceInputs'), dict)
@@ -4483,6 +4627,15 @@ class FutureSongWorkflow:
                     and endpoint.get('result') != 'accepted'):
                 return self._validate_endpoint_review(job)
             if self._validated_snapshot_is_current(job):
+                # A complete private candidate may still have disputed releases.
+                # An explicit Validate prepares the missing acoustic evidence;
+                # Status stays read-only and a completed measurement is reused.
+                authority = job.get('validation', {}).get('capabilities', {}).get('timingAuthority', {})
+                if job.get('state') == 'VALIDATED' and authority.get('kind') == 'reviewed-recording-acoustic-words':
+                    from stemwise_engine.word_timing_review import needs_release_measurement, readback
+                    report = readback(self, job) or {}
+                    if needs_release_measurement(job, report):
+                        return self._validate_available_capabilities(job)
                 self._write_task(job)
                 return self.summary(job)
             if job.get("state") in TERMINAL_STATES:
@@ -4604,25 +4757,6 @@ class FutureSongWorkflow:
 
 
 
-    def _cleanup_completed_rollback(self, job: dict[str, Any]) -> None:
-        if job.get("state") != "DELIVERED" or not isinstance(job.get("delivery"), dict):
-            return
-        deliveries = self.source.complete_delivery(self, job)
-        video_id = validate_video_id(job["videoId"])
-        destination = self.ready / f"{video_id}.stemwise.zip"
-        if sha256_file(destination) != job["delivery"].get("sha256"):
-            raise FutureSongError("completed rollback cleanup requires the current delivery")
-        from stemwise_engine.original_delivery import cleanup_replacement_rollback
-        cleanup_replacement_rollback(self, video_id)
-        for item in deliveries:
-            if item['videoId'] != video_id:
-                cleanup_replacement_rollback(self, item['videoId'])
-        if self.source.result_binding(job) is not None and 'nativePublication' in job:
-            job.pop('nativePublication')
-            self._save_job(job)
-        from stemwise_engine.job_ownership import cleanup_analysis_replacement
-        cleanup_analysis_replacement(self, job)
-
     def _result_binding(self, job):
         return self.source.result_binding(job)
 
@@ -4690,7 +4824,7 @@ class FutureSongWorkflow:
         return self.summary(job)
 
 
-    def summary(self, job: dict[str, Any], *, verify_delivery: bool = True) -> dict[str, Any]:
+    def _project_current_job(self, job):
         from stemwise_engine.workflow_status import project_job_summary
         from stemwise_engine.job_ownership import inspect_analysis_replacement
         replacement_busy = False
@@ -4712,19 +4846,34 @@ class FutureSongWorkflow:
         result = project_job_summary(job, workspace_root=self.workspace_root, root=self.root,
             runtime=self.runtime, job_dir=self._job_dir(job['videoId']),
             recording_evidence_inputs=self._recording_evidence_inputs(job), review_attempts=review_attempts)
+        result['exportReady'] = False
         if job.get('state') in {'VALIDATED', 'DELIVERED'}:
+            child = self.runtime/'children'/f"{job['videoId']}.stemwise.zip"
+            public_youtube = job['state'] == 'DELIVERED' and self.source_context is None
+            reason = 'validation-incomplete-or-stale'
             try:
-                from stemwise_engine.editorial_admission import require_completed_lyrics
-                document, _ = read_child(self.runtime/'children'/f"{job['videoId']}.stemwise.zip", self._runtime_config())
-                require_completed_lyrics(document['lyrics'], duration_ms=document['analysis']['durationMs'],
-                    endpoint_review=job.get('endpointReview'))
+                if public_youtube and not (self.ready/child.name).is_file():
+                    reason = 'delivery-file-unavailable'
+                    raise FutureSongError('The completed public song ZIP is missing')
+                from stemwise_engine.delivery_timing import require_delivery_timing
+                document, _ = read_child(child, self._runtime_config())
+                reason = 'delivery-timing-unresolved'
+                timing_review = require_delivery_timing(self, job, document)
+                result['wordTimingReview'] = timing_review
+                result['timingCoverage'] = self._timing_coverage(timing_review)
+                if public_youtube:
+                    from stemwise_engine.original_delivery import verify_original_delivery, require_selected_original
+                    reason = 'delivery-integrity-failed'
+                    require_selected_original(self, document)
+                    verify_original_delivery(self, job, expected_review=timing_review['timingDecisionSha256'])
             except (OSError, ValueError, KeyError, TypeError) as error:
                 result.pop('delivery', None)
-                result.update(sourceState=job['state'], state='STATUS_ERROR', statusError=(
-                    error.failure_details['reasonCode'] if isinstance(error, WorkflowInputError)
-                    else 'validation-incomplete-or-stale'))
+                result.update(deliveryAllowed=False, sourceState=job['state'], state='STATUS_ERROR', statusError=reason)
                 if isinstance(error, WorkflowInputError):
+                    result['statusError'] = error.failure_details['reasonCode']
                     result['failureDetails'] = dict(error.failure_details)
+                elif isinstance(error, FutureSongError) or reason == 'delivery-timing-unresolved':
+                    result['blocker'] = str(error)
         if replacement_busy:
             result.update(permittedActions=[], nextAction='Status')
         elif replacement_pending:
@@ -4736,20 +4885,25 @@ class FutureSongWorkflow:
         if ledger_path.is_file():
             from stemwise_engine.alignment_attempt import SongAttemptLedger
             ledger = SongAttemptLedger(ledger_path)
-            result['attemptAccounting'] = {'activeSeconds': ledger.elapsed(),
-                'recoverySeconds': ledger.elapsed('recovery'), 'waitSeconds': ledger.record['waitSeconds']}
+            receipt = ledger.record.get('lastObservedAt', ledger.record.get('activeSince'))
+            active = ledger.record.get('activeSince') is not None
+            wait = ledger.record.get('waitSince')
+            result['attemptAccounting'] = {'activeSeconds': ledger.elapsed(at=receipt),
+                'recoverySeconds': ledger.elapsed('recovery', at=receipt),
+                'waitSeconds': ledger.record['waitSeconds'] + (max(0., receipt - wait) if wait is not None else 0.),
+                'unobservedSeconds': ledger.record.get('unobservedSeconds', 0.)
+                    + (max(0., ledger.clock() - receipt) if active else 0.)}
             if ledger.blocking_disposition:
                 result['disposition'] = ledger.blocking_disposition
         if getattr(self, 'source_context', None) is not None:
             deliveries = []
-            if (job.get('state') == 'DELIVERED' and job.get('nativePublication') == {
-                    'phase': 'pending', 'packageSha256': job.get('delivery', {}).get('sha256')}):
+            if result['state'] == 'DELIVERY_PUBLICATION_PENDING':
                 result.pop('delivery', None)
-                result.update(state='DELIVERY_PUBLICATION_PENDING', nextAction='Status' if replacement_busy else 'Finalize',
+                result.update(state='DELIVERY_PUBLICATION_PENDING', deliveryAllowed=False, nextAction='Status' if replacement_busy else 'Finalize',
                     recordingKey=self.key, recordingInput=self.recording.identity,
                     resultScope='recording-enrichment', phoneDeliveryAllowed=False, phoneDeliveries=[])
-                return result
-            if result['state'] == 'DELIVERED' and verify_delivery:
+                return job, result
+            if result['state'] == 'DELIVERED':
                 from stemwise_engine.native_delivery import current
                 try:
                     deliveries = current(self, job)
@@ -4758,51 +4912,30 @@ class FutureSongWorkflow:
                 else:
                     if not deliveries:
                         from stemwise_engine.native_delivery import _selected_ids
-                        result['state'] = 'DELIVERY_AUDIO_REQUIRED' if _selected_ids(self) else 'DELIVERY_NOT_SELECTED'
+                        result['state'] = 'DELIVERY_AUDIO_REQUIRED' if _selected_ids(self, verify_media=False) else 'DELIVERY_NOT_SELECTED'
                         result.pop('delivery', None)
             result.update(recordingKey=self.key, recordingInput=self.recording.identity,
                          resultScope='recording-enrichment', phoneDeliveryAllowed=bool(deliveries),
                          phoneDeliveries=deliveries)
             if 'delivery' in result:
                 result['delivery']['readyToImport'] = bool(deliveries)
-            return result
+        ready = result['state'] == 'DELIVERED' and result.get('delivery', {}).get('readyToImport') is True
+        result.update(deliveryAllowed=ready, exportReady=ready)
+        return job, result
 
-        return result
-
+    def summary(self, job: dict[str, Any], *, verify_delivery: bool = True) -> dict[str, Any]:
+        return self._status_summary(job, verify_delivery=verify_delivery)
 
     def _status_summary(self, job: dict[str, Any], *, verify_delivery: bool = True) -> dict[str, Any]:
-        result = self.summary(job) if verify_delivery else self.summary(job, verify_delivery=False)
+        if 'platformContentRestriction' in job:
+            return {'videoId':job['videoId'], 'sourceState':job.get('state'), 'state':'PLATFORM_CONTENT_RESTRICTED',
+                    'updatedAt':job.get('updatedAt'), 'deliveryAllowed':False, 'exportReady':False,
+                    'platformContentRestriction':{'code':'platform-content-restriction'}}
+        job, result = self._project_current_job(job)
         if (job.get('state') == 'VALIDATED' and result['state'] != 'STATUS_ERROR'
                 and not self._validated_snapshot_is_current(job)):
             result.update(sourceState='VALIDATED', state='STATUS_ERROR', statusError='validation-incomplete-or-stale')
-        if job.get('state') == 'DELIVERED' and result['state'] != 'STATUS_ERROR' and not verify_delivery:
-            result['deliveryVerification'] = {'status': 'not-rechecked',
-                                              'nextAction': 'Finalize' if 'Finalize' in result['permittedActions'] else 'Status',
-                                              'scope': 'committed-state-projection'}
-            delivery = job.get('delivery')
-            try:
-                if not isinstance(delivery, dict):
-                    raise ValueError('delivery receipt is missing')
-                path = validate_generated_path(self.ready,
-                    self.ready / f"{job['videoId']}.stemwise.zip", workspace_root=self.workspace_root)
-                if not path.is_file() or type(delivery.get('bytes')) is not int or path.stat().st_size != delivery['bytes']:
-                    raise ValueError('delivery receipt size differs')
-            except (OSError, ValueError):
-                result.pop('delivery', None)
-                result.update(sourceState='DELIVERED', state='STATUS_ERROR', statusError='delivery-file-unavailable')
-            try:
-                validation = job['validation']
-                if validation.get('kind') == 'capability-completion':
-                    current, expected = self._capability_input_sha(job['videoId']), validation['inputSha256']
-                else:
-                    current, expected = self._editorial_sha(job), validation['editorialSha256']
-                if current != expected:
-                    raise ValueError('Current lyric authority differs from validation')
-            except (OSError, ValueError, KeyError, TypeError):
-                result.pop('delivery', None)
-                if result['state'] != 'STATUS_ERROR':
-                    result.update(sourceState='DELIVERED', state='STATUS_ERROR', statusError='validation-incomplete-or-stale')
-        elif job.get("state") == "DELIVERED" and result['state'] != 'STATUS_ERROR' and not self._validated_snapshot_is_current(
+        if job.get("state") == "DELIVERED" and result['state'] != 'STATUS_ERROR' and not self._validated_snapshot_is_current(
             job,
             require_delivery=True,
             allow_pending_delivery_cleanup=True,
@@ -4813,7 +4946,7 @@ class FutureSongWorkflow:
                 state="STATUS_ERROR",
                 statusError="delivery-integrity-failed",
             )
-        if (result.get('statusError') in {'validation-incomplete-or-stale', 'delivery-integrity-failed'}
+        if (result.get('statusError') in {'validation-incomplete-or-stale', 'delivery-integrity-failed', 'delivery-timing-unresolved'}
                 and job.get('state') in {'VALIDATED', 'DELIVERED'}):
             # Diagnose stale completion from current proof without approving a new snapshot.
             try:
@@ -4844,15 +4977,44 @@ class FutureSongWorkflow:
                 else:
                     if result['state'] == 'DELIVERY_AUDIO_REQUIRED':
                         result['nextAction'] = 'Finalize' if 'Finalize' in result['permittedActions'] else 'Status'
+        ready = result['state'] == 'DELIVERED' and result.get('delivery', {}).get('readyToImport') is True
+        result.update(deliveryAllowed=ready, exportReady=ready)
+        if ready:
+            result['deliveryVerification'] = {'status': 'verified', 'scope': 'recording-bound-bundle'}
+        else:
+            if 'delivery' in result:
+                result['delivery']['readyToImport'] = False
+            if 'phoneDeliveryAllowed' in result:
+                result.update(phoneDeliveryAllowed=False, phoneDeliveries=[])
+            if result['state'] == 'STATUS_ERROR' and 'Task' in result.get('permittedActions', []):
+                result['nextAction'] = 'Task'
+        if 'wordTimingReview' not in result:
+            from stemwise_engine.word_timing_review import readback
+            timing = readback(self, job, result)
+            if timing is not None:
+                result['wordTimingReview'] = timing
+                result['timingCoverage'] = self._timing_coverage(timing)
+        if 'wordTimingReview' in result:
+            if result.get('statusError') == 'delivery-timing-unresolved':
+                from stemwise_engine.word_timing_review import needs_release_measurement
+                result['nextAction'] = ('Validate' if 'Validate' in result.get('permittedActions', ())
+                    and needs_release_measurement(job, result['wordTimingReview']) else 'Task')
+            result['wordTimingReview']['exportReady'] = ready
+            result['wordTimingReview']['export'] = ('verified-phone-delivery' if ready else
+                'validated-child-only' if result['state'] == 'VALIDATED' else 'unverified')
         return result
+
+    @staticmethod
+    def _timing_coverage(report):
+        return {key: report[key] for key in ('status', 'lyricsFound', 'wordIntervals', 'completeLines', 'lines',
+            'endpointEvidenceAvailable', 'fullySupportedPublishedLines', 'clearedPublicationFlagCount',
+            'unresolvedPublicationFlagCount') if key in report}
 
     def status(self, video_id: str | None, *, verify_delivery: bool = False) -> dict[str, Any]:
         if video_id:
             job = self._load_job(validate_video_id(video_id), require_active_policy=False)
-            if "platformContentRestriction" in job:
-                return {"videoId": video_id, "state": job.get("state"),
-                        "updatedAt": job.get("updatedAt"), "deliveryAllowed": False,
-                        "platformContentRestriction": {"code": "platform-content-restriction"}}
+            if 'platformContentRestriction' in job:
+                return self._status_summary(job, verify_delivery=verify_delivery)
             job = self._reconcile_interrupted_validation(job)
             result = self._status_summary(job, verify_delivery=verify_delivery)
             try:
@@ -4876,7 +5038,9 @@ class FutureSongWorkflow:
         delivered: list[tuple[int, str, dict[str, Any]]] = []
         for index, path in enumerate(paths):
             try:
-                job = self._reconcile_interrupted_validation(read_json(path))
+                job = read_json(path)
+                if 'platformContentRestriction' not in job:
+                    job = self._reconcile_interrupted_validation(job)
                 if job.get("state") == "DELIVERED":
                     delivered.append(
                         (index, validate_video_id(job.get("videoId")), job)
@@ -4909,7 +5073,11 @@ class FutureSongWorkflow:
                             "statusError": diagnostic_code(error),
                         }
         jobs = [self._aggregate_status_summary(summaries[index]) for index in range(len(paths))]
+        if self.source_context is None:
+            from stemwise_engine.workflow_status import public_inventory
+            return public_inventory(self, jobs)
         return {
+            "scope": self.source_context.recording_key,
             "jobCount": len(jobs),
             "stateCounts": {
                 state: sum(job["state"] == state for job in jobs)

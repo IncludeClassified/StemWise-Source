@@ -17,6 +17,10 @@ def optimal_edit_owners(expected, actual, *, budget=None):
     from stemwise_engine.acoustic_inputs import CURRENT_BUDGET
     budget = budget or CURRENT_BUDGET
     n, m = len(expected), len(actual)
+    if n == m and all(left == right for left, right in zip(expected, actual)):
+        budget.require(retained_bytes=(n + 1)*256)
+        return {"cost": 0, "matches": [array("I", [i]) for i in range(n)], "deleted": set(),
+                "substituted": set(), "affectedExpected": set(), "affectedActual": set()}
     # Compact owner arrays and their bounded row/set overhead share the matrix guard.
     budget.require(frames=n+1, states=m+1, arrays=4, item_bytes=4,
         retained_bytes=(n+m+2)*256)

@@ -3,6 +3,43 @@ from dataclasses import dataclass
 from stemwise_engine.workflow_states import JobState, JobProgress
 
 
+def timing_review_steps(report):
+    """Surface the named word edge and the next usable action before the full evidence."""
+    lines = []
+    all_options = report.get('listeningOptions', [])
+    options = [option for option in all_options if option['status'] == 'needs-listening']
+    confirmed = {(o['line'], o['wordIndex']) for o in all_options if o['status'] == 'A-confirmed'}
+    prioritized = set()
+    for group in report.get('instrumentalBoundaryReview', {}).get('boundaries', []):
+        if group['reviewRole'] != 'flagged-boundary' or (group['line'], group['wordIndex']) in confirmed:
+            continue
+        label = f"Line {group['line']}, word {group['wordIndex']} “{group['word']}” {group['boundary']}"
+        if group['association'] == 'candidate-for-listening':
+            time = group['listenFirstMs'][0]
+            candidate = next(c for c in group['nativeComparisons'] if c['atMs'] == time)
+            prioritized.add((group['line'], group['wordIndex']))
+            lines.append(f"{label} — check the vocal at {time / 1000:.3f} s. "
+                         f"The instrumental hit peaks at {candidate['impactMs'] / 1000:.3f} s.")
+        else:
+            rival = next((r for candidate in group['nativeComparisons'] if candidate['nearbyPeakMs']
+                          for r in candidate['competingBoundaries']), None)
+            if rival:
+                lines.append(f"{label} — the hit is also near line {rival['line']}, word {rival['wordIndex']} "
+                             f"“{rival['word']}” {rival['boundary']}. Check the vocal.")
+            else:
+                lines.append(f"{label} — the instrumental evidence cannot distinguish this boundary. Check the vocal.")
+    if options:
+        options = sorted(options, key=lambda option: (option['line'], option['wordIndex']) not in prioritized)
+        lines.append("Recording comparisons available")
+        for option in options:
+            alternative = option['B']
+            selectable = alternative['canSelectEnd'] or alternative['canSelectInterval']
+            suffix = '' if selectable else ' (B crosses a neighbor or would move a locked boundary)'
+            lines.append(f"Line {option['line']}, word {option['wordIndex']} “{option['word']}” — {option['id']}{suffix}")
+        lines.extend(["Prepare the first comparison in PowerShell", options[0]['prepareCommand']])
+    return '\n'.join(lines)
+
+
 @dataclass(frozen=True)
 class TaskPlan:
     video_id: str
@@ -44,7 +81,7 @@ class TaskPlan:
             'Without an Original, RecordingEvidence proposes unapproved wording candidates. Prepare and review original.txt or original.lrc and lyrics.meta.json before recording comparison.',
             'Try eligible source and recording evidence work, then Validate the complete-word Original target; companion tracks remain independent.',
             'Plain, partial, line-only, untimed and incomplete lyrics remain blocked recovery. Unavailable lyrics need qualified exhaustive search and recovery evidence; never invent listening or review decisions.',
-            'After ordinary alignment refuses, only the owner\'s independent verification of these exact words, pronunciation and performed occurrences can authorize complete acoustic predictions through owner-verified-lyrics.json. Keep predicted timing estimated; never invent owner approval or missing word intervals.',
+            'If wording and performed order pass recording admission and recording review, Validate can finish a timing-only refusal with measured acoustic estimates. Preserve timing locks and estimated labels. The separate owner-verified-lyrics.json route requires actual owner confirmation.',
             'Keep lyric bodies in the local review inputs; report only identifiers and decisions.',
             f'For another lyric source, stage it with `& {launcher} -Action Source {selector} -Url \'<source-url>\'`.', '']
         if self.state == JobState.NEEDS_LYRICS:
@@ -60,6 +97,8 @@ class TaskPlan:
             lines += [f'Unapproved audio-first lyric candidate: {self.audio_candidate}',
                 'Compare it with this recording before preparing the original; it grants no wording or timing authority.']
         action = self.next_action or (self.progress or JobProgress.current({'state': self.state.value})).next_action
-        lines += ['', '```powershell', f'$StemWiseAgent = {launcher}',
-            f'& $StemWiseAgent -Action Status {selector}', f'& $StemWiseAgent -Action {action} {selector}', '```', '']
+        lines += ['', '```powershell', f'$StemWiseAgent = {launcher}', f'& $StemWiseAgent -Action Status {selector}']
+        if action not in ('Status', 'Task'):
+            lines.append(f'& $StemWiseAgent -Action {action} {selector}')
+        lines += ['```', '']
         return '\n'.join(lines).encode('utf-8')

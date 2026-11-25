@@ -2,7 +2,6 @@
 import argparse
 import hashlib
 import json
-import math
 import os
 import time
 import uuid
@@ -17,12 +16,12 @@ from stemwise_engine.common import (atomic_write_json, diagnostic_code, exclusiv
                     load_config, manifested_temporary_directory, remove_manifested_directory,
                     read_bounded_json, read_bounded_regular_bytes, parse_strict_json_bytes,
                     resolve_path, sha256_file, utc_now, validate_generated_path,
-                    validate_video_id, process_lock_descriptor, json_bytes)
-from stemwise_engine.contract import MAX_DURATION_MS, MAX_JSON_BYTES, require_usable_analysis as require_analysis
+                    process_lock_descriptor, json_bytes)
+from stemwise_engine.contract import MAX_JSON_BYTES, require_usable_analysis as require_analysis
 from stemwise_engine.analyzers import _allin1_python
 from stemwise_engine.pipeline import run_analysis_worker
 from stemwise_engine.provenance import (collect_acoustic_provenance, provenance_fingerprint, numerical_source_identity)
-from stemwise_engine.youtube import MAX_ANALYSIS_SOURCE_BYTES, decode_analysis_audio, probe_duration_ms
+from stemwise_engine.youtube import decode_analysis_audio, probe_duration_ms
 from stemwise_engine.workflow_context import telemetry_job_root
 from stemwise_engine.recording_source import selected_recording
 
@@ -39,8 +38,8 @@ def acoustic_producer_identity(config, *, observe_execution=True):
                 observe_execution=observe_execution)}
 
 
-def selected_input(config, key, *, producer_identity=None):
-    workspace, pc, audio, identity = selected_recording(config, key)
+def selected_input(config, key, *, producer_identity=None, verify_media=True):
+    workspace, pc, audio, identity = selected_recording(config, key, verify_media=verify_media)
     track_id = identity['trackId']
     producer_identity = producer_identity or acoustic_producer_identity(config)
     # Other producers remain untouched and never become current by relabeling.
@@ -94,7 +93,8 @@ def matching_analysis(config, wav, duration, producer) -> dict[str, Any] | None:
 
 def status(config, key, *, producer_identity=None):
     producer = producer_identity or acoustic_producer_identity(config, observe_execution=False)
-    workspace, _, root, _, identity = selected_input(config, key, producer_identity=producer)
+    workspace, _, root, _, identity = selected_input(config, key, producer_identity=producer,
+                                                      verify_media=producer_identity is not None)
     if producer_identity is None and not (root/'job.json').exists():
         # Inspection selects a stored execution tuple; operation admission supplies its live tuple.
         candidates = []
@@ -109,14 +109,13 @@ def status(config, key, *, producer_identity=None):
                 base = {**stored, 'runtime': {name:value for name,value in stored['runtime'].items() if name != 'execution'}}
                 if (base == producer and saved.get('input') == identity
                         and candidate.parent.name == f'v{ENGINE_VERSION}-{provenance_fingerprint(stored)}'):
-                    candidates.append((candidate.stat().st_mtime_ns, stored))
+                    candidates.append((candidate.stat().st_mtime_ns, stored, candidate.parent))
             except InterruptedError:
                 raise
             except (OSError, ValueError):
                 continue
         if candidates:
-            producer = max(candidates, key=lambda item:item[0])[1]
-            workspace, _, root, _, identity = selected_input(config, key, producer_identity=producer)
+            _, producer, root = max(candidates, key=lambda item:item[0])
     path = root / 'job.json'
     result = {'recordingKey': key, 'state': 'NOT_STARTED',
               'phoneDeliveryAllowed': False, 'lyricsTimed': False,
@@ -337,10 +336,6 @@ def _analyze(config, key, *, repair=False):
             if repair_components(previous, current['pcm']['durationMs']):
                 repair_from = workspace/current['analysis']
         if current['state'] == 'ANALYSIS_COMPLETE' and repair_from is None:
-            if current['producerIdentity'] != producer:
-                # The retained job keeps its original producer and bytes; readback names the exact equivalence.
-                _finish_completed_cleanup(config, key, current)
-                return {**current, 'reused': True}
             run.update(cacheReused=True, cacheReason='complete-recording-cache', pcm=current['pcm'])
             persist_run()
             job = read_bounded_json(root / 'job.json', max_bytes=MAX_JSON_BYTES, root=root)

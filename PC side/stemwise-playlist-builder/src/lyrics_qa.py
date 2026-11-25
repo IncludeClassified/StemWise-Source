@@ -16,7 +16,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from stemwise_engine.common import atomic_write_json, read_json, utc_now, diagnostic_code
+from stemwise_engine.common import (atomic_write_json, read_json, parse_strict_json_bytes, utc_now,
+    diagnostic_code, companion_language_roles, canonical_lyrics_language)
 
 
 STANDARD_VERSION = 1
@@ -409,7 +410,9 @@ def audit_library(config: dict[str, Any]) -> dict[str, Any]:
         video_id = item["videoId"]
         sidecar_path = project / "owner-input" / f"{video_id}.lyrics.json"
         try:
-            lyrics = read_json(sidecar_path)
+            raw = sidecar_path.read_bytes()
+            lyrics = parse_strict_json_bytes(raw)
+            sidecar_sha = hashlib.sha256(raw).hexdigest()
             from stemwise_engine.contract import validate_lyrics, _has_language_variant
             validate_lyrics(lyrics, enforce_owner_policy=False)
             tracks = lyrics['tracks']
@@ -452,7 +455,7 @@ def audit_library(config: dict[str, Any]) -> dict[str, Any]:
                     "originalTrackCount": 0,
                     "translationTrackCount": len(translations),
                     "ipaTrackCount": len(ipa_tracks),
-                    "sidecarSha256": hashlib.sha256(sidecar_path.read_bytes()).hexdigest(),
+                    "sidecarSha256": sidecar_sha,
                 }
             )
             continue
@@ -506,12 +509,12 @@ def audit_library(config: dict[str, Any]) -> dict[str, Any]:
         )
         text_audit = audit_text(text, language, script, component_languages=component_languages or ())
         expected_title_languages = _title_language_expectation(str(item.get("title") or ""))
-        primary = language.split("-", 1)[0].lower()
+        primary = canonical_lyrics_language(language.lower()).split("-", 1)[0]
         if expected_title_languages and primary not in expected_title_languages:
             text_audit["issues"].append(
                 {
                     "code": "title-language-version-mismatch",
-                    "severity": "error",
+                    "severity": "warning",
                     "declaredLanguage": primary,
                     "expectedLanguages": sorted(expected_title_languages),
                 }
@@ -523,14 +526,9 @@ def audit_library(config: dict[str, Any]) -> dict[str, Any]:
         source = original.get("source") if isinstance(original.get("source"), dict) else {}
         source_class = _source_class(str(source.get("name") or ""))
         source_classes[source_class] += 1
-        needs_translation = primary != "en"
-        if primary == "mul" and component_languages is None:
-            needs_ipa: bool | None = None
+        needs_translation, needs_ipa = companion_language_roles(primary, component_languages)
+        if needs_ipa is None:
             ipa_requirement_pending += 1
-        elif primary == "mul":
-            needs_ipa = any(value not in {"ar", "en"} for value in component_languages)
-        else:
-            needs_ipa = primary not in {"ar", "en"}
         translation_missing = needs_translation and not translations
         ipa_missing = needs_ipa is True and not ipa_tracks
         missing_translation += int(translation_missing)
@@ -552,7 +550,7 @@ def audit_library(config: dict[str, Any]) -> dict[str, Any]:
                 "missingIpa": ipa_missing,
                 "sourceClass": source_class,
                 "sourceName": source.get("name"),
-                "sidecarSha256": hashlib.sha256(sidecar_path.read_bytes()).hexdigest(),
+                "sidecarSha256": sidecar_sha,
                 "original": text_audit,
                 "reviewStatus": "unavailable",
                 "companions": companion_audits,

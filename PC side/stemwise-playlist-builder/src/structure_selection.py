@@ -4,8 +4,8 @@ from typing import Any
 from dataclasses import dataclass
 from pathlib import Path
 from stemwise_engine.alignment_phases import StructureSelectionRequest, StructureSelectionResult
-from stemwise_engine.lyric_content import (confirm_content, require_content, timing_observation_eligible,
-    is_source_recording_admission, require_timing_only)
+from stemwise_engine.lyric_content import require_content, is_source_recording_admission, require_timing_only
+from stemwise_engine.alignment_attempt import timing_witness_eligible
 from stemwise_engine.lyrics_alignment import AlignmentResult, _physical_lines as _plain_physical_lines
 from stemwise_engine.workflow_records import LyricsContentBlocker
 
@@ -61,17 +61,14 @@ class StructureSelectionStage:
         if len(paths) != len(self.merge_transcripts):
             raise ValueError('Every structure transcript requires an explicit evidence association')
         for transcript, path in zip(self.merge_transcripts, paths):
-            source_admission = (confirm_content(self.request.original, sources,
-                admission.canonical_plain_sha256, admission.audio_sha256,
-                evidence_path=path, evidence_root=self.request.evidence_root) if path is not None else admission)
-            timing_observation_eligible(source_admission, self.request.original, sources, transcript,
-                evidence_path=path, evidence_root=self.request.evidence_root)
+            timing_witness_eligible(admission, self.request.original, sources, transcript, path,
+                self.request.evidence_root, check_candidate=True)
         for _, result, _, _ in self.options:
             if result.source_physical_indices != sources:
                 raise LyricsContentBlocker("content-occurrence-uncertain", binding=admission.binding)
             if not result.accepted:
                 if (result.reasons == ('recognition-wording-mismatch',) and not result.starts_ms
-                        and is_source_recording_admission(admission, self.request.evidence_root)):
+                        and (admission.adjudication or is_source_recording_admission(admission, self.request.evidence_root))):
                     continue
                 require_timing_only(result.reasons, admission)
         self.progress["internalRepeatAuditComplete"] = True

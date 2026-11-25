@@ -245,7 +245,7 @@ def collect_normal_youtube_candidates(
     for kind, mapping, automatic, selected_languages in subtitle_groups:
         if not isinstance(mapping, dict):
             continue
-        languages = selected_languages if selected_languages is not None else list(mapping)[:12]
+        languages = selected_languages if selected_languages is not None else mapping
         for language in languages:
             choices = _subtitle_choices(mapping.get(language))
             if not choices:
@@ -301,6 +301,7 @@ def collect_normal_youtube_candidates(
         "surface": "normal-youtube",
         "exactVideoIdConfirmed": True,
         "exactUrl": canonical_url(video_id),
+        "manualSubtitleLanguages": [r["language"] for r in records if r["type"] == "manual-subtitle"],
         "candidateCount": sum("sha256" in record for record in records),
         "usableLyricCandidateCount": sum(
             record.get("lyricUse") == "potential-body" and "sha256" in record
@@ -361,6 +362,15 @@ def source_candidate_intact(candidate, job_root):
         return False
 
 
+def _unavailable_automatic_caption(item):
+    return (isinstance(item, dict) and item.get('type') == 'automatic-caption'
+        and item.get('automatic') is True and item.get('status') == 'unavailable'
+        and item.get('surface', 'normal-youtube') == 'normal-youtube'
+        and isinstance(item.get('language'), str) and bool(item['language'].strip())
+        and isinstance(item.get('reason'), str) and bool(item['reason'].strip())
+        and 'path' not in item and 'sha256' not in item)
+
+
 def source_surface_checks_complete(record, *, allow_unavailable_automatic_captions=False):
     if not isinstance(record, dict):
         return False
@@ -371,10 +381,7 @@ def source_surface_checks_complete(record, *, allow_unavailable_automatic_captio
     result, captions = music.get('result'), normal.get('records')
     if (allow_unavailable_automatic_captions and isinstance(result, dict)
             and result.get('decision') == 'acquired' and isinstance(captions, list)):
-        captions = [item for item in captions if not (isinstance(item, dict)
-            and item.get('type') == 'automatic-caption' and item.get('automatic') is True
-            and item.get('status') == 'unavailable' and isinstance(item.get('reason'), str)
-            and bool(item['reason'].strip()))]
+        captions = [item for item in captions if not _unavailable_automatic_caption(item)]
     return (isinstance(result, dict) and isinstance(result.get('decision'), str)
         and result['decision'] in {'acquired', 'not-found', 'skipped-existing'}
         and ('candidatePath' not in result or (isinstance(result['candidatePath'], str) and bool(result['candidatePath'])
@@ -389,6 +396,20 @@ def source_surface_checks_complete(record, *, allow_unavailable_automatic_captio
 def source_record_complete(record, job_root):
     return source_surface_checks_complete(record) and all(
         source_candidate_intact(candidate, job_root) for candidate in source_candidates(record))
+
+
+def source_record_ready_for_review(record, job_root):
+    """A retained written body can still be reviewed after optional ASR captions fail."""
+    normal = record.get('normalYouTube') if isinstance(record, dict) else None
+    entries = normal.get('records') if isinstance(normal, dict) else None
+    if isinstance(entries, list) and any(_unavailable_automatic_caption(item) for item in entries):
+        available = [item for item in entries if not _unavailable_automatic_caption(item)]
+        written = [item for item in available if isinstance(item, dict)
+            and item.get('type') in {'description', 'manual-subtitle'} and item.get('automatic') is False]
+        if source_record_has_usable_evidence({**record, 'normalYouTube': {'records': written}},
+                draft_present=False, job_root=Path(job_root).resolve(), package_video_id=record.get('videoId')):
+            record = {**record, 'normalYouTube': {**normal, 'records': available}}
+    return source_record_complete(record, job_root)
 
 
 def counterpart_search_complete(discovery):
@@ -711,13 +732,15 @@ class SourceAcquisition:
                     if isinstance(record, dict) and isinstance(record.get('videoId'), str)}
         staged = previous.get('stagedVideoIds', [previous['stagedVideoId']] if previous.get('stagedVideoId') else [])
         staged_complete = isinstance(staged, list) and all(selected in existing
-            and source_record_complete(existing[selected], self.context.job_dir) for selected in staged)
+            and source_record_ready_for_review(existing[selected], self.context.job_dir) for selected in staged)
         if (previous.get('contentRejectionBinding') == binding and counterpart_search_complete(previous)
-                and previous.get('stagingStatus') != 'staging-failed'
-                and staged_complete):
-            return
-        discovery = discover_counterpart_candidates({'videoId': job['videoId'],
-            'title': job.get('title'), 'uploader': job.get('uploader'), 'durationSeconds': job.get('durationSeconds')})
+                and staged_complete and not previous.get('stagingErrors')):
+            if previous.get('stagingStatus') != 'staging-failed':
+                return
+            discovery = dict(previous)
+        else:
+            discovery = discover_counterpart_candidates({'videoId': job['videoId'],
+                'title': job.get('title'), 'uploader': job.get('uploader'), 'durationSeconds': job.get('durationSeconds')})
         selected_ids = [record.get('videoId') for record in discovery.get('candidates', []) if isinstance(record, dict)]
         if discovery.get('recommendedVideoId'):
             selected_ids.append(discovery['recommendedVideoId'])
@@ -729,7 +752,7 @@ class SourceAcquisition:
             selected = validate_video_id(selected)
             if selected not in staged:
                 staged.append(selected)
-            if selected in existing and source_record_complete(existing[selected], self.context.job_dir):
+            if selected in existing and source_record_ready_for_review(existing[selected], self.context.job_dir):
                 continue
             try:
                 self.operations.stage_source(job, selected)
@@ -745,7 +768,7 @@ class SourceAcquisition:
         sources = read_bounded_json(source_path, max_bytes=MAX_JSON_BYTES, root=self.context.job_dir)
         current = {record.get('videoId'): record for record in sources.get('lyricEvidenceSources', []) if isinstance(record, dict)}
         staging_failed = bool(staging_errors) or any(selected not in current
-            or not source_record_complete(current[selected], self.context.job_dir) for selected in staged)
+            or not source_record_ready_for_review(current[selected], self.context.job_dir) for selected in staged)
         if staging_failed:
             discovery['stagingStatus'] = 'staging-failed'
             discovery['stagingErrors'] = staging_errors

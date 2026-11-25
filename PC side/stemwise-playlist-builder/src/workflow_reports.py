@@ -371,9 +371,11 @@ def alignment_checkpoint_key(
     if view != "mix":
         cache_name = f"qwen-structure-{view}-{hint or 'auto'}.private.json"
     qwen_path = alignment_job / cache_name
-    if witness.get("selectedSequenceSupported") is True and not qwen_path.is_file():
+    selected_qwen = (witness.get("selectedSequenceSupported") is True
+        or witness_diagnostics.get('contentAdmission', {}).get('evidence', {}).get('path') == cache_name)
+    if selected_qwen and not qwen_path.is_file():
         raise FutureSongError("selected Qwen structure cache is missing")
-    if witness.get("selectedSequenceSupported") is True or qwen_path in used_cache_paths.get('qwen3-asr', []):
+    if selected_qwen or qwen_path in used_cache_paths.get('qwen3-asr', []):
         qwen_cache = read_optional_alignment_cache(
             qwen_path, root=alignment_job
         )
@@ -1227,6 +1229,10 @@ class WorkflowReports:
             },
             "artifacts": artifacts,
         }
+        # Display and companion review can legitimately update the editorial
+        # snapshot after alignment. Its immutable run must retain that exact
+        # source and editorial pair for the later Validate/Finalize readback.
+        self.write_report_authority_references(video_id, declaration["editorialSha256"], declaration["sourcesSha256"])
         return self.store.commit(report_root, record), completed_at
 
 
@@ -1430,6 +1436,17 @@ class WorkflowReports:
         try:
             return self.store.commit(report_root, record, evidence=evidence)
         except ReportSizeLimitExceeded:
+            # The record holds required provenance and publication identities. Only the
+            # diagnostic body is optional; the same bounded store still checks the record.
+            if status == "complete":
+                raw = json_bytes(evidence['diagnostics'], pretty=True)
+                summary_evidence = {**evidence, 'diagnostics': {
+                    'detailStatus': 'omitted-size-limit', 'omittedDetailBytes': len(raw),
+                    'omittedDetailSha256': hashlib.sha256(raw).hexdigest()}}
+                try:
+                    return self.store.commit(report_root, record, evidence=summary_evidence)
+                except ReportSizeLimitExceeded:
+                    pass  # Required proof itself exceeds the bound; preserve the failed attempt.
             compact_record, compact_evidence = compact_alignment_run(record, evidence,
                 state=state, checkpoint_raw=checkpoint_raw)
             compact_sha256 = self.store.commit(

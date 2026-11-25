@@ -9,7 +9,7 @@ import stemwise_engine.contract as contract
 from stemwise_engine.enrichment_constants import MAX_RECORDING_TRACK_ID, MAX_RECORDING_BYTES
 from stemwise_engine.common import parse_strict_json_bytes
 from stemwise_engine.lyrics_tokenization import TOKENIZATION_VERSION, display_word_ranges
-from stemwise_engine.ipa_validation import validate_ipa
+from stemwise_engine.ipa_validation import IPA_EXEMPT, IPA_SKIP, selective_ipa, validate_ipa
 
 
 FORMAT_VERSION = contract.FORMAT_VERSION
@@ -21,8 +21,8 @@ _fail = contract._fail
 _child = contract._child
 
 
-def _validate_ipa_text(text: str, path: str) -> None:
-    issues = validate_ipa(text)
+def _validate_ipa_text(text: str, path: str, language: str) -> None:
+    issues = validate_ipa(text, allow_skips=contract._language_primary(language) == 'mul')
     if issues:
         issue = issues[0]
         _fail(path, f'{issue.code} at physical line {issue.line}, position {issue.position}')
@@ -210,7 +210,7 @@ def _validate_owner_lyrics_policy(
     if original_primary == "mul" and (
         "componentLanguages" in original or lyrics["status"] == "complete"
     ):
-        if len(component_primaries) < 2 or component_primaries & {"mul", "und", "zxx"}:
+        if len(component_primaries) < 2 or component_primaries & {"mul", "und", "mis", "zxx"}:
             _fail(
                 _child(_child(path, "tracks"), originals[0][0]) + ".componentLanguages",
                 "must identify at least two concrete material languages",
@@ -253,12 +253,10 @@ def _validate_owner_lyrics_policy(
 
     if len(translations) > 1 or len(transliterations) > 1:
         _fail(_child(path, "tracks"), "owner lyrics allow at most one translation and one IPA track")
-    needs_translation = original_primary != "en"
-    needs_ipa = (
-        bool(component_primaries - {"ar", "en"})
-        if original_primary == "mul"
-        else original_primary not in {"ar", "en"}
-    )
+    from stemwise_engine.common import companion_language_roles
+    needs_translation, needs_ipa = companion_language_roles(original_primary, component_primaries)
+    if lyrics['status'] == 'complete' and None in (needs_translation, needs_ipa):
+        _fail(_child(path, 'tracks'), 'complete lyrics require known material languages')
     if translations and not needs_translation:
         _fail(
             _child(_child(path, "tracks"), translations[0][0]) + ".language",
@@ -306,7 +304,7 @@ def _validate_regional_lines(track: Mapping[str, Any], path: str, duration_ms: i
             required={"text", "contentStatus", "occurrenceStatus", "timing"}, optional={"words"})
         contract._plain_text(line["text"], line_path + ".text")
         if track['kind'] == 'transliteration':
-            _validate_ipa_text(line['text'], line_path + '.text')
+            _validate_ipa_text(line['text'], line_path + '.text', track['language'])
         content = contract._enum(line["contentStatus"], line_path + ".contentStatus",
                                  {"admitted", "source-only", "disputed"})
         occurrence = contract._enum(line["occurrenceStatus"], line_path + ".occurrenceStatus",
@@ -458,7 +456,7 @@ def _validate_lyrics_v2(
                 _fail(_child(track_path, "lines"), "is forbidden on a plain track")
             contract._plain_text(track.get("text"), _child(track_path, "text"))
             if track_kind == 'transliteration':
-                _validate_ipa_text(track['text'], _child(track_path, 'text'))
+                _validate_ipa_text(track['text'], _child(track_path, 'text'), track['language'])
             continue
         if "text" in track:
             _fail(_child(track_path, "text"), "is forbidden on a synced track")
@@ -487,7 +485,7 @@ def _validate_lyrics_v2(
                 _fail(_child(line_path, "endMs"), "must be greater than startMs")
             contract._plain_text(line["text"], _child(line_path, "text"))
             if track_kind == 'transliteration':
-                _validate_ipa_text(line['text'], _child(line_path, 'text'))
+                _validate_ipa_text(line['text'], _child(line_path, 'text'), track['language'])
             if previous_start_ms is not None and start_ms < previous_start_ms:
                 _fail(
                     _child(line_path, "startMs"),
@@ -529,6 +527,17 @@ def _validate_lyrics_v2(
     if any(sum(track['kind'] == kind for track in validated_tracks) > 1
            for kind in ('translation', 'transliteration')):
         _fail(_child(path, 'tracks'), 'lyrics allow at most one English translation and one IPA track')
+    for track in (t for t in validated_tracks if t['kind'] == 'transliteration'):
+        original = next(t for t in validated_tracks if t['id'] == track['basedOnTrackId'])
+        primary = contract._language_primary(original['language'])
+        components = {contract._language_primary(tag) for tag in original.get('componentLanguages', [])}
+        if primary in IPA_EXEMPT or (primary == 'mul' and not components - IPA_EXEMPT):
+            _fail(_child(path, 'tracks'), 'English and Arabic cannot carry IPA')
+        content = track['text'] if track['format'] == 'plain' else '\n'.join(line['text'] for line in track['lines'])
+        if (IPA_SKIP in content) != selective_ipa(original):
+            _fail(_child(path, 'tracks'), 'mixed IPA must exclude English and Arabic occurrences')
+        if IPA_SKIP in content and not any(char.isalpha() for char in content):
+            _fail(_child(path, 'tracks'), 'mixed IPA needs eligible pronunciation')
     for track_path, based_on, timeline in companion_timelines:
         if based_on not in original_timelines:
             _fail(_child(track_path, "lines"), "timed companions require a timed original timeline")
@@ -650,13 +659,21 @@ def validate_lyrics(
     return value
 
 
-def require_publication_lyrics(value: Mapping[str, Any]) -> None:
-    """Only complete, fully timed regional transport can leave the PC workflow."""
+def require_staged_lyrics(value: Mapping[str, Any]) -> None:
+    """Private children may hold plain drafts while alignment is pending."""
     if not any(track.get('format') == 'regional' for track in value.get('tracks', [])):
         return
     if value.get('status') != 'complete':
         _fail('$.lyrics.status', 'regional publication requires complete timed lyrics')
     validate_lyrics(value, enforce_owner_policy=False)
+
+
+def require_publication_lyrics(value: Mapping[str, Any] | None, *, duration_ms=None) -> None:
+    """A finished transport covers every performed word and its required companions."""
+    if not isinstance(value, Mapping) or value.get('status') != 'complete':
+        _fail('$.lyrics.status', 'delivery requires complete word-aligned lyrics')
+    validate_lyrics(value, duration_ms=duration_ms)
+    _require_complete_regional_timing(value)
 
 
 def _require_complete_regional_timing(value: Mapping[str, Any]) -> None:

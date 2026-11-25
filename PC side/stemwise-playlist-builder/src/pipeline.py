@@ -54,7 +54,7 @@ from stemwise_engine.packages import (
     _verify_png,
 )
 from stemwise_engine.provenance import collect_provenance, provenance_fingerprint
-from stemwise_engine.song_enrichment_v2 import validate_lyrics, require_publication_lyrics
+from stemwise_engine.song_enrichment_v2 import validate_lyrics, require_staged_lyrics
 from stemwise_engine.contract import MAX_JSON_BYTES
 from stemwise_engine.youtube import (
     inventory_playlist,
@@ -589,7 +589,7 @@ class StemwisePipeline:
         if not isinstance(raw, dict):
             raise ValueError(f"{path.name} must contain the exact lyrics object")
         validate_lyrics(raw)
-        require_publication_lyrics(raw)
+        require_staged_lyrics(raw)
         return raw, fingerprint
 
     def _new_state(self, item: dict[str, Any], owner_lyrics_sha256: str, *, retain_prepared=True) -> dict[str, Any]:
@@ -1167,17 +1167,22 @@ class StemwisePipeline:
                                    previous_child_raw, previous_document, audio, lyrics, lyrics_sha, *, force=False,
                                    replacement_operation_id=None):
         video_id = item['videoId']
+        # The committed child owns the artwork. Acquisition scratch can already have
+        # been retired when the exact native PCM is restored for a withdrawn song.
+        state = self._new_state(item, lyrics_sha, retain_prepared=(replacement_operation_id is None
+            and (audio.parent / 'cover.png').exists()))
         binding = {'version': 1, 'producerSha256': self.provenance_sha256,
                    'previousCheckpointSha256': hashlib.sha256(previous_raw).hexdigest(),
                    'previousChildSha256': hashlib.sha256(previous_child_raw).hexdigest(),
                    'pcm': previous_state['originalAudio'], 'ownerLyricsSha256': lyrics_sha}
+        if self.config.get('localRecordingKey'):
+            binding['acousticProducerIdentity'] = state['acousticProducerIdentity']
         attempt_id = hashlib.sha256(json.dumps(binding, sort_keys=True).encode('utf-8')).hexdigest()
         root = self._analysis_replacement_root(video_id)
         attempt = root / attempt_id
         owner = {'kind': 'analysis-replacement', 'videoId': video_id}
         if not attempt.exists():
             create_manifested_directory(root, attempt, owner=owner, workspace_root=self.workspace_root)
-        state = self._new_state(item, lyrics_sha, retain_prepared=replacement_operation_id is None)
         if replacement_operation_id is not None:
             state['analysisReplacementOperationId'] = replacement_operation_id
         state['originalAudio'] = dict(previous_state['originalAudio'])
@@ -1195,7 +1200,8 @@ class StemwisePipeline:
                 details = {'startedAt': utc_now(), 'producerSha256': self.provenance_sha256,
                            'pcmSha256': binding['pcm']['sha256'], 'cacheReused': None}
                 self._analysis_reuse = {}
-                if not force and self._checkpoint_producer(previous_state) is not None:
+                if (not force and self._checkpoint_producer(previous_state) is not None and
+                        previous_state.get('acousticProducerIdentity') == state.get('acousticProducerIdentity')):
                     analysis = previous_document['analysis']
                     causes = {}
                     self._analysis_reuse = {'cacheReused': True, 'cacheReason': 'verified-committed-numerics'}
@@ -1527,10 +1533,13 @@ class StemwisePipeline:
                 )
 
                 # The download extraction may expose richer YouTube Music fields.
+                metadata_source = {'extraction': 'download'}
                 try:
                     metadata = self._metadata(downloaded_info, video_id)
-                except Exception:
-                    pass
+                except WorkerRetirementError:
+                    raise
+                except Exception as error:
+                    metadata_source = {'extraction': 'initial', 'downloadExtractionFailure': diagnostic_code(error)}
                 metadata, research = enrich_metadata(
                     metadata,
                     duration_ms,
@@ -1545,6 +1554,7 @@ class StemwisePipeline:
                     details={
                         "matchStatus": metadata["matchStatus"],
                         "research": research,
+                        **metadata_source,
                     },
                 )
 

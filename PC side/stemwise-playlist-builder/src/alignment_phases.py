@@ -219,6 +219,7 @@ class EndpointEvidence:
     independent_inputs: Mapping[str, tuple[Sequence[int], Record, list[list[tuple[int, int, str]]]]]
     reviewed_lrc_starts: Mapping[int, int]
     route_names: Mapping[str, str]
+    recording_entrances: tuple[tuple[int, int], ...] = ()
     content_admission: Record | None = None
 
     def __post_init__(self):

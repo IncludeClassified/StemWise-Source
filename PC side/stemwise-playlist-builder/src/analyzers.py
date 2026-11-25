@@ -284,10 +284,6 @@ def _interpret_skey_scores(scores: Iterable[Any], labels: dict[int, str]) -> dic
         "tonic": tonic,
         "mode": mode,
     }
-    alternatives = [dict(zip(('tonic', 'mode'), _parse_key_label(labels[index])))
-                    for index in ranked[1:] if values[index] > 0]
-    if alternatives:
-        result['alternatives'] = alternatives
     return result
 
 
@@ -500,11 +496,18 @@ def _normalize_allin1_result(raw: dict[str, Any], duration_ms: int) -> tuple[dic
         else:
             discarded.add('overlapping or reversed bounds')
     if sections:
+        boundaries = [(0, sections[0]['startMs']),
+                      *((left['endMs'], right['startMs']) for left, right in zip(sections, sections[1:])),
+                      (sections[-1]['endMs'], duration_ms)]
+        gaps = [(start, end) for start, end in boundaries if start < end]
+        if gaps:
+            start, end = gaps[0]
+            discarded.add(f'uncovered {start}–{end} ms ({sum(b-a for a,b in gaps)} ms total)')
         structure = {"status": "partial" if discarded else "complete", "sections": sections}
         if discarded:
             structure['reason'] = 'All-In-One discarded sections: ' + ', '.join(sorted(discarded)) + '.'
     else:
-        structure = {"status": "unavailable", "reason": "All-In-One returned no usable sections."}
+        structure = {"status": "unavailable", "reason": "all-in-one-no-usable-sections"}
 
     beats = _unique_times(raw.get("beats") or [], duration_ms)
     raw_downbeats = _unique_times(raw.get("downbeats") or [], duration_ms)
@@ -538,6 +541,8 @@ def _normalize_allin1_result(raw: dict[str, Any], duration_ms: int) -> tuple[dic
     }
     if warnings:
         tool["warnings"] = warnings
+    if 'demixProfile' in raw:
+        tool['profile'] = json.dumps(raw['demixProfile'], sort_keys=True, separators=(',', ':'))
     return structure, diagnostic, tool
 
 
@@ -755,7 +760,7 @@ def analyze_essentia(audio_path: Path) -> tuple[dict[str, Any], dict[str, Any], 
     try:
         import numpy as np
         import soundfile as sf
-        from stemwise_engine.analysis_resources import analysis_resource_policy, require_analysis_capacity
+        from stemwise_engine.analysis_resources import require_analysis_capacity
         info = sf.info(audio_path)
         from stemwise_engine.common import source_duration_ms
         duration_ms = source_duration_ms(info.frames, info.samplerate)
@@ -772,15 +777,20 @@ def analyze_essentia(audio_path: Path) -> tuple[dict[str, Any], dict[str, Any], 
             window = es.Windowing(type="hann")
             spectrum = es.Spectrum()
             peaks = es.SpectralPeaks(minFrequency=40, maxFrequency=5000, magnitudeThreshold=1e-5)
-            tuning_algorithm = es.TuningFrequency()
+            estimator = es.TuningFrequency()
             frequencies: list[float] = []
+            observed_frames = 0
             frames = (_essentia_mono_frames(audio_path, duration_ms, es) if windowed else
                 es.FrameGenerator(mono, frameSize=4096, hopSize=2048, startFromZero=True))
             for frame in frames:
+                observed_frames += 1
                 peak_frequencies, magnitudes = peaks(spectrum(window(frame)))
                 if len(peak_frequencies) < 2:
                     continue
-                frequency, _ = tuning_algorithm(peak_frequencies, magnitudes)
+                # The estimator accumulates a histogram across calls. Each frame
+                # must have independent evidence before testing global agreement.
+                estimator.reset()
+                frequency, _ = estimator(peak_frequencies, magnitudes)
                 frequency = float(frequency)
                 if math.isfinite(frequency) and 400 <= frequency <= 480:
                     frequencies.append(frequency)
@@ -791,14 +801,15 @@ def analyze_essentia(audio_path: Path) -> tuple[dict[str, Any], dict[str, Any], 
                 cents = 1200.0 * math.log2(selected / 440.0)
                 cents_values = [1200.0 * math.log2(value / selected) for value in frequencies]
                 dispersion = float(statistics.median(abs(value) for value in cents_values))
-                tuning_status = "complete" if dispersion <= 8.0 else "uncertain"
+                agreeing = sum(abs(value) <= 8.0 for value in cents_values)
+                tuning_status = "complete" if dispersion <= 8.0 and agreeing >= .9*len(frequencies) and len(frequencies) >= .5*observed_frames else "uncertain"
                 tuning = {
                     "status": tuning_status,
                     "frequencyHz": round(selected, 4),
                     "centsFromA440": round(cents, 3),
                 }
                 if tuning_status != "complete":
-                    tuning["reason"] = "Tuning estimates varied substantially across the recording."
+                    tuning["reason"] = "Pitched frames give insufficient coverage or agreement for one recording-wide tuning."
         except WorkerRetirementError:
             raise
         except Exception as error:

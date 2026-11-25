@@ -110,7 +110,7 @@ def target_plan(request, _dictionary, vocab):
 
 
 def decode(logp, targets, owners, words, edges, bounds, *, blank=0, estimator="viterbi", token_logp=None,
-           boundary_summaries=None):
+           boundary_summaries=None, latest_entries=None):
     """Maximum complete CTC path, with constraints on states rather than tokens."""
     CURRENT_BUDGET.require(frames=int(logp.shape[0]), states=2*len(targets)+1,
         arrays=5, retained_bytes=int(logp.nbytes))
@@ -138,6 +138,14 @@ def decode(logp, targets, owners, words, edges, bounds, *, blank=0, estimator="v
         if high is not None:
             valid &= edges[1:] <= high
         emissions[~valid, 2*token+1] = -np.inf
+    if latest_entries:
+        for word, latest in latest_entries.items():
+            if word not in words or type(latest) not in (int, float) or not np.isfinite(latest):
+                raise ValueError("Invalid acoustic word entrance fence")
+            first = 2*owners.index(words.index(word))+1
+            # Only predecessor states expire. The word can stay on its first
+            # vowel and sustain for the rest of the measured vocal phrase.
+            emissions[edges[1:]>latest, :first] = -np.inf
     if estimator in ("posterior", "posterior+risk"):
         return _posterior_timings(token_values, labels, emissions, skip, targets, owners, words, edges,
                                   boundary_risk=estimator == "posterior+risk", boundary_summaries=boundary_summaries)
@@ -309,9 +317,9 @@ def load_model(project: Path):
     return model
 
 
-def align_signal(model, signal, targets, origin_ms, *, bounds=None):
+def align_signal(model, signal, targets, origin_ms, *, bounds=None, latest_entries=None):
     logp, edges = prediction_emissions(model, signal, origin_ms)
-    return decode(logp, targets[0], targets[2], targets[1], edges, bounds or {})
+    return decode(logp, targets[0], targets[2], targets[1], edges, bounds or {}, latest_entries=latest_entries)
 
 
 def prediction_emissions(model, signal, origin_ms):

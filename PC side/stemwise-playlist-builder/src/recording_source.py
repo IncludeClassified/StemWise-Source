@@ -86,12 +86,12 @@ def retained_input(library, key, *, verify_media=True):
     audio = validate_generated_path(library, audio, workspace_root=workspace)
     if not 0 < audio.stat().st_size <= MAX_ANALYSIS_SOURCE_BYTES:
         raise ValueError('Selected input exceeds the native audio byte limit')
+    import soundfile as sf
+    with audio.open('rb') as stream:
+        info = sf.info(stream)
     if verify_media:
         metadata = probe(audio)
     else:
-        import soundfile as sf
-        with audio.open('rb') as stream:
-            info = sf.info(stream)
         metadata = {'codec_name': 'flac' if info.format == 'FLAC' else info.format,
                     'channels': info.channels, 'duration': info.duration,
                     'bits_per_raw_sample': {'PCM_16': 16, 'PCM_24': 24, 'PCM_32': 32}.get(info.subtype, 0)}
@@ -102,10 +102,7 @@ def retained_input(library, key, *, verify_media=True):
             or not 0 < metadata['duration'] <= MAX_DURATION_MS / 1000):
         raise ValueError('Selected input must be native finite mono/stereo FLAC within the duration limit')
     digest = receipt['sha256']
-    import soundfile as sf
     from stemwise_engine.common import source_duration_ms
-    with audio.open('rb') as stream:
-        info = sf.info(stream)
     identity = {'recordingKey': key, 'trackId': track_id,
                 'file': audio.relative_to(workspace).as_posix(), 'sha256': digest,
                 'byteCount': audio.stat().st_size, 'durationMs': source_duration_ms(info.frames, info.samplerate)}

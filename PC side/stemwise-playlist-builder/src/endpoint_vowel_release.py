@@ -23,15 +23,19 @@ AGREEMENT_MS = 100
 
 
 def english_track(original):
-    return original.get('language') == 'en' and set(original.get('componentLanguages') or ()) <= {'en'}
+    from stemwise_engine.lyrics_alignment import canonical_language
+    return (canonical_language(original.get('language')) == 'en'
+            and all(canonical_language(tag) == 'en' for tag in (original.get('componentLanguages') or ())))
 
 
 def vocal_word_ends(rows):
     """Get the independent full-word estimate, bound to each performed occurrence."""
+    from stemwise_engine.alignment_endpoints import ENDPOINT_MMS_ROUTES
+    routes = {'torchaudio-mms-fa-on-' + view for view in ENDPOINT_MMS_ROUTES}
     result = {}
     for row in rows:
         candidate = row.get('familyCandidates', {}).get('mms-fa') or {}
-        if candidate.get('route') == 'torchaudio-mms-fa-on-htdemucs-vocals':
+        if candidate.get('route') in routes:
             for word in candidate.get('words', ()):
                 result[word['occurrenceWordId']] = (word['startMs'],word['endMs'])
     return result

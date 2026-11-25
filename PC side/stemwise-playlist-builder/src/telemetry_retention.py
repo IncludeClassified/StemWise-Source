@@ -1,5 +1,5 @@
 """Bound unreferenced local diagnostics while preserving current recovery chains."""
-from contextlib import nullcontext, contextmanager, ExitStack
+from contextlib import nullcontext, contextmanager
 import errno
 from pathlib import Path
 import re
@@ -8,7 +8,7 @@ import subprocess
 
 from stemwise_engine.common import (exclusive_process_lock, process_lock_descriptor, read_bounded_json,
                     atomic_write_json, sha256_file, utc_now, validate_generated_path)
-from stemwise_engine.common import resolve_path
+from stemwise_engine.common import ProcessLockBusyError, resolve_path
 from stemwise_engine.workflow_context import current_state_root, native_state_root
 
 MAX_UNREFERENCED_COUNT = 128
@@ -293,30 +293,47 @@ def cleanup(workspace: Path, *, apply=True, max_total_bytes=MAX_TOTAL_UNREFERENC
     root = validate_generated_path(workspace, workspace/'Engine telemetry', workspace_root=workspace)
     if not root.exists():
         return {}
-    with ExitStack() as leases:
-        leases.enter_context(exclusive_process_lock(root/'retention.lock'))
+    with exclusive_process_lock(root/'retention.lock'):
         sources = [validate_generated_path(root, path, workspace_root=workspace) for path in sorted(root.iterdir())
             if path.is_dir() and re.fullmatch(r'(?:youtube-[A-Za-z0-9_-]{11}|qobuz-[1-9][0-9]*)', path.name)]
-        for path in sources:
-            leases.enter_context(publication(workspace, path))
-        inventory, result = [], {}
-        # Resolve every configured authority path while all source publishers are fenced.
-        jobs = {path: _authority_jobs(workspace, path.name) for path in sources}
-        for path in sources:
-            result[path.name] = _cleanup_locked(workspace, path, jobs[path], apply,
-                MAX_UNREFERENCED_COUNT, MAX_UNREFERENCED_BYTES, inventory)
-        total = sum(size for _, _, _, size in inventory)
-        for source, path, files, size in sorted(inventory, key=lambda entry: (entry[1].stat().st_mtime_ns, str(entry[1]))):
+        result, inventory = {}, []
+        for source in sources:
+            try:
+                with publication(workspace, source):
+                    entries = []
+                    result[source.name] = _cleanup_locked(workspace, source, _authority_jobs(workspace, source.name),
+                        apply, MAX_UNREFERENCED_COUNT, MAX_UNREFERENCED_BYTES, entries)
+                    inventory.extend((path.stat().st_mtime_ns, str(path), source, path, size)
+                                     for _, path, _, size in entries)
+            except ProcessLockBusyError:
+                result[source.name] = {'deferred': True, 'removedCount': 0, 'removedBytes': 0, 'applied': apply}
+        total = sum(entry[-1] for entry in inventory)
+        candidates = {}
+        for stamp, _, source, path, size in sorted(inventory):
             if total <= max_total_bytes:
                 break
-            if apply:
-                _remove_candidate(workspace, source, path, files)
+            candidates.setdefault(source, {})[path] = (stamp, size)
             total -= size
-            row = result[source.name]
-            row['unreferencedCount'] -= 1
-            row['unreferencedBytes'] -= size
-            row['removedCount'] += 1
-            row['removedBytes'] += size
+        for source, selected in candidates.items():
+            try:
+                with publication(workspace, source):
+                    # References can change between inventories. Recompute reachability
+                    # under this source's fence before removing any exact candidate.
+                    current = []
+                    _cleanup_locked(workspace, source, _authority_jobs(workspace, source.name),
+                                    False, MAX_UNREFERENCED_COUNT, MAX_UNREFERENCED_BYTES, current)
+                    row = result[source.name]
+                    for _, path, files, size in current:
+                        if selected.get(path) != (path.stat().st_mtime_ns, size):
+                            continue
+                        if apply:
+                            _remove_candidate(workspace, source, path, files)
+                        row['unreferencedCount'] -= 1
+                        row['unreferencedBytes'] -= size
+                        row['removedCount'] += 1
+                        row['removedBytes'] += size
+            except ProcessLockBusyError:
+                result[source.name]['deferred'] = True
         return result
 
 

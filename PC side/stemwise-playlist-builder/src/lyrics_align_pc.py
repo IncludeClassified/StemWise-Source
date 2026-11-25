@@ -12,7 +12,6 @@ import stemwise_engine.alignment_audio as audio_store
 import stemwise_engine.alignment_models as models
 import stemwise_engine.ctc_worker as ctc_worker
 import copy
-import gc
 import hashlib
 import importlib.metadata
 import json
@@ -23,13 +22,11 @@ import re
 import shutil
 import sys
 import time
-import traceback
-import unicodedata
 from collections import Counter
-from dataclasses import asdict, dataclass, field, replace
+from dataclasses import asdict, dataclass, replace
 from fractions import Fraction
 from functools import lru_cache
-from itertools import combinations, product
+from itertools import product
 from pathlib import Path
 from stemwise_engine.model_registry import model_assets, runtime_profile
 from stemwise_engine.provenance import semantic_source_identity
@@ -39,8 +36,8 @@ from typing import Any, Callable, Sequence, TYPE_CHECKING
 if TYPE_CHECKING:
     from stemwise_engine.pipeline import StemwisePipeline
 
-from stemwise_engine.alignment_publication import AlignmentPublisher, _require_completed_structure_witness
-from stemwise_engine.lyric_content import (confirm_content, require_content, require_exact_sequence, require_timing_only)
+from stemwise_engine.alignment_publication import AlignmentPublisher, _require_completed_structure_witness, qwen_mix_cache_name
+from stemwise_engine.lyric_content import confirm_content, require_content, require_exact_sequence
 from stemwise_engine.workflow_records import LyricsContentBlocker, ContentEvidenceUnavailable, CONTENT_EVIDENCE_TECHNICAL_REASONS
 import stemwise_engine.alignment_endpoints as endpoints
 import stemwise_engine.structure_selection as structure_selection
@@ -49,11 +46,10 @@ import stemwise_engine.alignment_worker_session as _alignment_sessions
 import stemwise_engine.worker_protocol as worker_protocol
 from stemwise_engine.worker_protocol import parse_worker_json, WorkerProtocolError
 from stemwise_engine.campaign_operations import model_operation_slot
-from stemwise_engine.alignment_phases import (AudioIdentity, PairedEndpointResult, EndpointSelectionResult, EndpointAlignmentRequest,
-    respects_reviewed_start,
+from stemwise_engine.alignment_phases import (EndpointSelectionResult, EndpointAlignmentRequest,
     AlignmentContext, EndpointText, EndpointEvidence, EndpointAudio, EndpointWorkers,
     EndpointServices, AlignmentEvents, AlignmentProgress, StructureSelectionRequest,
-    StructureSelectionResult, AlignmentPublicationRequest, EndpointTimings)
+    StructureSelectionResult, AlignmentPublicationRequest)
 from stemwise_engine.structure_selection import (_baseline_source_indices, _has_structural_mutation, _result_score, _select_evidence_option)
 
 
@@ -84,11 +80,8 @@ from stemwise_engine.contract import (
 from stemwise_engine.lyrics_alignment import (
     _plain_original,
     _ordered_endpoint_candidate_path,
-    _lyric_lines_for_sources,
-    _mapping,
     ALIGNMENT_VERSION,
     DEFAULT_MODEL,
-    DEFAULT_THRESHOLD,
     TRANSCRIPT_CACHE_VERSION,
     _physical_lines as _plain_physical_lines,
     AlignmentResult,
@@ -123,7 +116,6 @@ from stemwise_engine.lyrics_tokenization import (
     TOKENIZATION_VERSION,
     display_words,
     lexical_authority_sha256,
-    lexical_line_tokens,
 )
 from stemwise_engine.packages import validate_child_zip
 from stemwise_engine.qwen3_asr_transcribe import (
@@ -370,8 +362,11 @@ def _require_no_unchanged_content_block(prior, canonical_sha, audio_sha, *, work
         if reasons and all(reason in repairable_input for reason in reasons):
             return  # Valid repaired input still needs fresh retained recognition admission.
         raise blocker
-    if (set(reasons) == {'content-sequence-uncertain'} and workspace is not None
-            and isinstance(prior.get('contentDispute'), dict)):
+    stale_qwen_review = (set(reasons) == {'recording-adjudication-stale'}
+        and (prior.get('structureWitness') or {}).get('route') == QWEN3_ASR_ROUTE
+        and (prior.get('structureWitness') or {}).get('status') == 'started')
+    disputed_sequence = set(reasons) == {'content-sequence-uncertain'} and isinstance(prior.get('contentDispute'), dict)
+    if workspace is not None and (stale_qwen_review or disputed_sequence):
         if original is None:
             raw = read_bounded_regular_bytes(workspace.current_backup_path(video_id),
                 max_bytes=MAX_JSON_BYTES, root=workspace.canonical_plain)
@@ -380,6 +375,11 @@ def _require_no_unchanged_content_block(prior, canonical_sha, audio_sha, *, work
             original = _plain_original(parse_strict_json_bytes(raw))
         admission = lyric_content.reviewed_workspace_admission(workspace, video_id, original,
             binding['sourcePhysicalIndices'], canonical_sha, audio_sha)
+        if stale_qwen_review:
+            if (admission is not None and admission.adjudication is not None
+                    and admission.evidence_path in {qwen_mix_cache_name(hint) for hint in transcription_languages(original)}):
+                return  # The exact retained mix, reading, occurrence map and review all replayed.
+            raise blocker
         from stemwise_engine.alignment_attempt import ContentDispute
         try:
             dispute = ContentDispute.from_record(prior['contentDispute'],
@@ -3008,6 +3008,9 @@ def _run_alignment_worker_batch(*, config: dict[str, Any], python: Path, helper:
                                 environment: dict[str, str], failure_path: Path, repair: bool,
                                 model: Path | None = None, language: str | None = None) -> tuple[Any, dict[str, Any], dict[str, Any] | None]:
     from stemwise_engine.alignment_model_queue import prepare_emissions
+    if model is None:
+        from stemwise_engine.mms_forced_alignment import _request_plan
+        _request_plan(request)
     output_path.unlink(missing_ok=True)
     if model is not None:
         capability = _run_numerical_process([str(python), "-m", "stemwise_engine." + helper.stem, '--check-targets',
@@ -4170,6 +4173,9 @@ def _load_final_mms_alignment(
     sources = list(alignment.source_physical_indices)
     physical = _plain_physical_lines(original["text"])
     word_lines = [display_words(physical[source]) for source in sources]
+    from stemwise_engine.mms_forced_alignment import _request_plan
+    _request_plan(_forced_alignment_request(video_id, sources, occurrence_mapping,
+        word_lines, duration_ms=request_duration_ms, segments=segments)[0])
     runtime = _mms_runtime_provenance(
         mms_python,
         helper,
@@ -4408,6 +4414,7 @@ def _build_initial_alignment_segments(
     free_family_candidates: dict[str, tuple[dict[str, Any] | None, ...]],
     transcripts: list[Any],
     transcript_labels: list[str],
+    recording_entrances: tuple[tuple[int, int], ...] = (),
 ) -> list[dict[str, int]]:
     def planning_lines():
         yield from free_family_candidates.values()
@@ -4420,7 +4427,8 @@ def _build_initial_alignment_segments(
     # These hints freeze guarded worker windows only. Prompted recognition never
     # joins the independent endpoint or occurrence-identity evidence families.
     for lines in planning_lines():
-        segments = endpoints._build_bootstrap_segments(len(sources), duration_ms, lines)
+        segments = endpoints._build_bootstrap_segments(len(sources), duration_ms, lines,
+            recording_entrances=recording_entrances)
         if segments is None:
             continue
         return segments
@@ -4648,7 +4656,7 @@ def _write_alignment_report(workspace, *, model, selected_count, counts, results
 def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_ms, alignment_temp_root, state,
                                 original, lyrics, alignment, spoken, evidence_options, recognition_evidence,
                                 expected_mix_sha256, analysis_audio, audio_views, services,
-                                route_diagnostic, route_failures, reviewed_lrc_starts):
+                                route_diagnostic, route_failures, reviewed_lrc_starts, coarse_line_locations):
     endpoint_verifier_transcripts = list(recognition_evidence.transcripts)
     endpoint_verifier_labels = list(recognition_evidence.labels)
     endpoint_verifier_reused = list(recognition_evidence.reused)
@@ -4714,11 +4722,18 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
     else:
         mix_audio, mix_identity = canonical_mix()
         endpoint_duration_ms = _worker_pcm_duration_ms(mix_identity)
+    from stemwise_engine.lyric_preview.job import recording_entrances
+    # A word inside a line can veto a conflicting search cut. Its time is never a line edge.
+    entrances = coarse_line_locations
+    stanza_entrances = recording_entrances(
+        workspace, video_id, expected_mix_sha256, original, sources, endpoint_duration_ms, spoken=spoken)
+    entrances += tuple(stanza_entrances.items())
     baseline_segments = _build_initial_alignment_segments(
         original["text"], sources, lexical_mapping, endpoint_duration_ms,
         free_family_candidates=free_family_candidates,
         transcripts=endpoint_verifier_transcripts,
         transcript_labels=endpoint_verifier_labels,
+        recording_entrances=entrances,
     )
     verifier_candidates: tuple[dict[str, Any] | None, ...] = tuple(
         None for _ in sources
@@ -4796,7 +4811,7 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
         if timing_hints is not None:
             seeded_mms_segments = endpoints._build_bootstrap_segments(
                 len(sources), endpoint_duration_ms,
-                timing_hints, verifier_candidates,
+                timing_hints, verifier_candidates, recording_entrances=entrances,
             )
             if seeded_mms_segments is not None and len(seeded_mms_segments) < 2:
                 seeded_mms_segments = None
@@ -4824,7 +4839,7 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
                 verifier_family=verifier_family, verifier_reused=verifier_reused,
                 wav2vec2_language=wav2vec2_language, free_family_candidates=endpoint_free_family_candidates,
                 independent_inputs=independent_inputs, reviewed_lrc_starts=reviewed_lrc_starts,
-                route_names=endpoint_route_names, content_admission=state["contentAdmission"]),
+                route_names=endpoint_route_names, recording_entrances=entrances, content_admission=state["contentAdmission"]),
             audio=EndpointAudio(expected_mix_sha256=expected_mix_sha256, analysis_audio=analysis_audio,
                 canonical_mix=canonical_mix, get_endpoint_audio=get_endpoint_audio,
                 mix_audio=mix_audio, mix_identity=mix_identity,
@@ -4853,6 +4868,23 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
         state["recoveredRouteFailures"] = recovered_failures
     state["routeFailures"] = blocking_failures
     endpoint_summary = endpoint_selection.summary
+    state.pop('stanzaTimingReview', None)
+    if stanza_entrances:
+        from stemwise_engine import stanza_timing
+        readings = spoken.word_lines(sources) if spoken else [[w[2] for w in line] for line in display_word_lines]
+        try:
+            requests = stanza_timing.locations(stanza_entrances, lexical_mapping, endpoint_summary, readings, endpoint_duration_ms)
+            if requests:
+                release_model()
+            observations = stanza_timing.run(config, workspace.job_dir(video_id), requests, endpoint_summary, canonical_mix)
+        except (OSError, RuntimeError, ValueError, TimeoutExpired) as error:
+            endpoints._require_recoverable_endpoint_failure(error)
+            services.events.attempt('stanza-remeasurement', 'mix', 'failed',
+                code=route_diagnostic(error, 'stanza-remeasurement', 'mix'))
+        else:
+            state['stanzaTimingReview'] = {**stanza_timing.recording_binding(expected_mix_sha256, state['mappingSha256'],
+                spoken.reference if spoken else None),
+                'anchors': [[i,t] for i,t in sorted(stanza_entrances.items())], 'words': observations}
     endpoint_stage.record_vowel_estimates(endpoint_summary)
     if selected_mms_route in endpoints.ROFORMER_ROUTES:
         state["roformerCascade"][
@@ -4861,13 +4893,51 @@ def _refine_alignment_endpoints(*, config, args, workspace, video_id, duration_m
     state["endpointRouteAttempts"] = list(endpoint_route_attempts)
     if endpoint_summary["resultClass"] != "line-unresolved":
         public_line_timings = list(endpoint_selection.timings)
-        candidate = build_synced_sidecar(
-            lyrics,
-            alignment,
-            duration_ms,
-            line_timings=public_line_timings,
-        )
+        if alignment.accepted:
+            candidate = build_synced_sidecar(lyrics, alignment, duration_ms, line_timings=public_line_timings)
     return lexical_mapping, endpoint_selection, public_line_timings, candidate
+
+
+def _untimed_search_admission(stage, alignment):
+    request = stage.request
+    sources = _baseline_source_indices(request.original['text'])
+    if (alignment.reasons != ('recognition-wording-mismatch',) or alignment.starts_ms
+            or not sources or alignment.source_physical_indices != sources):
+        return None
+    admission = require_content(stage.progress.get('contentAdmission'), request.original, sources,
+        stage.progress.get('canonicalPlainSha256'), stage.progress.get('contentBinding', {}).get('audioSha256'),
+        request.evidence_root)
+    if not (admission.adjudication or lyric_content.is_source_recording_admission(admission, request.evidence_root)):
+        return None
+    return admission
+
+
+def _time_selected_sequence(stage, alignment, lyrics, refine):
+    """A verified sequence without ASR clocks can request the ordinary independent endpoints."""
+    if alignment.accepted:
+        return (alignment, *refine())
+    admission = _untimed_search_admission(stage, alignment)
+    if admission is None:
+        return alignment, None, None, None, None
+    request = stage.request
+    sources = alignment.source_physical_indices
+    stage.progress['untimedEndpointSearch'] = {'contentEvidenceSha256': admission.evidence_sha256,
+                                              'previousReasons': list(alignment.reasons)}
+    mapping, selected, timings, _ = refine()
+    if selected.summary['resultClass'] != 'committed-words':
+        return alignment, mapping, selected, None, None
+    occurrences = selected.summary['occurrenceCandidates']
+    expected = mapping['performedOccurrences']
+    if not timings or not (len(expected) == len(occurrences) == len(timings) == len(sources)):
+        raise ValueError('Word timing does not cover the verified performed sequence')
+    for source, owner, row, timing in zip(sources, expected, occurrences, timings):
+        if (row['publishDecision']['result'] != 'words' or row['occurrenceId'] != owner['occurrenceId']
+                or not (row['sourcePhysicalIndex'] == owner['sourcePhysicalIndex'] == source)
+                or not owner['words'] or len(timing.get('words', ())) != len(owner['words'])):
+            raise ValueError('Word timing does not cover the verified performed occurrence')
+    resolved = replace(alignment, accepted=True, reasons=(), starts_ms=tuple(line['startMs'] for line in timings))
+    candidate = build_synced_sidecar(lyrics, resolved, request.duration_ms, line_timings=timings)
+    return resolved, mapping, selected, timings, candidate
 
 
 @_alignment_sessions.alignment_worker_session()
@@ -5156,7 +5226,8 @@ def _align(
             evidence_options: list[tuple[str, Any, dict[str, Any], bool]] = []
             from stemwise_engine.alignment_attempt import RecognitionEvidenceSet
             recognition_evidence = RecognitionEvidenceSet()
-            def record_recognition_route(label, transcribe, *, evidence_path=None, admit=False):
+            coarse_locations_by_route = {}
+            def record_recognition_route(label, transcribe, *, evidence_path=None, coarse_path=None, admit=False):
                 transcript, evidence, reused = transcribe()
                 if admit:
                     record_route_attempt('structure', label, 'success', cache_reused=reused)
@@ -5165,10 +5236,11 @@ def _align(
                 if alignment.reasons == ('recognition-wording-mismatch',):
                     record_route_attempt('structure', label, 'unavailable', cache_reused=reused,
                         code='recognition-wording-mismatch')
-                    coarse = recognition.source_line_anchors(evidence_path, duration_ms)
+                    coarse = recognition.source_line_anchors(coarse_path or evidence_path, duration_ms)
                     if coarse is not None:
                         alignment, anchor_evidence = coarse
                         evidence = {**evidence, 'coarseStructure': anchor_evidence}
+                        coarse_locations_by_route[label] = tuple(enumerate(alignment.starts_ms))
                 else:
                     recognition_evidence.add(label, transcript, reused, evidence_path)
                 evidence_options.append((label, alignment, evidence, reused))
@@ -5196,6 +5268,7 @@ def _align(
                     kwargs['use_approved_prompt'] = False
                 return record_recognition_route(f"{route.label}:{language or 'auto'}",
                     lambda: tracked_whisper(**kwargs), evidence_path=path if route.admit_content else None,
+                    coarse_path=path if not route.prompted and not route.vocals else None,
                     admit=route.admit_content)
 
             if native_adapters := mms_asr.adapters_for(original):
@@ -5538,19 +5611,27 @@ def _align(
                         reused,
                     )
 
-                _, structure_result = _run_conditional_cascade(
-                    tuple(endpoints.ROFORMER_ROUTES),
-                    evaluate_structure_route,
-                    on_failure=lambda route_id, code: record_route_failure(
-                        "structure", route_id, code
-                    ),
-                    diagnostic_path=workspace.job_dir(video_id) / 'model-route.failure.private.txt',
-                    diagnostic_context={'attemptId': getattr(args, 'attempt_id', None), 'videoId': video_id,
-                        'stage': 'structure', 'model': args.model, 'device': args.device},
-                    prior_technical_failure=any(
-                        failure["stage"] == "structure" for failure in route_failures
-                    ),
-                )
+                try:
+                    _, structure_result = _run_conditional_cascade(
+                        tuple(endpoints.ROFORMER_ROUTES),
+                        evaluate_structure_route,
+                        on_failure=lambda route_id, code: record_route_failure(
+                            "structure", route_id, code
+                        ),
+                        diagnostic_path=workspace.job_dir(video_id) / 'model-route.failure.private.txt',
+                        diagnostic_context={'attemptId': getattr(args, 'attempt_id', None), 'videoId': video_id,
+                            'stage': 'structure', 'model': args.model, 'device': args.device},
+                        prior_technical_failure=any(
+                            failure["stage"] == "structure" for failure in route_failures
+                        ),
+                    )
+                except ConditionalCascadeTechnicalError:
+                    # Optional structure workers can fail after the recording and its
+                    # performed sequence were independently verified. Keep their failures
+                    # and let the endpoint workers try that exact sequence without clocks.
+                    structure_result = select_evidence()
+                    if _untimed_search_admission(structure_stage, structure_result[1]) is None:
+                        raise
                 evidence_type, alignment, evidence, reused = structure_result
             else:
                 evidence_type, alignment, evidence, reused = selected_evidence
@@ -5566,37 +5647,46 @@ def _align(
                         Path(config["projectDir"]) / "src" / "qwen3_asr_transcribe.py",
                         device=args.device,
                         timeout_seconds=int(config["analysisTimeoutMinutes"]) * 60)
-                    qwen_language = _qwen_structure_languages(original, qwen_runtime["supportedLanguages"])[0]
+                    languages = _qwen_structure_languages(original, qwen_runtime["supportedLanguages"])
+                    current = lyric_content.require_workspace_content(workspace, video_id, content_sources,
+                        original=original, audio_sha=expected_mix_sha256)
+                    reviewed_hint = next((hint for hint in languages if current.adjudication is not None
+                        and current.evidence_path == qwen_mix_cache_name(hint)), None)
+                    qwen_language = reviewed_hint or languages[0]
                     qwen_text, qwen_provenance, qwen_reused = tracked_qwen(
                         config=config, video_id=video_id, language=None if qwen_language == "auto" else qwen_language,
                         audio=qwen_audio, audio_identity=qwen_audio_identity, model_cache=model_cache,
                         workspace=workspace, temp_dir=alignment_temp_root, device=args.device,
                         timeout_seconds=int(config["analysisTimeoutMinutes"]) * 60,
-                        before_run=release_model, runtime_report=qwen_runtime, separate_language_cache=True)
+                        before_run=release_model, runtime_report=qwen_runtime, separate_language_cache=True,
+                        cache_only=reviewed_hint is not None)
+                    qwen_path = workspace.job_dir(video_id) / qwen_mix_cache_name(qwen_language)
                     qwen_admission = None
-                    qwen_path = workspace.job_dir(video_id) / (f'qwen-structure-{qwen_language}.private.json'
-                        if qwen_language != 'auto' else 'qwen-structure.private.json')
-                    try:
-                        require_exact_sequence(original, content_sources, qwen_text,
-                                               canonical_plain_sha256, expected_mix_sha256)
-                    except LyricsContentBlocker:
-                        qwen_admission = confirm_content(original, content_sources, canonical_plain_sha256,
-                            expected_mix_sha256, evidence_path=qwen_path,
-                            evidence_root=workspace.job_dir(video_id),
+                    if reviewed_hint is not None:
+                        qwen_admission = current
+                        lyric_content.require_admitted_sequence(current, original, content_sources, qwen_text,
+                            evidence_path=qwen_path, evidence_root=workspace.job_dir(video_id),
                             adjudication_job_dir=workspace.root.parent / 'jobs' / video_id)
-                        lyric_content.require_admitted_sequence(qwen_admission, original, content_sources, qwen_text,
-                            evidence_path=qwen_path,
-                            evidence_root=workspace.job_dir(video_id),
-                            adjudication_job_dir=workspace.root.parent / 'jobs' / video_id)
-                    scores, _, _ = _score_qwen_structure_routes(original, {content_sources}, (qwen_language,),
-                        lambda _language: (qwen_text, qwen_provenance, qwen_reused), admission=qwen_admission,
-                        workspace=workspace, video_id=video_id, evidence_path=qwen_path)
-                    support = scores[0]
-                    if not support.accepted or support.metrics.direct_line_count != support.metrics.line_count:
+                        support = score_structure_witness(spoken.matching_text() if spoken else original['text'],
+                            content_sources, qwen_text)
+                    else:
+                        try:
+                            require_exact_sequence(original, content_sources, qwen_text,
+                                                   canonical_plain_sha256, expected_mix_sha256)
+                        except LyricsContentBlocker:
+                            qwen_admission = confirm_content(original, content_sources, canonical_plain_sha256,
+                                expected_mix_sha256, evidence_path=qwen_path, evidence_root=workspace.job_dir(video_id),
+                                adjudication_job_dir=workspace.root.parent / 'jobs' / video_id)
+                        scores, _, _ = _score_qwen_structure_routes(original, {content_sources}, (qwen_language,),
+                            lambda _language: (qwen_text, qwen_provenance, qwen_reused), admission=qwen_admission,
+                            workspace=workspace, video_id=video_id, evidence_path=qwen_path)
+                        support = scores[0]
+                    all_direct = support.metrics.direct_line_count == support.metrics.line_count
+                    if reviewed_hint is None and (not support.accepted or not all_direct):
                         raise LyricsContentBlocker("content-witness-uncertain", binding=state["contentBinding"])
                     state["structureWitness"] = {"family": "qwen3-asr", "route": QWEN3_ASR_ROUTE,
-                        "status": "success", "candidateCount": 1, "passingCandidateCount": 1,
-                        "selectedSequenceSupported": True, "selectedSequenceEveryLineDirect": True,
+                        "status": "success", "candidateCount": 1, "passingCandidateCount": int(support.accepted),
+                        "selectedSequenceSupported": support.accepted, "selectedSequenceEveryLineDirect": all_direct,
                         "cacheReused": qwen_reused, "languageHint": qwen_provenance["language"],
                         "metrics": asdict(support.metrics), "lexicalAuthoritySha256": lexical_authority_sha256(original),
                         **{key: qwen_provenance[key] for key in ("modelRevision", "modelSnapshotSha256",
@@ -5614,7 +5704,7 @@ def _align(
                         "status": "failure", "candidateCount": 1, "cacheReused": False, "failureCode": code}
                     record_route_attempt("structure", QWEN3_ASR_ROUTE, "failure", code=code)
                     raise
-                _require_completed_structure_witness(alignment, state["structureWitness"])
+                _require_completed_structure_witness(alignment, state["structureWitness"], admission=current)
 
             attempt_summaries = [
                 {
@@ -5638,12 +5728,8 @@ def _align(
                 evidenceAttempts=attempt_summaries,
             )
             workspace.write_state(video_id, state)
-            summary = serialize_result(alignment)
-            candidate = None
-            public_line_timings = None
-            endpoint_selection = None
-            lexical_mapping = None
-            if alignment.accepted:
+
+            def refine_selected():
                 endpoint_services = EndpointServices(
                     workers=EndpointWorkers(load_mms=tracked_mms, load_wav2vec2=tracked_wav2vec2,
                         load_owsm=tracked_owsm, load_nfa=tracked_nfa,
@@ -5655,14 +5741,18 @@ def _align(
                     progress=AlignmentProgress(state=state, endpoint_attempts=[],
                         checkpoint=lambda: workspace.write_state(video_id, state)),
                     release_model=release_model, runtime_probe_cache=runtime_probe_cache)
-                lexical_mapping, endpoint_selection, public_line_timings, candidate = _refine_alignment_endpoints(
+                return _refine_alignment_endpoints(
                     config=config, args=args, workspace=workspace, video_id=video_id, duration_ms=duration_ms,
                     alignment_temp_root=alignment_temp_root, state=state, original=original, lyrics=lyrics,
                     alignment=alignment, spoken=spoken, evidence_options=evidence_options,
                     recognition_evidence=recognition_evidence, expected_mix_sha256=expected_mix_sha256,
                     analysis_audio=analysis_audio, audio_views=audio_views, services=endpoint_services,
                     route_diagnostic=route_diagnostic, route_failures=route_failures,
-                    reviewed_lrc_starts=reviewed_lrc_starts)
+                    reviewed_lrc_starts=reviewed_lrc_starts,
+                    coarse_line_locations=coarse_locations_by_route.get(evidence_type, ()))
+            alignment, lexical_mapping, endpoint_selection, public_line_timings, candidate = _time_selected_sequence(
+                structure_stage, alignment, lyrics, refine_selected)
+            summary = serialize_result(alignment)
             # Cache hits can leave the per-song Whisper owner resident. Its
             # retirement must succeed before replacing the approved sidecar.
             release_model()

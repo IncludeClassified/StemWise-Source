@@ -8,6 +8,7 @@ import re
 import time
 from pathlib import Path, PurePosixPath
 
+from stemwise_engine.lyrics_normalize import performed_line_indices, physical_lines
 from stemwise_engine.common import json_bytes, read_bounded_regular_bytes, validate_video_id
 from stemwise_engine.contract import MAX_JSON_BYTES
 from stemwise_engine.editorial_review import valid_reviewer
@@ -46,7 +47,7 @@ def companion_binding(video_id, original, candidate, *, original_input_sha256,
     plain_original = copy.deepcopy(original)
     plain_original.pop('lines', None)
     plain_original.update(format='plain', text=_text(original))
-    indices = [index for index, line in enumerate(plain_original['text'].split('\n')) if line.strip()]
+    indices = list(performed_line_indices(plain_original['text']))
     admission = (content_admission.to_record() if hasattr(content_admission, 'to_record')
                  else content_admission)
     if admission is not None:
@@ -143,6 +144,8 @@ def validate_companion_review(value, kind):
     """Strict private shape validation, separate from current-input admission."""
     keys = {'formatVersion', 'binding', 'reviewer', 'completedAt', 'decision',
             'coveredOccurrenceIds', 'convention', 'checks', 'issues', 'evidence', 'rationale'}
+    if kind == 'transliteration' and isinstance(value, dict) and 'wordLanguages' in value:
+        keys.add('wordLanguages')
     if (kind not in REVIEW_CHECKS or not isinstance(value, dict) or set(value) != keys
             or type(value['formatVersion']) is not int or value['formatVersion'] != 1
             or not valid_reviewer(value['reviewer'])
@@ -197,11 +200,12 @@ def _translation_audit(candidate):
 
 def companion_issues(original, candidate):
     """Deterministic role QA only; a clean result confers no editorial authority."""
-    from stemwise_engine.ipa_validation import validate_companion_text
+    from stemwise_engine.ipa_validation import selective_ipa, validate_companion_text
     kind = candidate['kind']
     role = {'translation': 'translationEn', 'transliteration': 'ipa'}[kind]
     issues = [{'code': item.code, 'line': item.line, 'position': item.position}
-              for item in validate_companion_text(_text(original), _text(candidate), role=role)]
+              for item in validate_companion_text(_text(original), _text(candidate), role=role,
+                                                   allow_skips=selective_ipa(original))]
     if kind == 'translation':
         issues.extend(_translation_audit(candidate)['issues'])
     return issues
@@ -243,6 +247,23 @@ def admit_companion(original, candidate, review, *, binding, required, evidence_
         return result('invalid', issues=issues)
     if binding['contentEvidence'] is None:
         return result('unreviewed', ('original-authority-unavailable',))
+    from stemwise_engine.ipa_validation import ipa_language_issues, reviewed_ipa_languages, selective_ipa
+    reference = binding['contentEvidence'].get('spokenTargets')
+    if kind == 'transliteration' and (reference or selective_ipa(original)):
+        from stemwise_engine import spoken_targets
+        from stemwise_engine.workflow_records import LyricsContentBlocker
+        indices = performed_line_indices(plain_original['text'])
+        if not reference:
+            return result('review-required', ('ipa-word-languages-unreviewed',))
+        try:
+            plan = spoken_targets.load(evidence_root, binding['videoId'], plain_original, indices, binding['audioSha256'])
+            if plan is None or plan.reference != reference:
+                return result('stale', ('ipa-word-languages-changed',))
+            scope_issues = ipa_language_issues(_text(candidate), indices, plan.language_lines(indices))
+        except LyricsContentBlocker:
+            return result('stale', ('ipa-word-languages-changed',))
+        if scope_issues:
+            return result('invalid', issues=[vars(issue) for issue in scope_issues])
     if review is None:
         return result('unreviewed', ('companion-review-missing',))
     try:
@@ -253,6 +274,14 @@ def admit_companion(original, candidate, review, *, binding, required, evidence_
         return result('stale', ('companion-review-stale',))
     if review['coveredOccurrenceIds'] != binding['occurrenceIds']:
         return result('review-required', ('companion-coverage-incomplete',))
+    if kind == 'transliteration':
+        if reference and 'wordLanguages' in review:
+            return result('invalid', ('ipa-word-languages-already-bound',))
+        if not reference:
+            issues = reviewed_ipa_languages(plain_original, performed_line_indices(plain_original['text']),
+                                            review.get('wordLanguages'))
+            if issues:
+                return result('review-required', issues=[vars(issue) for issue in issues])
     if (review['decision'] != 'admit' or 'unresolved' in review['checks'].values()
             or review['checks']['meaning' if kind == 'translation' else 'performed-pronunciation'] != 'reviewed'
             or any(issue['status'] == 'unresolved' for issue in review['issues'])):
@@ -269,7 +298,9 @@ def admit_companion(original, candidate, review, *, binding, required, evidence_
 
 def companion_review_packet(original, candidates, bindings, *, video_id=None):
     """Current local authoring inputs, never a generated review decision."""
-    physical = _text(original).split('\n')
+    text = _text(original)
+    physical = physical_lines(text)
+    sung = performed_line_indices(text)
     current_binding = next((binding for binding in bindings.values() if binding is not None), None)
     video_id = video_id or (current_binding['videoId'] if current_binding else None)
     authority_lines, occurrences = {}, {}
@@ -277,12 +308,11 @@ def companion_review_packet(original, candidates, bindings, *, video_id=None):
         from stemwise_engine.lyrics_alignment import build_lexical_occurrence_mapping
         plain = copy.deepcopy(original)
         plain.pop('lines', None)
-        plain.update(format='plain', text=_text(original))
-        mapping = build_lexical_occurrence_mapping(video_id, plain,
-            [index for index, line in enumerate(physical) if line.strip()])
+        plain.update(format='plain', text=text)
+        mapping = build_lexical_occurrence_mapping(video_id, plain, sung)
         authority_lines = {line['sourcePhysicalIndex']: line['lineId'] for line in mapping['authorityLines']}
         occurrences = {item['sourcePhysicalIndex']: item['occurrenceId'] for item in mapping['performedOccurrences']}
-    physical_lines = [{'physicalIndex': index, 'text': line, 'stanzaBoundary': not line.strip(),
+    review_lines = [{'physicalIndex': index, 'text': line, 'stanzaBoundary': index not in sung,
                        'lineId': authority_lines.get(index), 'occurrenceId': occurrences.get(index)}
                       for index, line in enumerate(physical)]
     roles = {}
@@ -293,12 +323,22 @@ def companion_review_packet(original, candidates, bindings, *, video_id=None):
             'convention': CONVENTIONS[kind], 'requiredChecks': list(REVIEW_CHECKS[kind]),
             'expectedReviewProperties': ['formatVersion', 'binding', 'reviewer', 'completedAt',
                 'decision', 'coveredOccurrenceIds', 'convention', 'checks', 'issues', 'evidence', 'rationale']}
+        if kind != 'transliteration' or not binding:
+            continue
+        from stemwise_engine.ipa_validation import selective_ipa
+        if not selective_ipa(original) and not (binding.get('contentEvidence') or {}).get('spokenTargets'):
+            from stemwise_engine.lyrics_tokenization import display_words
+            roles[kind]['expectedReviewProperties'].append('wordLanguages')
+            for index in sung:
+                review_lines[index]['displayWords'] = [word for _, _, word in display_words(physical[index])]
     return {'formatVersion': 1, 'policyVersion': COMPANION_POLICY_VERSION,
-        'original': copy.deepcopy(original), 'physicalLines': physical_lines, 'roles': roles,
+        'original': copy.deepcopy(original), 'physicalLines': review_lines, 'roles': roles,
         'instructions': [
             'Preserve each source occurrence and stanza; do not merge repeated lines.',
             'Translation preserves meaning, polarity, referents, modality, names and ambiguity; it is not a singable adaptation.',
             'IPA describes the performed broad pronunciation; dictionary, ASR and timing do not prove it.',
+            'Exclude Arabic and English from IPA. Use — for a wholly excluded line. On mixed-eligibility lines use one cell per display word separated by " | ", with — in excluded cells.',
+            'When wordLanguages is requested, record one reviewed primary language code per display word, one array per performed occurrence in order. Check the recording and reference before writing or reusing IPA. If a word is English or Arabic, declare the mixed languages and use the recording-bound spoken plan.',
             'Review dialect, borrowed names, code-switching, connected speech and differing repeated realisations.',
             'Do not infer lexical stress, length or tone from musical pitch or duration.',
             'Locate material issues and unresolved alternatives by occurrence ID and position; withhold uncertain roles.',

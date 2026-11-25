@@ -270,7 +270,8 @@ def _validate_language(value: Any, path: str) -> None:
 def _language_primary(value: str) -> str:
     """Return the case-insensitive primary BCP 47 language subtag."""
 
-    return value.split("-", 1)[0].lower()
+    from stemwise_engine.common import canonical_lyrics_language
+    return canonical_lyrics_language(value.split("-", 1)[0].lower())
 
 
 def _has_language_variant(value: str, variant: str) -> bool:
